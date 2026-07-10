@@ -125,3 +125,75 @@ td { color: var(--text); }
   .status-card { min-width: 0; }
   .employee-row { display: grid; }
 }
+
+@media (max-width: 480px) {
+  /* Layout generale */
+  .app { width: calc(100% - 24px); margin: 0 auto; padding: 20px 12px; }
+  body { background-position: top left; }
+
+  /* Hero */
+  .hero { gap: 12px; align-items: center; }
+  h1 { font-size: 2rem; line-height: 1.05; max-width: 100%; }
+  .hero-text { font-size: 1rem; max-width: 100%; }
+
+  /* Cards e spacing */
+  .card { padding: 14px; border-radius: 16px; }
+  .status-card { padding: 12px; border-radius: 14px; gap: 10px; }
+  .card-head { gap: 10px; margin-bottom: 12px; }
+
+  /* Tipografia e elementi ridotti */
+  h2 { font-size: 1.1rem; }
+  p, small, .employee-row .meta { font-size: 0.95rem; }
+  .message { font-size: 0.95rem; }
+
+  /* Avatar e pill */
+  .avatar { width: 44px; height: 44px; border-radius: 12px; font-size: 1.1rem; }
+  .pill { padding: 6px 8px; font-size: .72rem; }
+
+  /* Form e controlli */
+  label { gap: 6px; }
+  input {
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+  }
+  .check input { width: 18px; height: 18px; }
+
+  /* Bottoni e azioni */
+  .actions, .punch-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.98rem;
+  }
+
+  /* Griglie e liste */
+  .grid, .settings, .security-list, .stats, .employee-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .settings { gap: 10px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+
+  /* Tabelle: rendile scorrevoli senza larghezza minima fissa */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 0; width: 100%; font-size: 0.95rem; }
+  th, td { padding: 10px; }
+
+  /* Riduci ombre e blur per prestazioni mobile */
+  .status-card, .card { box-shadow: 0 10px 30px rgba(0,0,0,.28); backdrop-filter: blur(8px); }
+  .stack { gap: 10px; }
+
+  /* Misc */
+  .profile { gap: 10px; align-items: center; }
+  .employee-row { display: grid; gap: 8px; }
+  .badge { padding: 4px 8px; font-size: .7rem; }
+
+  /* Evita elementi troppo larghi */
+  .wide { grid-column: auto; }
+}
