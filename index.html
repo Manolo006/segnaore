@@ -1,0 +1,95 @@
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Segna Ore Dipendenti</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Registro presenze</p>
+          <h1>Segna entrate e uscite in sicurezza</h1>
+          <p class="hero-text">
+            Timbrature dipendenti con account locale, controllo posizione GPS.
+          </p>
+          <p><a class="link" href="datore.html">Apri pagina datore →</a></p>
+        </div>
+        <div class="status-card">
+          <span id="securityDot" class="dot"></span>
+          <div>
+            <strong id="securityTitle">Controllo sicurezza</strong>
+            <small id="securityText">In attesa di verifica</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Account dipendente</h2>
+          <form id="employeeForm" class="stack">
+            <label>
+              Nome e cognome
+              <input id="employeeName" autocomplete="name" placeholder="Es. Mario Rossi" required />
+            </label>
+            <label>
+              PIN personale
+              <input id="employeePin" type="password" inputmode="numeric" minlength="4" maxlength="8" placeholder="4-8 cifre" required />
+            </label>
+            <div class="actions">
+              <button type="submit">Entra / crea account</button>
+              <button id="logoutBtn" class="secondary" type="button" hidden>Esci account</button>
+            </div>
+          </form>
+          <p id="accountMessage" class="message"></p>
+        </article>
+
+        <article class="card">
+          <h2>Timbratura</h2>
+          <div class="profile">
+            <span class="avatar" id="avatar">?</span>
+            <div>
+              <strong id="currentEmployee">Nessun dipendente</strong>
+              <small id="currentState">Accedi per timbrare</small>
+            </div>
+          </div>
+          <div class="punch-actions">
+            <button id="clockInBtn" disabled>Segna entrata</button>
+            <button id="clockOutBtn" class="danger" disabled>Segna uscita</button><div class="security-list">
+            <div><span id="gpsBadge" class="badge">GPS</span><strong id="gpsText">Non verificato</strong></div>
+            <button id="checkSecurityBtn" class="secondary" type="button">Verifica ora</button>
+          </div>
+          </div>
+          <p id="punchMessage" class="message"></p>
+        </article>
+
+        <article class="card wide">
+          <div class="card-head">
+            <div>
+              <h2>Registro presenze</h2>
+              <p>Storico salvato in questo browser.</p>
+            </div>
+            <button id="exportBtn" class="secondary" type="button">Esporta CSV</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dipendente</th>
+                  <th>Entrata</th>
+                  <th>Uscita</th>
+                  <th>Ore</th>
+                  <th>Sicurezza</th>
+                </tr>
+              </thead>
+              <tbody id="recordsBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
