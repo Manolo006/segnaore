@@ -16,7 +16,7 @@ if (loginForm) {
             btnSubmit.disabled = true;
             errorDiv.style.display = "none";
             await signInWithEmailAndPassword(auth, email, password);
-            window.location.href = "dashboard.html";
+            window.location.href = "index.html";
         } catch (error) {
             errorDiv.innerText = "Credenziali non valide o errore di rete.";
             errorDiv.style.display = "flex";
