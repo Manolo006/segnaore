@@ -567,7 +567,26 @@
     <span id="mobileCartTotal">0.00 €</span>
   </button>
 
-  <script>
+  <script type="module">
+    /* =====================================================
+       FIREBASE — Inizializzazione diretta (GitHub Pages safe)
+    ===================================================== */
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, push, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
+      authDomain:        "in-punto.firebaseapp.com",
+      databaseURL:       "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:         "in-punto",
+      storageBucket:     "in-punto.firebasestorage.app",
+      messagingSenderId: "851521503055",
+      appId:             "1:851521503055:web:7e23520cf67641f044cf3a"
+    };
+    const fbApp = initializeApp(firebaseConfig);
+    const db    = getDatabase(fbApp);
+    console.log('[Ordini] Firebase connesso ✅');
+
     /* =====================================================
        DATI DEL MENU (Facili da modificare)
        L'utente può aggiungere prodotti qui!
@@ -786,7 +805,7 @@
       };
 
       try {
-        const newOrderRef = push(ref(dbRealtime, 'orders'));
+        const newOrderRef = push(ref(db, 'orders'));
         await set(newOrderRef, orderData);
         alert(tableId ? `Ordine inviato in cucina per il Tavolo ${tableId}!` : `Ordine Asporto inviato in cucina!`);
         cart = [];
@@ -794,7 +813,7 @@
         if(window.innerWidth <= 900) toggleMobileCart();
       } catch (e) {
         console.error("Errore invio ordine:", e);
-        alert("Errore durante l'invio dell'ordine.");
+        alert("Errore: " + e.message);
       }
     }
 
@@ -823,10 +842,13 @@
     });
 
     /* =====================================================
-       INIT & EXPORTS
+       INIT & EXPORTS — Necessario perché script è type="module"
+       Le funzioni module non sono globali, vanno esposte su window
     ===================================================== */
-    window.changeQty = changeQty;
-    window.sendOrder = sendOrder;
+    window.setCat         = setCat;
+    window.addToCart      = addToCart;
+    window.changeQty      = changeQty;
+    window.sendOrder      = sendOrder;
     window.toggleMobileCart = toggleMobileCart;
 
     renderCategories();

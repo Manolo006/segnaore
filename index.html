@@ -11,13 +11,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="module">
-    import { dbRealtime, ref, onValue, push, set } from './js/firebase.js';
-    window._db = dbRealtime;
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, onValue, push, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
+      authDomain:        "in-punto.firebaseapp.com",
+      databaseURL:       "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:         "in-punto",
+      storageBucket:     "in-punto.firebasestorage.app",
+      messagingSenderId: "851521503055",
+      appId:             "1:851521503055:web:7e23520cf67641f044cf3a"
+    };
+    const fbApp = initializeApp(firebaseConfig);
+    const db    = getDatabase(fbApp);
+    window._db = db;
     window._fbRef = ref;
     window._fbOnValue = onValue;
     window._fbPush = push;
     window._fbSet = set;
     window._fbReady = true;
+    console.log('[Sala] Firebase connesso ✅');
   </script>
   <style>
     /* ===================================================
