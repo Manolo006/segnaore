@@ -1,22 +1,48 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getDatabase, ref, onValue, push, set, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// TODO: Inserisci le vere credenziali Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
-  authDomain: "in-punto.firebaseapp.com",
-  databaseURL: "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "in-punto",
-  storageBucket: "in-punto.firebasestorage.app",
-  messagingSenderId: "851521503055",
-  appId: "1:851521503055:web:7e23520cf67641f044cf3a",
-  measurementId: "G-31TMYBR9RF"
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_AUTH_DOMAIN",
+  databaseURL: "PASTE_DATABASE_URL",
+  projectId: "PASTE_PROJECT_ID",
+  storageBucket: "PASTE_STORAGE_BUCKET",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId: "PASTE_APP_ID"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+let app, auth, dbFirestore, dbRealtime;
+
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  dbFirestore = getFirestore(app);
+  dbRealtime = getDatabase(app);
+  console.log('[Firebase] Inizializzato (v10 Modular)');
+} catch (error) {
+  console.warn('[Firebase] Errore inizializzazione:', error.message);
+}
+
+export {
+  app,
+  auth,
+  dbFirestore,
+  dbRealtime,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  doc,
+  getDoc,
+  setDoc,
+  ref,
+  onValue,
+  push,
+  set,
+  update,
+  remove
+};

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard - Presenze Ristorante</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-brand" id="app-title">RistoGest - Presenze</div>
+        <div class="nav-user">
+            <span id="user-display-name" style="font-weight: 500;">Caricamento...</span>
+            <button id="btn-logout" class="btn-logout">Esci</button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+
+        <section id="section-employee" class="dashboard-section">
+            <div class="employee-grid">
+                
+                <div class="glass-card status-panel">
+                    <h2 id="employee-welcome">Benvenuto</h2>
+                    <div id="gps-status" class="geo-indicator inactive">
+                        <span>Verifica posizione GPS in corso...</span>
+                    </div>
+                    <div id="shift-status-badge" class="badge badge-closed mt-4">Nessun turno attivo</div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="btn-clock-in" class="btn btn-success" disabled>
+                        Entrata
+                    </button>
+                    <button id="btn-clock-out" class="btn btn-danger" disabled>
+                        Uscita
+                    </button>
+                </div>
+
+                <div class="stats-row">
+                    <div class="glass-card stat-box">
+                        <div id="emp-stat-hours" class="value">0</div>
+                        <div class="label">Ore Totali</div>
+                    </div>
+                    <div class="glass-card stat-box">
+                        <div id="emp-stat-overtime" class="value">0</div>
+                        <div class="label">Straordinari (h)</div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h3 class="mb-4">Il tuo storico turni</h3>
+                    <div id="employee-history-list" class="modern-list">
+                        </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="section-owner" class="dashboard-section">
+            
+            <div class="owner-grid">
+                <div class="glass-card stat-box">
+                    <div id="owner-stat-presenti" class="value">0</div>
+                    <div class="label">Dipendenti Presenti</div>
+                </div>
+                <div class="glass-card stat-box">
+                    <div id="owner-stat-da-approvare" class="value">0</div>
+                    <div class="label">Turni da Approvare</div>
+                </div>
+                <div class="glass-card stat-box">
+                    <div id="owner-stat-ore-mese" class="value">0</div>
+                    <div class="label">Ore Totali Mese</div>
+                </div>
+            </div>
+
+            <div class="owner-grid">
+                
+                <div class="glass-card">
+                    <div class="section-title">
+                        <span>Turni da Approvare</span>
+                    </div>
+                    <div id="owner-review-list" class="modern-list">
+                        </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="section-title">
+                        <span>Stato Dipendenti</span>
+                    </div>
+                    <div id="owner-employees-list" class="modern-list">
+                        </div>
+                </div>
+
+                <div class="glass-card full-width-card">
+                    <h3 class="mb-4">Impostazioni Sede e Raggio GPS</h3>
+                    <form id="gps-settings-form" class="stats-row" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: flex-end;">
+                        <div class="input-group">
+                            <label for="setting-lat">Latitudine Sede</label>
+                            <input type="number" step="any" id="setting-lat" class="input-field" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="setting-lng">Longitudine Sede</label>
+                            <input type="number" step="any" id="setting-lng" class="input-field" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="setting-radius">Raggio di tolleranza (metri)</label>
+                            <input type="number" id="setting-radius" class="input-field" required>
+                        </div>
+                        <div class="input-group">
+                            <button type="submit" class="btn btn-primary" style="padding: 14px;">Salva Configurazione</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <div id="review-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-employee-name">Approva Turno</h3>
+                <button id="modal-close-btn" class="modal-close">&times;</button>
+            </div>
+            
+            <div class="time-comparison-box">
+                <div class="time-comparison-row">
+                    <span>Entrata Reale:</span>
+                    <strong id="modal-real-in">--:--</strong>
+                </div>
+                <div class="time-comparison-row">
+                    <span>Uscita Reale:</span>
+                    <strong id="modal-real-out">--:--</strong>
+                </div>
+            </div>
+
+            <p class="text-center" style="font-size: 0.85rem; color: var(--color-text-muted);">
+                Trascina o usa le frecce per modificare l'orario conteggiato
+            </p>
+
+            <div class="ios-picker-container">
+                <div class="time-picker-wrapper">
+                    <label>Entrata Conteggiata</label>
+                    <input type="time" id="picker-time-in" class="ios-wheel-input">
+                </div>
+                <div class="time-picker-wrapper">
+                    <label>Uscita Conteggiata</label>
+                    <input type="time" id="picker-time-out" class="ios-wheel-input">
+                </div>
+            </div>
+
+            <div class="action-buttons mt-4">
+                <button id="btn-modal-cancel" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);">
+                    Annulla
+                </button>
+                <button id="btn-modal-approve" class="btn btn-success">
+                    Approva e Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/gps.js"></script>
+    <script type="module" src="js/attendance.js"></script>
+    <script type="module" src="js/employee.js"></script>
+    <script type="module" src="js/owner.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/app.js"></script>
+
+</body>
+</html>
