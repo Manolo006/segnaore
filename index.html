@@ -1214,7 +1214,7 @@
 </div>
 
 <!-- ===== FAB ===== -->
-<button class="fab" id="fabBtn" title="Nuovo ordine" onclick="showToast('✅', 'Apri schermata nuovo ordine')">
+<button class="fab" id="fabBtn" title="Nuovo ordine" onclick="startGlobalOrder()">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 
@@ -1228,6 +1228,17 @@
 
 
 <script>
+  function startGlobalOrder() {
+    const tableIdStr = prompt("Inserisci il numero del tavolo per la comanda:");
+    if (!tableIdStr) return; // user cancelled
+    const tid = parseInt(tableIdStr);
+    if (isNaN(tid)) {
+      alert("Numero tavolo non valido");
+      return;
+    }
+    // Check if table exists (optional, but good)
+    window.location.href = `ordini.html?table=${tid}`;
+  }
 
 /* =====================================================
    DATA — Status definitions

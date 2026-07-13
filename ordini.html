@@ -770,13 +770,9 @@
 
     async function sendOrder() {
       if (cart.length === 0) return;
-      if (!tableId) {
-        alert('Nessun tavolo selezionato.');
-        return;
-      }
       
       const orderData = {
-        tableId: parseInt(tableId),
+        tableId: tableId ? parseInt(tableId) : 'Asporto',
         status: 'new',
         createdAt: Date.now(),
         tableNote: '', // TODO add note input in the future
@@ -792,7 +788,7 @@
       try {
         const newOrderRef = push(ref(dbRealtime, 'orders'));
         await set(newOrderRef, orderData);
-        alert(`Ordine inviato in cucina per il Tavolo ${tableId}!`);
+        alert(tableId ? `Ordine inviato in cucina per il Tavolo ${tableId}!` : `Ordine Asporto inviato in cucina!`);
         cart = [];
         renderCart();
         if(window.innerWidth <= 900) toggleMobileCart();

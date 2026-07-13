@@ -5,14 +5,18 @@ import { getDatabase, ref, onValue, push, set, update, remove } from 'https://ww
 
 // TODO: Inserisci le vere credenziali Firebase
 const firebaseConfig = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_AUTH_DOMAIN",
-  databaseURL: "PASTE_DATABASE_URL",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_STORAGE_BUCKET",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
+  authDomain: "in-punto.firebaseapp.com",
+  databaseURL: "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "in-punto",
+  storageBucket: "in-punto.firebasestorage.app",
+  messagingSenderId: "851521503055",
+  appId: "1:851521503055:web:7e23520cf67641f044cf3a",
+  measurementId: "G-31TMYBR9RF"
 };
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 let app, auth, dbFirestore, dbRealtime;
 
