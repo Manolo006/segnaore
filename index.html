@@ -1155,11 +1155,7 @@
             Disponibile
             <span class="legend-count" id="lc-free">3</span>
           </div>
-          <div class="legend-item" data-filter="wait-order">
-            <div class="legend-dot" style="background: var(--s-wait-order)"></div>
-            Attesa ordine
-            <span class="legend-count" id="lc-wait">1</span>
-          </div>
+          
           <div class="legend-item" data-filter="preparing">
             <div class="legend-dot" style="background: var(--s-preparing)"></div>
             In preparazione
@@ -1330,7 +1326,7 @@
 </div>
 
 <!-- ===== FAB ===== -->
-<button class="fab" id="fabBtn" title="Nuovo ordine" onclick="window.location.href='lista-ordini.html'">
+<button class="fab" id="fabBtn" title="Nuovo ordine" onclick="window.startGlobalOrder()">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 
@@ -1344,7 +1340,7 @@
 
 
 <script type="module">
-  function startGlobalOrder() {
+  window.startGlobalOrder = function() {
     const tableIdStr = prompt("Inserisci il numero del tavolo per la comanda:");
     if (!tableIdStr) return; // user cancelled
     const tid = parseInt(tableIdStr);
@@ -1383,7 +1379,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
   const STATUS_LABELS = {
   'free':       'Disponibile',
   'reserved':   'Prenotato',
-  'wait-order': 'Attesa ordine',
   'preparing':  'In preparazione',
   'ready':      'Pronto da servire',
   'bill':       'Attesa conto',
@@ -1393,7 +1388,6 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
 const STATUS_COLORS = {
   'free':       '#22c55e',
   'reserved':   '#0ea5e9',
-  'wait-order': '#f59e0b',
   'preparing':  '#3b82f6',
   'ready':      '#a855f7',
   'bill':       '#f97316',
@@ -1403,7 +1397,6 @@ const STATUS_COLORS = {
 const STATUS_EMOJIS = {
   'free':       '🟢',
   'reserved':   '🩵',
-  'wait-order': '🟡',
   'preparing':  '🔵',
   'ready':      '🟣',
   'bill':       '🟠',
@@ -1646,7 +1639,7 @@ setInterval(updateTimers, 1000);
    STATS
 ===================================================== */
 function updateStats() {
-  const counts = { free: 0, reserved: 0, 'wait-order': 0, preparing: 0, ready: 0, bill: 0, paid: 0 };
+  const counts = { free: 0, reserved: 0, preparing: 0, ready: 0, bill: 0, paid: 0 };
   let total = 0, occupied = 0;
 
   tables.forEach(d => {
@@ -1662,7 +1655,7 @@ function updateStats() {
   
   // Legend
   const legendMap = {
-    'lc-free': 'free', 'lc-wait': 'wait-order', 'lc-prep': 'preparing', 
+    'lc-free': 'free', 'lc-prep': 'preparing', 
     'lc-ready': 'ready', 'lc-bill': 'bill', 'lc-paid': 'paid'
   };
   Object.entries(legendMap).forEach(([elId, stat]) => {
@@ -1716,8 +1709,7 @@ function buildPanelContent(id) {
     <div class="panel-actions" style="margin-top:8px;">
 
       <!-- 1. NUOVO ORDINE — only when table is NOT free/reserved -->
-      <button class="pact-btn pact-btn--primary"
-        ${isFree || isReserved ? 'disabled title="Prima imposta il tavolo come attivo"' : ''}
+      <button class="pact-btn pact-btn--primary" 
         onclick="window.location.href='ordini.html?table=${id}'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
         Nuovo Ordine
@@ -2059,7 +2051,7 @@ function initSync() {
           t.startedAt = Math.min(...tOrders.map(o => o.createdAt));
           const allItems = tOrders.flatMap(o => o.items || []);
           if (allItems.length === 0) {
-            t.status = 'wait-order';
+            t.status = 'preparing';
           } else if (allItems.some(i => i.status === 'cooking')) {
             t.status = 'preparing';
           } else if (allItems.some(i => i.status === 'ready')) {
@@ -2067,7 +2059,7 @@ function initSync() {
           } else if (allItems.every(i => i.status === 'done')) {
             t.status = 'paid';
           } else {
-            t.status = 'wait-order';
+            t.status = 'preparing';
           }
         }
       });
