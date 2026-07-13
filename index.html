@@ -969,13 +969,58 @@
       .bottom-sheet-overlay { display: block; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
       .bottom-sheet { display: block; }
       .bottom-sheet-overlay.show { pointer-events: auto; opacity: 1; }
-
-      /* Floor canvas becomes a grid on mobile */
+      .main-content {
+        padding: 0;
+        margin-bottom: calc(var(--bnav-h) + env(safe-area-inset-bottom));
+        position: relative;
+        height: calc(100vh - var(--nav-h) - var(--bnav-h) - env(safe-area-inset-bottom) - 10px);
+        overflow: hidden; /* Force fit, NO SCROLLING */
+      }
+      .floor-area {
+        position: relative;
+        height: 100%;
+      }
       .floor-canvas { display: none; }
-      .floor-canvas--grid { display: grid; }
-
-      /* Make area areas use natural height */
-      .floor-area { min-height: auto; padding-bottom: calc(var(--bnav-h) + 80px + env(safe-area-inset-bottom)); }
+      
+      .floor-canvas--grid { 
+        display: flex;
+        flex-wrap: wrap;
+        align-content: stretch;
+        justify-content: center;
+        gap: 4px;
+        padding: 4px;
+        height: 100%;
+        width: 100%;
+      }
+      .floor-canvas--grid .table-card {
+        flex: 1 1 15%; /* Fits roughly 6 columns */
+        max-width: 20%; /* Prevents a few remaining items from becoming huge */
+        height: auto !important;
+        min-height: 0;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        padding: 4px !important;
+        border-radius: 8px !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .floor-canvas--grid .table-card__num {
+        font-size: 0.95rem !important;
+        margin: 2px 0 !important;
+      }
+      .floor-canvas--grid .table-card__seats {
+        font-size: 0.55rem !important;
+        margin: 0 !important;
+      }
+      .floor-canvas--grid .table-card__timer {
+        font-size: 0.55rem !important;
+        margin-top: 2px !important;
+        padding: 2px 4px !important;
+      }
 
       /* FAB sits above the bottom nav */
       .fab {
@@ -1001,13 +1046,13 @@
       .topnav__time { font-size: 0.8rem; padding: 0 8px; }
       .icon-btn { width: 32px; height: 32px; }
 
-      /* Tighter grid for small screens */
-      .floor-canvas--grid {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-        gap: 8px;
+      /* Tighter fit for very small screens */
+      .floor-canvas--grid .table-card {
+        flex: 1 1 18%; /* Fits roughly 5 columns */
+        max-width: 25%;
+        padding: 2px !important;
       }
-      .floor-canvas--grid .table-card { height: 80px !important; }
-      .table-card__num { font-size: 1.2rem !important; }
+      .floor-canvas--grid .table-card__num { font-size: 0.9rem !important; }
 
       /* Bottom sheet: full-screen comfortable */
       .bottom-sheet { max-height: 92vh; }
@@ -1017,11 +1062,10 @@
        RESPONSIVE — SMALL PHONE (SE, etc)
     =================================================== */
     @media (max-width: 375px) {
-      .floor-canvas--grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+      .floor-canvas--grid .table-card {
+        flex: 1 1 20%; /* Fits roughly 4 columns */
+        max-width: 30%;
       }
-      .floor-canvas--grid .table-card { height: 74px !important; }
     }
 
     /* ===================================================

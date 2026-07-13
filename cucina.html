@@ -332,7 +332,7 @@
     <div class="topnav__brand">
       <div class="topnav__logo">👨‍🍳</div>
       <div>
-        <div class="topnav__title">Cucina — KDS</div>
+        <div class="topnav__title">Cucina</div>
         <div class="topnav__sub">Display comande</div>
       </div>
     </div>
@@ -369,35 +369,19 @@
 
 <script>
 /* =====================================================
-   DEMO DATA (sostituire con Firebase onValue in prod)
+   FIREBASE LIVE DATA
 ===================================================== */
-let orders = [
-  {
-    id: 'ord_1',
-    tableId: 21,
-    status: 'new', // 'new' | 'cooking' | 'ready' | 'done'
-    createdAt: Date.now() - 3 * 60000,
-    tableNote: 'Celiaco al posto 2',
-    items: [
-      { id: 'i1', name: 'Spaghetto allo Scoglio', qty: 2, status: 'new', selected: false, note: '' },
-      { id: 'i2', name: 'Risotto ai Funghi', qty: 1, status: 'new', selected: false, note: 'senza tartufo' },
-    ]
-  },
-  {
-    id: 'ord_2',
-    tableId: 3,
-    status: 'cooking',
-    createdAt: Date.now() - 12 * 60000,
-    tableNote: '',
-    items: [
-      { id: 'i3', name: 'Tagliere Salumi', qty: 1, status: 'cooking', selected: false, note: '' },
-      { id: 'i4', name: 'Bruschette miste', qty: 2, status: 'done', selected: false, note: '' },
-      { id: 'i5', name: 'Patatine Fritte', qty: 1, status: 'cooking', selected: false, note: '' },
-    ]
-  }
-];
-
+let orders = [];
 let currentFilter = 'all';
+
+function initApp() {
+  if (window._fbReady && window._db) {
+    subscribeFirebase();
+  } else {
+    setTimeout(initApp, 50);
+  }
+}
+initApp();
 
 /* =====================================================
    CLOCK

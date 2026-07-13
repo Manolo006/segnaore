@@ -1,176 +1,541 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard - Presenze Ristorante</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Presenze — RistoGest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script type="module">
+    /* =====================================================
+       FIREBASE INITIALIZATION
+    ===================================================== */
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc, serverTimestamp, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
+      authDomain:        "in-punto.firebaseapp.com",
+      databaseURL:       "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:         "in-punto",
+      storageBucket:     "in-punto.firebasestorage.app",
+      messagingSenderId: "851521503055",
+      appId:             "1:851521503055:web:7e23520cf67641f044cf3a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const dbFirestore = getFirestore(app);
+    const dbRealtime = getDatabase(app);
+    
+    // Esponiamo in window per l'accesso dalle funzioni di UI
+    window._auth = auth;
+    window._dbFirestore = dbFirestore;
+    window._dbRealtime = dbRealtime;
+    window._googleProvider = new GoogleAuthProvider();
+    window._signInWithPopup = signInWithPopup;
+    window._signOut = signOut;
+    window._doc = doc;
+    window._getDoc = getDoc;
+    window._setDoc = setDoc;
+    window._collection = collection;
+    window._addDoc = addDoc;
+    window._query = query;
+    window._where = where;
+    window._getDocs = getDocs;
+    window._updateDoc = updateDoc;
+    window._serverTimestamp = serverTimestamp;
+    window._orderBy = orderBy;
+    window._ref = ref;
+    window._set = set;
+    window._get = get;
+
+    // Inizializza l'app dopo il caricamento moduli
+    window.addEventListener('DOMContentLoaded', initApp);
+
+    /* =====================================================
+       CORE LOGIC
+    ===================================================== */
+    let currentUser = null;
+    let userRole = null;
+    let gpsStatus = { valid: false, lat: null, lng: null };
+    let currentShiftId = null;
+
+    function initApp() {
+      // Ascolta stato Auth
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          currentUser = user;
+          document.getElementById('view-login').style.display = 'none';
+          
+          // Recupera ruolo da Firestore
+          const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
+          if (!userDoc.exists()) {
+            await setDoc(doc(dbFirestore, "users", user.uid), {
+              name: user.displayName || "Dipendente",
+              email: user.email,
+              role: "employee",
+              createdAt: new Date()
+            });
+            userRole = "employee";
+          } else {
+            userRole = userDoc.data().role;
+          }
+
+          document.getElementById('userName').textContent = user.displayName || "Utente";
+          
+          if (userRole === "owner") {
+            document.getElementById('view-owner').style.display = 'block';
+            loadOwnerDashboard();
+          } else {
+            document.getElementById('view-employee').style.display = 'block';
+            startGpsTracking();
+            loadEmployeeDashboard();
+          }
+
+        } else {
+          currentUser = null;
+          userRole = null;
+          document.getElementById('view-login').style.display = 'flex';
+          document.getElementById('view-employee').style.display = 'none';
+          document.getElementById('view-owner').style.display = 'none';
+        }
+      });
+    }
+
+    window.loginWithGoogle = async () => {
+      try {
+        await signInWithPopup(auth, window._googleProvider);
+      } catch (error) {
+        console.error("Errore login", error);
+        alert("Errore durante il login con Google");
+      }
+    };
+
+    window.logout = async () => {
+      await signOut(auth);
+      window.location.reload();
+    };
+
+    /* =====================================================
+       EMPLOYEE LOGIC
+    ===================================================== */
+    async function startGpsTracking() {
+      if ("geolocation" in navigator) {
+        const gpsLabel = document.getElementById('gps-status-label');
+        
+        // Fetch HQ coords da DB
+        const settingsSnap = await get(ref(dbRealtime, 'settings/gps'));
+        const settings = settingsSnap.val() || { lat: 45.4642, lng: 9.1900, radius: 100 };
+
+        navigator.geolocation.watchPosition(
+          (position) => {
+            const distance = calculateDistance(position.coords.latitude, position.coords.longitude, settings.lat, settings.lng);
+            if (distance <= settings.radius) {
+              gpsStatus = { valid: true, lat: position.coords.latitude, lng: position.coords.longitude };
+              gpsLabel.innerHTML = '📍 Posizione valida (Ristorante)';
+              gpsLabel.className = 'status-badge valid';
+              updateClockButtons();
+            } else {
+              gpsStatus = { valid: false, lat: position.coords.latitude, lng: position.coords.longitude };
+              gpsLabel.innerHTML = '⚠️ Troppo lontano dal ristorante';
+              gpsLabel.className = 'status-badge invalid';
+              updateClockButtons();
+            }
+          },
+          (error) => {
+            gpsLabel.innerHTML = '❌ Attiva il GPS per timbrare';
+            gpsLabel.className = 'status-badge invalid';
+            gpsStatus.valid = false;
+            updateClockButtons();
+          },
+          { enableHighAccuracy: true }
+        );
+      }
+    }
+
+    async function loadEmployeeDashboard() {
+      const q = query(collection(dbFirestore, "attendance"), where("userId", "==", currentUser.uid), where("status", "==", "In corso"));
+      const snapshot = await getDocs(q);
+      
+      const badge = document.getElementById('shift-badge');
+      if (!snapshot.empty) {
+        currentShiftId = snapshot.docs[0].id;
+        badge.innerHTML = `🟢 Turno In Corso`;
+      } else {
+        currentShiftId = null;
+        badge.innerHTML = `⚪ Nessun turno attivo`;
+      }
+      updateClockButtons();
+      loadHistory();
+    }
+
+    function updateClockButtons() {
+      const btnIn = document.getElementById('btn-in');
+      const btnOut = document.getElementById('btn-out');
+      
+      if (!gpsStatus.valid) {
+        btnIn.disabled = true;
+        btnOut.disabled = true;
+        return;
+      }
+
+      if (currentShiftId) {
+        btnIn.disabled = true;
+        btnOut.disabled = false;
+      } else {
+        btnIn.disabled = false;
+        btnOut.disabled = true;
+      }
+    }
+
+    window.clockIn = async () => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      
+      await addDoc(collection(dbFirestore, "attendance"), {
+        userId: currentUser.uid,
+        userName: currentUser.displayName,
+        dateString: now.toISOString().split('T')[0],
+        realClockIn: serverTimestamp(),
+        realClockOut: null,
+        approvedClockIn: timeStr,
+        approvedClockOut: null,
+        status: "In corso",
+        gpsIn: { lat: gpsStatus.lat, lng: gpsStatus.lng },
+        totalHours: 0
+      });
+      loadEmployeeDashboard();
+    };
+
+    window.clockOut = async () => {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      
+      const shiftRef = doc(dbFirestore, "attendance", currentShiftId);
+      await updateDoc(shiftRef, {
+        realClockOut: serverTimestamp(),
+        approvedClockOut: timeStr,
+        status: "Da approvare",
+        gpsOut: { lat: gpsStatus.lat, lng: gpsStatus.lng }
+      });
+      loadEmployeeDashboard();
+    };
+
+    async function loadHistory() {
+      const q = query(collection(dbFirestore, "attendance"), where("userId", "==", currentUser.uid), orderBy("realClockIn", "desc"));
+      const snapshot = await getDocs(q);
+      const list = document.getElementById('history-list');
+      list.innerHTML = '';
+      
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        let color = data.status === 'Approvato' ? 'var(--s-ready)' : (data.status === 'In corso' ? 'var(--s-prep)' : 'var(--s-new)');
+        list.innerHTML += `
+          <div class="card history-card">
+            <div>
+              <div style="font-weight:700;">${data.dateString}</div>
+              <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">In: ${data.approvedClockIn} - Out: ${data.approvedClockOut || '--:--'}</div>
+            </div>
+            <div style="color: ${color}; font-size: 0.8rem; font-weight:700;">${data.status}</div>
+          </div>
+        `;
+      });
+    }
+
+    /* =====================================================
+       OWNER LOGIC
+    ===================================================== */
+    async function loadOwnerDashboard() {
+      const q = query(collection(dbFirestore, "attendance"), where("status", "==", "Da approvare"));
+      const snapshot = await getDocs(q);
+      const list = document.getElementById('review-list');
+      list.innerHTML = '';
+      
+      if(snapshot.empty) {
+        list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">Nessun turno da approvare.</div>';
+      }
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        list.innerHTML += `
+          <div class="card history-card" style="flex-direction:column; align-items:flex-start; gap:12px;">
+            <div style="display:flex; justify-content:space-between; width:100%;">
+              <div style="font-weight:700;">${data.userName}</div>
+              <div style="font-size:0.8rem; color:var(--text-2);">${data.dateString}</div>
+            </div>
+            <div style="display:flex; gap:12px; width:100%;">
+              <input type="time" id="in_${docSnap.id}" value="${data.approvedClockIn}" class="input">
+              <input type="time" id="out_${docSnap.id}" value="${data.approvedClockOut}" class="input">
+              <button class="btn btn-green" onclick="approveShift('${docSnap.id}')">Approva</button>
+            </div>
+          </div>
+        `;
+      });
+
+      // Load Settings
+      const settingsSnap = await get(ref(dbRealtime, 'settings/gps'));
+      if (settingsSnap.exists()) {
+        const s = settingsSnap.val();
+        document.getElementById('lat').value = s.lat;
+        document.getElementById('lng').value = s.lng;
+        document.getElementById('rad').value = s.radius;
+      }
+    }
+
+    window.approveShift = async (id) => {
+      const inVal = document.getElementById(`in_${id}`).value;
+      const outVal = document.getElementById(`out_${id}`).value;
+      
+      // Calcolo ore base
+      let h = 0;
+      if (inVal && outVal) {
+        const t1 = inVal.split(':');
+        const t2 = outVal.split(':');
+        const m1 = parseInt(t1[0])*60 + parseInt(t1[1]);
+        const m2 = parseInt(t2[0])*60 + parseInt(t2[1]);
+        h = Math.max(0, m2 - m1) / 60;
+      }
+
+      await updateDoc(doc(dbFirestore, "attendance", id), {
+        approvedClockIn: inVal,
+        approvedClockOut: outVal,
+        status: "Approvato",
+        totalHours: h
+      });
+      loadOwnerDashboard();
+    };
+
+    window.saveSettings = async () => {
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lng = parseFloat(document.getElementById('lng').value);
+      const rad = parseInt(document.getElementById('rad').value);
+      await set(ref(dbRealtime, 'settings/gps'), { lat, lng, radius: rad });
+      alert('Impostazioni GPS salvate!');
+    };
+
+    /* UTILS */
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const f1 = lat1 * Math.PI/180;
+      const f2 = lat2 * Math.PI/180;
+      const df = (lat2-lat1) * Math.PI/180;
+      const dl = (lon2-lon1) * Math.PI/180;
+      const a = Math.sin(df/2) * Math.sin(df/2) + Math.cos(f1) * Math.cos(f2) * Math.sin(dl/2) * Math.sin(dl/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg:        #0a0a0f;
+      --bg-2:      #111118;
+      --surface:   rgba(255,255,255,0.04);
+      --surface-2: rgba(255,255,255,0.07);
+      --border:    rgba(255,255,255,0.08);
+      --text:      #f1f5f9;
+      --text-2:    #94a3b8;
+      --accent:    #3b82f6;
+      --s-new:     #f59e0b;
+      --s-prep:    #3b82f6;
+      --s-ready:   #22c55e;
+      --s-danger:  #ef4444;
+      --radius:    16px;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
+    
+    /* NAVBAR */
+    .topnav {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topnav__brand { font-size: 1.1rem; font-weight: 700; display:flex; align-items:center; gap:10px;}
+    
+    /* CONTAINER */
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    
+    /* GLASS CARD */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn:active { transform: scale(0.98); }
+    .btn-blue { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+    .btn-green { background: linear-gradient(135deg, #059669, #10b981); }
+    .btn-red { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-2); }
+
+    /* STATUS BADGE */
+    .status-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      background: var(--surface-2);
+    }
+    .status-badge.valid { background: rgba(34,197,94,0.15); color: var(--s-ready); border: 1px solid rgba(34,197,94,0.3); }
+    .status-badge.invalid { background: rgba(239,68,68,0.15); color: var(--s-danger); border: 1px solid rgba(239,68,68,0.3); }
+    
+    /* HISTORY LIST */
+    .history-card {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      background: var(--bg-2);
+    }
+
+    /* INPUTS */
+    .input {
+      width: 100%;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: white;
+      font-family: inherit;
+      margin-bottom: 12px;
+    }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 70px;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 400;
+    }
+    .bnav-item {
+      background: none; border: none; color: var(--text-3);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      font-size: 0.7rem; font-weight: 600;
+    }
+    .bnav-item svg { width: 24px; height: 24px; }
+    .bnav-item.active { color: var(--accent); }
+  </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="nav-brand" id="app-title">RistoGest - Presenze</div>
-        <div class="nav-user">
-            <span id="user-display-name" style="font-weight: 500;">Caricamento...</span>
-            <button id="btn-logout" class="btn-logout">Esci</button>
-        </div>
-    </nav>
+  <nav class="topnav">
+    <div class="topnav__brand">
+      <div style="width:30px; height:30px; background:linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius:8px; display:flex; align-items:center; justify-content:center;">⏰</div>
+      Presenze
+    </div>
+    <div style="font-size:0.85rem; color:var(--text-2);" id="userName">Caricamento...</div>
+  </nav>
 
-    <main class="main-content">
+  <!-- VISTA LOGIN -->
+  <div id="view-login" class="container" style="display:none; text-align:center; padding-top:40px;">
+    <h1 style="font-size:1.8rem; margin-bottom:10px;">Accedi a RistoGest</h1>
+    <p style="color:var(--text-2); margin-bottom:40px;">Usa il tuo account aziendale Google per timbrare il cartellino.</p>
+    <button class="btn btn-blue" onclick="loginWithGoogle()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.12 11.23h-3.35v3.35h-1.54v-3.35H7.88v-1.54h3.35V8.34h1.54v3.35h3.35v1.54z"/></svg>
+      Accedi con Google
+    </button>
+  </div>
 
-        <section id="section-employee" class="dashboard-section">
-            <div class="employee-grid">
-                
-                <div class="glass-card status-panel">
-                    <h2 id="employee-welcome">Benvenuto</h2>
-                    <div id="gps-status" class="geo-indicator inactive">
-                        <span>Verifica posizione GPS in corso...</span>
-                    </div>
-                    <div id="shift-status-badge" class="badge badge-closed mt-4">Nessun turno attivo</div>
-                </div>
-
-                <div class="action-buttons">
-                    <button id="btn-clock-in" class="btn btn-success" disabled>
-                        Entrata
-                    </button>
-                    <button id="btn-clock-out" class="btn btn-danger" disabled>
-                        Uscita
-                    </button>
-                </div>
-
-                <div class="stats-row">
-                    <div class="glass-card stat-box">
-                        <div id="emp-stat-hours" class="value">0</div>
-                        <div class="label">Ore Totali</div>
-                    </div>
-                    <div class="glass-card stat-box">
-                        <div id="emp-stat-overtime" class="value">0</div>
-                        <div class="label">Straordinari (h)</div>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <h3 class="mb-4">Il tuo storico turni</h3>
-                    <div id="employee-history-list" class="modern-list">
-                        </div>
-                </div>
-
-            </div>
-        </section>
-
-        <section id="section-owner" class="dashboard-section">
-            
-            <div class="owner-grid">
-                <div class="glass-card stat-box">
-                    <div id="owner-stat-presenti" class="value">0</div>
-                    <div class="label">Dipendenti Presenti</div>
-                </div>
-                <div class="glass-card stat-box">
-                    <div id="owner-stat-da-approvare" class="value">0</div>
-                    <div class="label">Turni da Approvare</div>
-                </div>
-                <div class="glass-card stat-box">
-                    <div id="owner-stat-ore-mese" class="value">0</div>
-                    <div class="label">Ore Totali Mese</div>
-                </div>
-            </div>
-
-            <div class="owner-grid">
-                
-                <div class="glass-card">
-                    <div class="section-title">
-                        <span>Turni da Approvare</span>
-                    </div>
-                    <div id="owner-review-list" class="modern-list">
-                        </div>
-                </div>
-
-                <div class="glass-card">
-                    <div class="section-title">
-                        <span>Stato Dipendenti</span>
-                    </div>
-                    <div id="owner-employees-list" class="modern-list">
-                        </div>
-                </div>
-
-                <div class="glass-card full-width-card">
-                    <h3 class="mb-4">Impostazioni Sede e Raggio GPS</h3>
-                    <form id="gps-settings-form" class="stats-row" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: flex-end;">
-                        <div class="input-group">
-                            <label for="setting-lat">Latitudine Sede</label>
-                            <input type="number" step="any" id="setting-lat" class="input-field" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="setting-lng">Longitudine Sede</label>
-                            <input type="number" step="any" id="setting-lng" class="input-field" required>
-                        </div>
-                        <div class="input-group">
-                            <label for="setting-radius">Raggio di tolleranza (metri)</label>
-                            <input type="number" id="setting-radius" class="input-field" required>
-                        </div>
-                        <div class="input-group">
-                            <button type="submit" class="btn btn-primary" style="padding: 14px;">Salva Configurazione</button>
-                        </div>
-                    </form>
-                </div>
-
-            </div>
-        </section>
-
-    </main>
-
-    <div id="review-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-employee-name">Approva Turno</h3>
-                <button id="modal-close-btn" class="modal-close">&times;</button>
-            </div>
-            
-            <div class="time-comparison-box">
-                <div class="time-comparison-row">
-                    <span>Entrata Reale:</span>
-                    <strong id="modal-real-in">--:--</strong>
-                </div>
-                <div class="time-comparison-row">
-                    <span>Uscita Reale:</span>
-                    <strong id="modal-real-out">--:--</strong>
-                </div>
-            </div>
-
-            <p class="text-center" style="font-size: 0.85rem; color: var(--color-text-muted);">
-                Trascina o usa le frecce per modificare l'orario conteggiato
-            </p>
-
-            <div class="ios-picker-container">
-                <div class="time-picker-wrapper">
-                    <label>Entrata Conteggiata</label>
-                    <input type="time" id="picker-time-in" class="ios-wheel-input">
-                </div>
-                <div class="time-picker-wrapper">
-                    <label>Uscita Conteggiata</label>
-                    <input type="time" id="picker-time-out" class="ios-wheel-input">
-                </div>
-            </div>
-
-            <div class="action-buttons mt-4">
-                <button id="btn-modal-cancel" class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);">
-                    Annulla
-                </button>
-                <button id="btn-modal-approve" class="btn btn-success">
-                    Approva e Chiudi
-                </button>
-            </div>
-        </div>
+  <!-- VISTA DIPENDENTE -->
+  <div id="view-employee" class="container" style="display:none;">
+    <div class="card" style="text-align:center;">
+      <div id="shift-badge" style="font-size:1.2rem; font-weight:800; margin-bottom:12px;">⚪ Nessun turno attivo</div>
+      <div id="gps-status-label" class="status-badge invalid">Verifica GPS in corso...</div>
+      
+      <div style="display:flex; gap:16px;">
+        <button class="btn btn-green" id="btn-in" disabled onclick="clockIn()">Entrata</button>
+        <button class="btn btn-red" id="btn-out" disabled onclick="clockOut()">Uscita</button>
+      </div>
     </div>
 
-    <script type="module" src="js/firebase.js"></script>
-    <script type="module" src="js/utils.js"></script>
-    <script type="module" src="js/gps.js"></script>
-    <script type="module" src="js/attendance.js"></script>
-    <script type="module" src="js/employee.js"></script>
-    <script type="module" src="js/owner.js"></script>
-    <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/app.js"></script>
+    <h3 style="margin-bottom:16px; font-size:1.1rem;">I Tuoi Ultimi Turni</h3>
+    <div id="history-list"></div>
+    
+    <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Esci dall'account</button>
+  </div>
+
+  <!-- VISTA PROPRIETARIO -->
+  <div id="view-owner" class="container" style="display:none;">
+    <h3 style="margin-bottom:16px; font-size:1.1rem; color:var(--s-new);">Da Approvare</h3>
+    <div id="review-list"></div>
+
+    <h3 style="margin-top:40px; margin-bottom:16px; font-size:1.1rem; color:var(--accent);">Impostazioni GPS (Sede)</h3>
+    <div class="card">
+      <label style="font-size:0.8rem; color:var(--text-2);">Latitudine</label>
+      <input type="number" step="any" id="lat" class="input">
+      <label style="font-size:0.8rem; color:var(--text-2);">Longitudine</label>
+      <input type="number" step="any" id="lng" class="input">
+      <label style="font-size:0.8rem; color:var(--text-2);">Raggio (metri)</label>
+      <input type="number" id="rad" class="input">
+      <button class="btn btn-blue" onclick="saveSettings()">Salva Sede</button>
+    </div>
+
+    <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Esci dall'account</button>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="bnav-item" onclick="window.location.href='index.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Sala
+    </button>
+    <button class="bnav-item" onclick="window.location.href='ordini.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
+      Ordini
+    </button>
+    <button class="bnav-item" onclick="window.location.href='cucina.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      Cucina
+    </button>
+    <button class="bnav-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Presenze
+    </button>
+  </nav>
 
 </body>
 </html>
