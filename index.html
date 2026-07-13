@@ -382,7 +382,7 @@
 
     /* MOBILE: responsive grid for tables */
     .floor-canvas--grid {
-      display: grid;
+      display: none; /* Hidden by default on desktop */
       grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
       gap: 10px;
       padding: 4px 0;
@@ -1209,7 +1209,7 @@
 </div><!-- end floor-canvas -->
 
         <!-- MOBILE GRID (shown on phones) -->
-        <div class="floor-canvas--grid" id="floor-canvas-pt-grid" style="display:none;"></div>
+        <div class="floor-canvas--grid" id="floor-canvas-pt-grid"></div>
       </div><!-- end piano terra -->
 
 
@@ -1242,7 +1242,7 @@
 </div><!-- end floor-canvas -->
 
         <!-- MOBILE GRID (shown on phones) -->
-        <div class="floor-canvas--grid" id="floor-canvas-tr-grid" style="display:none;"></div>
+        <div class="floor-canvas--grid" id="floor-canvas-tr-grid"></div>
       </div><!-- end terrazza -->
 
 
