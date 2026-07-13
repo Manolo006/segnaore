@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Sala — RistoGest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -72,7 +76,8 @@
 
       --sidebar-w:  260px;
       --panel-w:    340px;
-      --nav-h:      60px;
+      --nav-h:      56px;
+      --bnav-h:     60px;
 
       --ease:   cubic-bezier(0.4, 0, 0.2, 1);
       --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -113,10 +118,13 @@
       display: flex;
       align-items: center;
       gap: 0;
-      padding: 0 20px;
-      background: rgba(10,10,15,0.95);
+      padding: 0 16px;
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      background: rgba(10,10,15,0.97);
       border-bottom: 1px solid var(--border);
       backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       z-index: 200;
       flex-shrink: 0;
     }
@@ -148,22 +156,27 @@
     /* Area tabs */
     .area-tabs {
       display: flex;
-      gap: 4px;
+      gap: 2px;
       flex: 1;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .area-tabs::-webkit-scrollbar { display: none; }
     .area-tab {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
+      gap: 6px;
+      padding: 7px 12px;
       border-radius: var(--radius-sm);
       background: transparent;
       color: var(--text-2);
-      font-size: 0.875rem;
+      font-size: 0.82rem;
       font-weight: 500;
       transition: all 0.18s var(--ease);
       position: relative;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .area-tab:hover { background: var(--surface); color: var(--text); }
     .area-tab.active {
@@ -172,7 +185,7 @@
       font-weight: 600;
     }
     .area-tab__dot {
-      width: 8px; height: 8px;
+      width: 7px; height: 7px;
       border-radius: 50%;
       background: currentColor;
       opacity: 0.7;
@@ -180,9 +193,9 @@
     .area-tab__badge {
       background: rgba(59,130,246,0.2);
       color: var(--accent);
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      padding: 2px 6px;
+      padding: 2px 5px;
       border-radius: 20px;
     }
 
@@ -312,6 +325,8 @@
       background-image:
         radial-gradient(circle at 20% 20%, rgba(59,130,246,0.03) 0%, transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(99,102,241,0.03) 0%, transparent 50%);
+      /* Reserve space for mobile bottom nav */
+      padding-bottom: 0;
     }
 
     /* Area panel (canvas) */
@@ -319,7 +334,7 @@
       display: none;
       position: relative;
       min-height: calc(100vh - var(--nav-h));
-      padding: 24px;
+      padding: 20px 16px;
     }
     .floor-area.active { display: block; }
 
@@ -335,7 +350,7 @@
       font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-2);
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       letter-spacing: 0.2px;
     }
     .area-label__icon {
@@ -346,10 +361,18 @@
       font-size: 11px;
     }
 
-    /* Floor canvas: absolute positioned tables */
+    /* DESKTOP: Floor canvas with absolute positions */
     .floor-canvas {
       position: relative;
       width: 100%;
+    }
+
+    /* MOBILE: responsive grid for tables */
+    .floor-canvas--grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 10px;
+      padding: 4px 0;
     }
 
     /* Architectural elements */
@@ -402,12 +425,15 @@
       gap: 4px;
       cursor: pointer;
       user-select: none;
+      -webkit-user-select: none;
       border-radius: var(--radius-md);
       border: 1.5px solid var(--border);
       background: var(--surface);
       transition: transform 0.18s var(--spring), box-shadow 0.2s var(--ease), border-color 0.2s;
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* Table shape variants */
@@ -416,6 +442,16 @@
     .table-card--lg  { width: 116px; height: 116px; }
     .table-card--rect { width: 140px; height: 80px; }
     .table-card--wide { width: 200px; height: 80px; }
+
+    /* Mobile grid cards — override absolute positioning */
+    .floor-canvas--grid .table-card {
+      position: relative;
+      width: 100% !important;
+      height: 90px !important;
+      left: auto !important;
+      right: auto !important;
+      top: auto !important;
+    }
 
     /* Status modifiers */
     .table-card[data-status="reserved"]      { border-color: var(--s-reserved-border);   background: var(--s-reserved-bg); }
@@ -740,6 +776,7 @@
       box-shadow: 0 8px 24px rgba(59,130,246,0.4);
       z-index: 300;
       transition: all 0.2s var(--spring);
+      -webkit-tap-highlight-color: transparent;
     }
     .fab:hover { transform: scale(1.08); box-shadow: 0 12px 32px rgba(59,130,246,0.5); }
 
@@ -841,32 +878,37 @@
       display: none;
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 68px;
-      background: rgba(10,10,15,0.97);
+      height: calc(var(--bnav-h) + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: rgba(10,10,15,0.98);
       border-top: 1px solid var(--border);
       backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       z-index: 400;
       align-items: center;
       justify-content: space-around;
-      padding: 0 8px;
+      padding-left: max(8px, env(safe-area-inset-left));
+      padding-right: max(8px, env(safe-area-inset-right));
     }
     .bnav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 8px 12px;
+      gap: 3px;
+      padding: 8px 10px;
       border-radius: var(--radius-sm);
       color: var(--text-3);
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       font-weight: 600;
       transition: all 0.18s;
       cursor: pointer;
       background: none;
       border: none;
+      min-width: 56px;
+      -webkit-tap-highlight-color: transparent;
     }
     .bnav-item.active { color: var(--accent); }
-    .bnav-item svg { width: 22px; height: 22px; }
+    .bnav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
 
     /* ===================================================
        MOBILE BOTTOM SHEET for Table Panel
@@ -878,30 +920,34 @@
       background: rgba(0,0,0,0.6);
       z-index: 350;
       backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
     .bottom-sheet {
       display: none;
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      max-height: 85vh;
+      max-height: 88vh;
       background: var(--bg-2);
       border-radius: var(--radius-xl) var(--radius-xl) 0 0;
       border-top: 1px solid var(--border);
-      z-index: 360;
+      z-index: 420;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       transform: translateY(100%);
       transition: transform 0.35s var(--ease);
+      padding-bottom: env(safe-area-inset-bottom);
     }
     .bottom-sheet.open { transform: translateY(0); }
     .bottom-sheet__handle {
-      width: 36px; height: 4px;
+      width: 40px; height: 4px;
       background: var(--border-strong);
       border-radius: 2px;
-      margin: 12px auto 0;
+      margin: 14px auto 4px;
+      flex-shrink: 0;
     }
 
     /* ===================================================
-       RESPONSIVE
+       RESPONSIVE — TABLET
     =================================================== */
     @media (max-width: 900px) {
       .sidebar { display: none; }
@@ -910,11 +956,59 @@
       .bottom-sheet-overlay { display: block; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
       .bottom-sheet { display: block; }
       .bottom-sheet-overlay.show { pointer-events: auto; opacity: 1; }
+
+      /* Floor canvas becomes a grid on mobile */
+      .floor-canvas { display: none; }
+      .floor-canvas--grid { display: grid; }
+
+      /* Make area areas use natural height */
+      .floor-area { min-height: auto; padding-bottom: calc(var(--bnav-h) + 80px + env(safe-area-inset-bottom)); }
+
+      /* FAB sits above the bottom nav */
+      .fab {
+        bottom: calc(var(--bnav-h) + 12px + env(safe-area-inset-bottom));
+        right: 16px;
+        width: 48px; height: 48px;
+        border-radius: 14px;
+      }
+
+      /* Toast above FAB + bottom nav */
+      .toast-wrap {
+        bottom: calc(var(--bnav-h) + 72px + env(safe-area-inset-bottom));
+      }
     }
 
+    /* ===================================================
+       RESPONSIVE — PHONE
+    =================================================== */
     @media (max-width: 600px) {
       .area-tab__badge { display: none; }
       .topnav__brand-sub { display: none; }
+      .topnav__brand { margin-right: 8px; }
+      .topnav__time { font-size: 0.8rem; padding: 0 8px; }
+      .icon-btn { width: 32px; height: 32px; }
+
+      /* Tighter grid for small screens */
+      .floor-canvas--grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+      }
+      .floor-canvas--grid .table-card { height: 80px !important; }
+      .table-card__num { font-size: 1.2rem !important; }
+
+      /* Bottom sheet: full-screen comfortable */
+      .bottom-sheet { max-height: 92vh; }
+    }
+
+    /* ===================================================
+       RESPONSIVE — SMALL PHONE (SE, etc)
+    =================================================== */
+    @media (max-width: 375px) {
+      .floor-canvas--grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .floor-canvas--grid .table-card { height: 74px !important; }
     }
 
     /* ===================================================
@@ -1100,6 +1194,9 @@
           
 <div id="floor-canvas-pt-dynamic"></div>
 </div><!-- end floor-canvas -->
+
+        <!-- MOBILE GRID (shown on phones) -->
+        <div class="floor-canvas--grid" id="floor-canvas-pt-grid" style="display:none;"></div>
       </div><!-- end piano terra -->
 
 
@@ -1129,22 +1226,10 @@
           
 <div id="floor-canvas-tr-dynamic"></div>
 
-          <!-- Stage / decorative element -->
-          <div class="arch-wall arch-wall--label"
-               style="bottom:60px; right:20px; width:260px; height:80px; border-radius:8px 8px 0 0; opacity:0.5;">
-            AREA PALCO
-          </div>
-          <!-- Stage lines -->
-          <div style="position:absolute; bottom:0; right:20px; width:260px; display:flex; gap:20px; pointer-events:none; padding: 0 8px;">
-            <div style="width:2px; height:60px; background:rgba(255,255,255,0.05);"></div>
-            <div style="width:2px; height:60px; background:rgba(255,255,255,0.05);"></div>
-            <div style="width:2px; height:60px; background:rgba(255,255,255,0.05);"></div>
-            <div style="width:2px; height:60px; background:rgba(255,255,255,0.05);"></div>
-            <div style="width:2px; height:60px; background:rgba(255,255,255,0.05);"></div>
-            <div style="width:2px; height:60px; background:rgba(255,255,255,0.05);"></div>
-            <div style="width:2px; height:60px; background:rgba(255,255,255,0.05);"></div>
-          </div>
 </div><!-- end floor-canvas -->
+
+        <!-- MOBILE GRID (shown on phones) -->
+        <div class="floor-canvas--grid" id="floor-canvas-tr-grid" style="display:none;"></div>
       </div><!-- end terrazza -->
 
 
@@ -1190,17 +1275,17 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Sala
   </button>
-  <button class="bnav-item" data-tab="ordini" onclick="showToast('🍽️', 'Apri Ordini')">
+  <button class="bnav-item" data-tab="ordini" onclick="startGlobalOrder()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
     Ordini
   </button>
-  <button class="bnav-item" data-tab="cucina" onclick="showToast('👨‍🍳', 'Apri Cucina')">
+  <button class="bnav-item" data-tab="cucina" onclick="window.location.href='cucina.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
     Cucina
   </button>
-  <button class="bnav-item" data-tab="cassa" onclick="showToast('💳', 'Apri Cassa')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-    Cassa
+  <button class="bnav-item" data-tab="presenze" onclick="window.location.href='presenze.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Presenze
   </button>
 </nav>
 
@@ -1313,11 +1398,15 @@ let selectedTableId = null;
 function renderTables() {
   const containerPT = document.getElementById('floor-canvas-pt-dynamic');
   const containerTR = document.getElementById('floor-canvas-tr-dynamic');
+  const gridPT = document.getElementById('floor-canvas-pt-grid');
+  const gridTR = document.getElementById('floor-canvas-tr-grid');
   
   if (!containerPT || !containerTR) return;
   
   containerPT.innerHTML = '';
   containerTR.innerHTML = '';
+  if(gridPT) gridPT.innerHTML = '';
+  if(gridTR) gridTR.innerHTML = '';
   
   tables.forEach(t => {
      t.slotIds.forEach((slotId, index) => {
@@ -1339,11 +1428,29 @@ function renderTables() {
            ${(isMain && t.status === 'reserved' && t.reservedTime) ? `<div style="font-size:0.7rem; color:var(--s-reserved); font-weight:800; margin-top:2px;">${t.reservedTime}</div>` : ''}
          </div>
        `;
+
+       // Mobile grid card: only show the main slot (index 0), with seats updated to total
+       let gridCardHtml = isMain ? `
+         <div class="table-card table-card--sq${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
+              data-id="${t.id}" data-status="${t.status}">
+           <div class="table-card__status-dot"></div>
+           ${t.slotIds.length > 1 ? '<div class="table-card__combine">⛓</div>' : ''}
+           <div class="table-card__num">${t.id}</div>
+           <div class="table-card__seats">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+              ${t.seats}p
+           </div>
+           ${(t.startedAt) ? `<div class="table-card__timer" id="timer-grid-${t.id}">...</div>` : ''}
+           ${(t.status === 'reserved' && t.reservedTime) ? `<div style="font-size:0.6rem; color:var(--s-reserved); font-weight:800;">${t.reservedTime}</div>` : ''}
+         </div>
+       ` : '';
        
        if(slot.area.startsWith('Piano Terra')) {
           containerPT.innerHTML += cardHtml;
+          if(gridPT && gridCardHtml) gridPT.innerHTML += gridCardHtml;
        } else {
           containerTR.innerHTML += cardHtml;
+          if(gridTR && gridCardHtml) gridTR.innerHTML += gridCardHtml;
        }
      });
   });
@@ -1477,6 +1584,8 @@ function updateTimers() {
   tables.forEach(d => {
     const el = document.getElementById(`timer-${d.id}`);
     if (el && d.startedAt) el.textContent = formatTimer(now - d.startedAt);
+    const elGrid = document.getElementById(`timer-grid-${d.id}`);
+    if (elGrid && d.startedAt) elGrid.textContent = formatTimer(now - d.startedAt);
   });
 }
 setInterval(updateTimers, 1000);
