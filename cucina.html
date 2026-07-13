@@ -431,9 +431,10 @@ function renderTickets() {
     const isUrgent = elapsed > 15 * 60000 && order.status !== 'ready';
     const timerStr = formatElapsed(elapsed);
     const statusLabel = { new: 'In attesa', cooking: 'In cottura', ready: 'Pronta ✅' }[order.status] || '';
-    const allDone = order.items.every(i => i.done);
+    const itemsList = order.items || [];
+    const allDone = itemsList.length > 0 && itemsList.every(i => i.done);
 
-    const itemsHtml = order.items.map(item => {
+    const itemsHtml = itemsList.map(item => {
       const isDone = item.status === 'done';
       const isSelected = item.selected;
       const statusIcon = item.status === 'ready' ? '🟢' : item.status === 'cooking' ? '🔵' : '🟡';
@@ -486,8 +487,9 @@ function advanceOrder(orderId, newStatus) {
   if (!order) return;
 
   // Selezionati oppure tutti (se nessuno è selezionato)
-  const selectedItems = order.items.filter(i => i.selected);
-  const targets = selectedItems.length > 0 ? selectedItems : order.items;
+  const itemsList = order.items || [];
+  const selectedItems = itemsList.filter(i => i.selected);
+  const targets = selectedItems.length > 0 ? selectedItems : itemsList;
 
   targets.forEach(item => {
     item.status = newStatus;
@@ -495,9 +497,9 @@ function advanceOrder(orderId, newStatus) {
   });
 
   // Ricalcola stato ordine
-  const allDone = order.items.every(i => i.status === 'done');
-  const allReadyOrDone = order.items.every(i => i.status === 'ready' || i.status === 'done');
-  const anyCookingOrReady = order.items.some(i => i.status === 'cooking' || i.status === 'ready');
+  const allDone = itemsList.every(i => i.status === 'done');
+  const allReadyOrDone = itemsList.every(i => i.status === 'ready' || i.status === 'done');
+  const anyCookingOrReady = itemsList.some(i => i.status === 'cooking' || i.status === 'ready');
 
   if (allDone) order.status = 'done';
   else if (allReadyOrDone) order.status = 'ready';
@@ -518,7 +520,7 @@ function advanceOrder(orderId, newStatus) {
 function toggleItem(orderId, itemId) {
   const order = orders.find(o => o.id === orderId);
   if(!order) return;
-  const item = order.items.find(i => i.id === itemId);
+  const item = (order.items || []).find(i => i.id === itemId);
   if(!item) return;
   
   item.selected = !item.selected;

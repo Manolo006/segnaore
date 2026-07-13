@@ -33,7 +33,6 @@
     const dbFirestore = getFirestore(app);
     const dbRealtime = getDatabase(app);
     
-    // Esponiamo in window per l'accesso dalle funzioni di UI
     window._auth = auth;
     window._dbFirestore = dbFirestore;
     window._dbRealtime = dbRealtime;
@@ -55,7 +54,6 @@
     window._set = set;
     window._get = get;
 
-    // Inizializza l'app dopo il caricamento moduli
     window.addEventListener('DOMContentLoaded', initApp);
 
     /* =====================================================
@@ -63,28 +61,33 @@
     ===================================================== */
     let currentUser = null;
     let userRole = null;
+    let userData = null;
     let gpsStatus = { valid: false, lat: null, lng: null };
     let currentShiftId = null;
 
     function initApp() {
-      // Ascolta stato Auth
       onAuthStateChanged(auth, async (user) => {
         if (user) {
           currentUser = user;
           document.getElementById('view-login').style.display = 'none';
           
-          // Recupera ruolo da Firestore
           const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
           if (!userDoc.exists()) {
             await setDoc(doc(dbFirestore, "users", user.uid), {
-              name: user.displayName || "Dipendente",
+              name: user.displayName || "Utente",
               email: user.email,
-              role: "employee",
+              role: "pending", // NEW ACCOUNTS START AS PENDING
+              shiftStart: "09:00",
+              shiftEnd: "18:00",
+              contractType: "fulltime",
               createdAt: new Date()
             });
-            userRole = "employee";
+            userRole = "pending";
+            userData = { shiftStart: "09:00", shiftEnd: "18:00", contractType: "fulltime" };
           } else {
-            userRole = userDoc.data().role;
+            const data = userDoc.data();
+            userRole = data.role;
+            userData = data;
           }
 
           document.getElementById('userName').textContent = user.displayName || "Utente";
@@ -92,18 +95,23 @@
           if (userRole === "owner") {
             document.getElementById('view-owner').style.display = 'block';
             loadOwnerDashboard();
-          } else {
+          } else if (userRole === "employee") {
             document.getElementById('view-employee').style.display = 'block';
             startGpsTracking();
             loadEmployeeDashboard();
+          } else {
+            // PENDING
+            document.getElementById('view-pending').style.display = 'block';
           }
 
         } else {
           currentUser = null;
           userRole = null;
+          userData = null;
           document.getElementById('view-login').style.display = 'flex';
           document.getElementById('view-employee').style.display = 'none';
           document.getElementById('view-owner').style.display = 'none';
+          document.getElementById('view-pending').style.display = 'none';
         }
       });
     }
@@ -129,7 +137,6 @@
       if ("geolocation" in navigator) {
         const gpsLabel = document.getElementById('gps-status-label');
         
-        // Fetch HQ coords da DB
         const settingsSnap = await get(ref(dbRealtime, 'settings/gps'));
         const settings = settingsSnap.val() || { lat: 45.4642, lng: 9.1900, radius: 100 };
 
@@ -206,7 +213,10 @@
         realClockOut: null,
         approvedClockIn: timeStr,
         approvedClockOut: null,
+        expectedIn: userData.shiftStart || "09:00", // Save for owner comparison
+        expectedOut: userData.shiftEnd || "18:00",
         status: "In corso",
+        note: "",
         gpsIn: { lat: gpsStatus.lat, lng: gpsStatus.lng },
         totalHours: 0
       });
@@ -241,6 +251,7 @@
             <div>
               <div style="font-weight:700;">${data.dateString}</div>
               <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">In: ${data.approvedClockIn} - Out: ${data.approvedClockOut || '--:--'}</div>
+              ${data.note ? `<div style="font-size:0.75rem; color:var(--s-new); margin-top:4px;">Nota: ${data.note}</div>` : ''}
             </div>
             <div style="color: ${color}; font-size: 0.8rem; font-weight:700;">${data.status}</div>
           </div>
@@ -251,32 +262,16 @@
     /* =====================================================
        OWNER LOGIC
     ===================================================== */
-    async function loadOwnerDashboard() {
-      const q = query(collection(dbFirestore, "attendance"), where("status", "==", "Da approvare"));
-      const snapshot = await getDocs(q);
-      const list = document.getElementById('review-list');
-      list.innerHTML = '';
-      
-      if(snapshot.empty) {
-        list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">Nessun turno da approvare.</div>';
-      }
+    window.switchOwnerTab = (tabId, evt) => {
+      document.querySelectorAll('.owner-tab').forEach(t => t.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).style.display = 'block';
+      if(evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    };
 
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        list.innerHTML += `
-          <div class="card history-card" style="flex-direction:column; align-items:flex-start; gap:12px;">
-            <div style="display:flex; justify-content:space-between; width:100%;">
-              <div style="font-weight:700;">${data.userName}</div>
-              <div style="font-size:0.8rem; color:var(--text-2);">${data.dateString}</div>
-            </div>
-            <div style="display:flex; gap:12px; width:100%;">
-              <input type="time" id="in_${docSnap.id}" value="${data.approvedClockIn}" class="input">
-              <input type="time" id="out_${docSnap.id}" value="${data.approvedClockOut}" class="input">
-              <button class="btn btn-green" onclick="approveShift('${docSnap.id}')">Approva</button>
-            </div>
-          </div>
-        `;
-      });
+    async function loadOwnerDashboard() {
+      loadReviewList();
+      loadStaffList();
 
       // Load Settings
       const settingsSnap = await get(ref(dbRealtime, 'settings/gps'));
@@ -288,11 +283,131 @@
       }
     }
 
+    async function loadReviewList() {
+      const q = query(collection(dbFirestore, "attendance"), where("status", "==", "Da approvare"));
+      const snapshot = await getDocs(q);
+      const list = document.getElementById('review-list');
+      list.innerHTML = '';
+      
+      if(snapshot.empty) {
+        list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">Nessun turno da approvare.</div>';
+      }
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        
+        // Controlliamo il ritardo
+        let isLate = false;
+        if(data.approvedClockIn && data.expectedIn) {
+          if (data.approvedClockIn > data.expectedIn) isLate = true;
+        }
+
+        list.innerHTML += `
+          <div class="card history-card" style="flex-direction:column; align-items:flex-start; gap:12px;">
+            <div style="display:flex; justify-content:space-between; width:100%;">
+              <div>
+                <div style="font-weight:700;">${data.userName}</div>
+                <div style="font-size:0.75rem; color:var(--text-3); margin-top:2px;">Atteso: ${data.expectedIn || '?'} - ${data.expectedOut || '?'}</div>
+              </div>
+              <div style="font-size:0.8rem; color:var(--text-2); text-align:right;">
+                ${data.dateString}
+                ${isLate ? `<div style="color:var(--s-danger); font-weight:700; font-size:0.7rem; margin-top:4px;">⚠️ RITARDO</div>` : ''}
+              </div>
+            </div>
+            
+            <div style="display:flex; gap:12px; width:100%;">
+              <div style="flex:1;">
+                <label style="font-size:0.7rem; color:var(--text-2);">Entrata Effettiva</label>
+                <input type="time" id="in_${docSnap.id}" value="${data.approvedClockIn}" class="input">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:0.7rem; color:var(--text-2);">Uscita Effettiva</label>
+                <input type="time" id="out_${docSnap.id}" value="${data.approvedClockOut}" class="input">
+              </div>
+            </div>
+
+            <div style="width:100%;">
+              <input type="text" id="note_${docSnap.id}" placeholder="Nota / Giustificazione (es. Traffico)" value="${data.note || ''}" class="input" style="padding:10px;">
+            </div>
+
+            <button class="btn btn-green" onclick="approveShift('${docSnap.id}')" style="padding:12px;">Conferma & Approva</button>
+          </div>
+        `;
+      });
+    }
+
+    async function loadStaffList() {
+      const q = query(collection(dbFirestore, "users"));
+      const snapshot = await getDocs(q);
+      const list = document.getElementById('staff-list');
+      list.innerHTML = '';
+
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const isPending = data.role === 'pending';
+        
+        list.innerHTML += `
+          <div class="card" style="margin-bottom:12px; ${isPending ? 'border-color:var(--s-new); background:rgba(245,158,11,0.05);' : ''}">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div>
+                <div style="font-weight:700;">${data.name}</div>
+                <div style="font-size:0.75rem; color:var(--text-2);">${data.email}</div>
+              </div>
+              <div style="font-size:0.75rem; padding:4px 8px; border-radius:12px; background:var(--surface-2); text-transform:uppercase;">
+                ${data.role}
+              </div>
+            </div>
+
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+              <select id="role_${docSnap.id}" class="input" style="padding:8px; flex:1;">
+                <option value="pending" ${data.role === 'pending' ? 'selected' : ''}>In Attesa</option>
+                <option value="employee" ${data.role === 'employee' ? 'selected' : ''}>Dipendente</option>
+                <option value="owner" ${data.role === 'owner' ? 'selected' : ''}>Proprietario</option>
+              </select>
+              <select id="contract_${docSnap.id}" class="input" style="padding:8px; flex:1;">
+                <option value="fulltime" ${data.contractType === 'fulltime' ? 'selected' : ''}>Full-Time</option>
+                <option value="parttime" ${data.contractType === 'parttime' ? 'selected' : ''}>Part-Time</option>
+              </select>
+            </div>
+
+            <div style="display:flex; gap:8px;">
+              <div style="flex:1;">
+                <label style="font-size:0.7rem; color:var(--text-2);">Orario Inizio</label>
+                <input type="time" id="start_${docSnap.id}" value="${data.shiftStart || '09:00'}" class="input" style="padding:8px;">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:0.7rem; color:var(--text-2);">Orario Fine</label>
+                <input type="time" id="end_${docSnap.id}" value="${data.shiftEnd || '18:00'}" class="input" style="padding:8px;">
+              </div>
+            </div>
+
+            <button class="btn btn-outline" style="padding:10px; margin-top:8px; font-size:0.85rem;" onclick="saveUser('${docSnap.id}')">💾 Salva Dipendente</button>
+          </div>
+        `;
+      });
+    }
+
+    window.saveUser = async (id) => {
+      const role = document.getElementById(`role_${id}`).value;
+      const contract = document.getElementById(`contract_${id}`).value;
+      const start = document.getElementById(`start_${id}`).value;
+      const end = document.getElementById(`end_${id}`).value;
+
+      await updateDoc(doc(dbFirestore, "users", id), {
+        role: role,
+        contractType: contract,
+        shiftStart: start,
+        shiftEnd: end
+      });
+      alert('Impostazioni dipendente salvate.');
+      loadStaffList();
+    };
+
     window.approveShift = async (id) => {
       const inVal = document.getElementById(`in_${id}`).value;
       const outVal = document.getElementById(`out_${id}`).value;
+      const noteVal = document.getElementById(`note_${id}`).value;
       
-      // Calcolo ore base
       let h = 0;
       if (inVal && outVal) {
         const t1 = inVal.split(':');
@@ -305,10 +420,11 @@
       await updateDoc(doc(dbFirestore, "attendance", id), {
         approvedClockIn: inVal,
         approvedClockOut: outVal,
+        note: noteVal,
         status: "Approvato",
         totalHours: h
       });
-      loadOwnerDashboard();
+      loadReviewList();
     };
 
     window.saveSettings = async () => {
@@ -341,6 +457,7 @@
       --border:    rgba(255,255,255,0.08);
       --text:      #f1f5f9;
       --text-2:    #94a3b8;
+      --text-3:    #64748b;
       --accent:    #3b82f6;
       --s-new:     #f59e0b;
       --s-prep:    #3b82f6;
@@ -379,21 +496,20 @@
       margin-bottom: 20px;
     }
 
+    /* TABS */
+    .tabs-row {
+      display: flex; gap: 8px; margin-bottom: 24px; background: var(--bg-2); padding: 4px; border-radius: 12px; border: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-2); font-weight: 600; font-size: 0.85rem; border-radius: 8px; cursor: pointer; transition: 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--surface-2); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
     /* BUTTONS */
     .btn {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 700;
-      color: white;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: all 0.2s;
+      width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s;
     }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn:active { transform: scale(0.98); }
@@ -404,57 +520,25 @@
 
     /* STATUS BADGE */
     .status-badge {
-      display: inline-block;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 20px;
-      background: var(--surface-2);
+      display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 20px; background: var(--surface-2);
     }
     .status-badge.valid { background: rgba(34,197,94,0.15); color: var(--s-ready); border: 1px solid rgba(34,197,94,0.3); }
     .status-badge.invalid { background: rgba(239,68,68,0.15); color: var(--s-danger); border: 1px solid rgba(239,68,68,0.3); }
     
-    /* HISTORY LIST */
-    .history-card {
-      padding: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      background: var(--bg-2);
-    }
-
     /* INPUTS */
     .input {
-      width: 100%;
-      padding: 14px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: white;
-      font-family: inherit;
-      margin-bottom: 12px;
+      width: 100%; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: inherit; margin-bottom: 12px;
+    }
+    select.input {
+      appearance: none;
     }
 
     /* BOTTOM NAV */
     .bottom-nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: 70px;
-      background: rgba(10,10,15,0.85);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding-bottom: env(safe-area-inset-bottom);
-      z-index: 400;
+      position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: rgba(10,10,15,0.85); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 400;
     }
     .bnav-item {
-      background: none; border: none; color: var(--text-3);
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      font-size: 0.7rem; font-weight: 600;
+      background: none; border: none; color: var(--text-3); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 600;
     }
     .bnav-item svg { width: 24px; height: 24px; }
     .bnav-item.active { color: var(--accent); }
@@ -480,6 +564,16 @@
     </button>
   </div>
 
+  <!-- VISTA PENDING -->
+  <div id="view-pending" class="container" style="display:none; text-align:center; padding-top:40px;">
+    <div class="card" style="border-color:var(--s-new); background:rgba(245,158,11,0.05);">
+      <div style="font-size:3rem; margin-bottom:16px;">⏳</div>
+      <h2 style="margin-bottom:12px; color:var(--s-new);">In Attesa di Approvazione</h2>
+      <p style="color:var(--text-2); font-size:0.95rem; line-height:1.5;">Il tuo account è stato creato ed è attualmente in revisione. <br><br>Il proprietario del ristorante deve confermare la tua identità e assegnarti gli orari di lavoro prima di poter timbrare.</p>
+    </div>
+    <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Esci dall'account</button>
+  </div>
+
   <!-- VISTA DIPENDENTE -->
   <div id="view-employee" class="container" style="display:none;">
     <div class="card" style="text-align:center;">
@@ -500,18 +594,34 @@
 
   <!-- VISTA PROPRIETARIO -->
   <div id="view-owner" class="container" style="display:none;">
-    <h3 style="margin-bottom:16px; font-size:1.1rem; color:var(--s-new);">Da Approvare</h3>
-    <div id="review-list"></div>
+    
+    <div class="tabs-row">
+      <button class="tab-btn active" onclick="switchOwnerTab('tab-review', event)">Turni</button>
+      <button class="tab-btn" onclick="switchOwnerTab('tab-staff', event)">Gestione Personale</button>
+      <button class="tab-btn" onclick="switchOwnerTab('tab-gps', event)">Sede GPS</button>
+    </div>
 
-    <h3 style="margin-top:40px; margin-bottom:16px; font-size:1.1rem; color:var(--accent);">Impostazioni GPS (Sede)</h3>
-    <div class="card">
-      <label style="font-size:0.8rem; color:var(--text-2);">Latitudine</label>
-      <input type="number" step="any" id="lat" class="input">
-      <label style="font-size:0.8rem; color:var(--text-2);">Longitudine</label>
-      <input type="number" step="any" id="lng" class="input">
-      <label style="font-size:0.8rem; color:var(--text-2);">Raggio (metri)</label>
-      <input type="number" id="rad" class="input">
-      <button class="btn btn-blue" onclick="saveSettings()">Salva Sede</button>
+    <div id="tab-review" class="owner-tab">
+      <h3 style="margin-bottom:16px; font-size:1.1rem; color:var(--s-new);">Turni da Approvare</h3>
+      <div id="review-list"></div>
+    </div>
+
+    <div id="tab-staff" class="owner-tab" style="display:none;">
+      <h3 style="margin-bottom:16px; font-size:1.1rem; color:var(--accent);">Gestione Personale</h3>
+      <div id="staff-list"></div>
+    </div>
+
+    <div id="tab-gps" class="owner-tab" style="display:none;">
+      <h3 style="margin-bottom:16px; font-size:1.1rem;">Impostazioni Sede</h3>
+      <div class="card">
+        <label style="font-size:0.8rem; color:var(--text-2);">Latitudine</label>
+        <input type="number" step="any" id="lat" class="input">
+        <label style="font-size:0.8rem; color:var(--text-2);">Longitudine</label>
+        <input type="number" step="any" id="lng" class="input">
+        <label style="font-size:0.8rem; color:var(--text-2);">Raggio (metri)</label>
+        <input type="number" id="rad" class="input">
+        <button class="btn btn-blue" onclick="saveSettings()">Salva Sede</button>
+      </div>
     </div>
 
     <button class="btn btn-outline" style="margin-top:20px;" onclick="logout()">Esci dall'account</button>
@@ -523,7 +633,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Sala
     </button>
-    <button class="bnav-item" onclick="window.location.href='ordini.html'">
+    <button class="bnav-item" onclick="window.location.href='lista-ordini.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
       Ordini
     </button>

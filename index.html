@@ -13,17 +13,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getDatabase, ref, onValue, push, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-    const firebaseConfig = {
-      apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
-      authDomain:        "in-punto.firebaseapp.com",
-      databaseURL:       "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId:         "in-punto",
-      storageBucket:     "in-punto.firebasestorage.app",
-      messagingSenderId: "851521503055",
-      appId:             "1:851521503055:web:7e23520cf67641f044cf3a"
-    };
     const fbApp = initializeApp(firebaseConfig);
-    const db    = getDatabase(fbApp);
     window._db = db;
     window._fbRef = ref;
     window._fbOnValue = onValue;
@@ -980,18 +970,9 @@
         position: relative;
         height: 100%;
       }
-      .floor-canvas { display: none; }
+      .floor-canvas { transform: scale(0.65); transform-origin: top left; width: 153%; }
       
-      .floor-canvas--grid { 
-        display: flex;
-        flex-wrap: wrap;
-        align-content: stretch;
-        justify-content: center;
-        gap: 4px;
-        padding: 4px;
-        height: 100%;
-        width: 100%;
-      }
+      .floor-canvas--grid { display: none !important; }
       .floor-canvas--grid .table-card {
         flex: 1 1 15%; /* Fits roughly 6 columns */
         max-width: 20%; /* Prevents a few remaining items from becoming huge */
@@ -1047,11 +1028,7 @@
       .icon-btn { width: 32px; height: 32px; }
 
       /* Tighter fit for very small screens */
-      .floor-canvas--grid .table-card {
-        flex: 1 1 18%; /* Fits roughly 5 columns */
-        max-width: 25%;
-        padding: 2px !important;
-      }
+      .floor-canvas { transform: scale(0.55); width: 181%; }
       .floor-canvas--grid .table-card__num { font-size: 0.9rem !important; }
 
       /* Bottom sheet: full-screen comfortable */
@@ -1062,10 +1039,7 @@
        RESPONSIVE — SMALL PHONE (SE, etc)
     =================================================== */
     @media (max-width: 375px) {
-      .floor-canvas--grid .table-card {
-        flex: 1 1 20%; /* Fits roughly 4 columns */
-        max-width: 30%;
-      }
+      .floor-canvas { transform: scale(0.48); width: 208%; }
     }
 
     /* ===================================================
@@ -1332,7 +1306,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     Sala
   </button>
-  <button class="bnav-item" data-tab="ordini" onclick="startGlobalOrder()">
+  <button class="bnav-item" data-tab="ordini" onclick="window.location.href='lista-ordini.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
     Ordini
   </button>
@@ -1356,7 +1330,7 @@
 </div>
 
 <!-- ===== FAB ===== -->
-<button class="fab" id="fabBtn" title="Nuovo ordine" onclick="startGlobalOrder()">
+<button class="fab" id="fabBtn" title="Nuovo ordine" onclick="window.location.href='lista-ordini.html'">
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 
@@ -1369,7 +1343,7 @@
 </div>
 
 
-<script>
+<script type="module">
   function startGlobalOrder() {
     const tableIdStr = prompt("Inserisci il numero del tavolo per la comanda:");
     if (!tableIdStr) return; // user cancelled
@@ -1385,7 +1359,28 @@
 /* =====================================================
    DATA — Status definitions
 ===================================================== */
-const STATUS_LABELS = {
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
+    authDomain:        "in-punto.firebaseapp.com",
+    databaseURL:       "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "in-punto",
+    storageBucket:     "in-punto.firebasestorage.app",
+    messagingSenderId: "851521503055",
+    appId:             "1:851521503055:web:7e23520cf67641f044cf3a"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window._db = db;
+  window._ref = ref;
+  window._onValue = onValue;
+  window._fbSet = set;
+  window._fbReady = true;
+
+  const STATUS_LABELS = {
   'free':       'Disponibile',
   'reserved':   'Prenotato',
   'wait-order': 'Attesa ordine',
@@ -1434,17 +1429,17 @@ const tableSlots = {
 };
 
 let tables = [
-  { id: 1, slotIds: ['pt_1'], status: 'free', guests: 0, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: null },
-  { id: 2, slotIds: ['pt_2'], status: 'preparing', guests: 2, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: Date.now() - 32*60000 },
-  { id: 3, slotIds: ['pt_3'], status: 'ready', guests: 2, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: Date.now() - 48*60000 },
-  { id: 4, slotIds: ['pt_4'], status: 'wait-order', guests: 2, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: Date.now() - 8*60000 },
-  { id: 5, slotIds: ['pt_5'], status: 'preparing', guests: 2, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: Date.now() - 22*60000 },
-  { id: 6, slotIds: ['pt_6'], status: 'free', guests: 0, seats: 4, reservedTime: '', reservedGuests: 0, startedAt: null },
-  { id: 7, slotIds: ['pt_7'], status: 'free', guests: 0, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: null },
-  { id: 20, slotIds: ['tr_20'], status: 'free', guests: 0, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: null },
-  { id: 21, slotIds: ['tr_21a', 'tr_21b'], status: 'preparing', guests: 6, seats: 6, reservedTime: '', reservedGuests: 0, startedAt: Date.now() - 15*60000 },
-  { id: 22, slotIds: ['tr_22'], status: 'free', guests: 0, seats: 2, reservedTime: '', reservedGuests: 0, startedAt: null },
-  { id: 23, slotIds: ['tr_23'], status: 'bill', guests: 3, seats: 4, reservedTime: '', reservedGuests: 0, startedAt: Date.now() - 55*60000 },
+  { id: 1, slotIds: ['pt_1'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 2, slotIds: ['pt_2'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 3, slotIds: ['pt_3'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 4, slotIds: ['pt_4'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 5, slotIds: ['pt_5'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 6, slotIds: ['pt_6'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 7, slotIds: ['pt_7'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 20, slotIds: ['tr_20'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 21, slotIds: ['tr_21a', 'tr_21b'], status: 'free', guests: 0, seats: 6, startedAt: null },
+  { id: 22, slotIds: ['tr_22'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 23, slotIds: ['tr_23'], status: 'free', guests: 0, seats: 4, startedAt: null },
 ];
 
 let selectedTableId = null;
@@ -1474,7 +1469,7 @@ function renderTables() {
          <div class="table-card table-card--${slot.type}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
               data-id="${t.id}" data-status="${t.status}"
               style="${slot.left ? 'left:'+slot.left+';' : ''} ${slot.right ? 'right:'+slot.right+';' : ''} top:${slot.top}; opacity: ${isMain ? 1 : 0.8};">
-           <div class="table-card__status-dot"></div>
+           <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
            ${t.slotIds.length > 1 ? '<div class="table-card__combine">⛓</div>' : ''}
            <div class="table-card__num">${t.id}</div>
            <div class="table-card__seats">
@@ -1490,7 +1485,7 @@ function renderTables() {
        let gridCardHtml = isMain ? `
          <div class="table-card table-card--sq${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
               data-id="${t.id}" data-status="${t.status}">
-           <div class="table-card__status-dot"></div>
+           <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
            ${t.slotIds.length > 1 ? '<div class="table-card__combine">⛓</div>' : ''}
            <div class="table-card__num">${t.id}</div>
            <div class="table-card__seats">
@@ -2045,6 +2040,44 @@ document.querySelectorAll('.bnav-item').forEach(item => {
 
 // INITIAL RENDER
 renderTables();
+
+// Polling per Firebase Sync
+function initSync() {
+  if(window._fbReady) {
+    window._onValue(window._ref(window._db, 'orders'), (snapshot) => {
+      const data = snapshot.val();
+      const allOrders = data ? Object.values(data) : [];
+      
+      tables.forEach(t => {
+        const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
+        if (tOrders.length === 0) {
+          if (t.status !== 'reserved') {
+             t.status = 'free';
+             t.startedAt = null;
+          }
+        } else {
+          t.startedAt = Math.min(...tOrders.map(o => o.createdAt));
+          const allItems = tOrders.flatMap(o => o.items || []);
+          if (allItems.length === 0) {
+            t.status = 'wait-order';
+          } else if (allItems.some(i => i.status === 'cooking')) {
+            t.status = 'preparing';
+          } else if (allItems.some(i => i.status === 'ready')) {
+            t.status = 'ready';
+          } else if (allItems.every(i => i.status === 'done')) {
+            t.status = 'paid';
+          } else {
+            t.status = 'wait-order';
+          }
+        }
+      });
+      renderTables();
+    });
+  } else {
+    setTimeout(initSync, 100);
+  }
+}
+initSync();
 
 /* =====================================================
    NIGHTLY RESET (02:00 AM)
