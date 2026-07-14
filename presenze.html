@@ -138,7 +138,7 @@
         const gpsLabel = document.getElementById('gps-status-label');
         
         const settingsSnap = await get(ref(dbRealtime, 'settings/gps'));
-        const settings = settingsSnap.val() || { lat: 45.4642, lng: 9.1900, radius: 100 };
+        const settings = settingsSnap.val() || { lat: 37.069253, lng: -8.106154, radius: 100 };
 
         navigator.geolocation.watchPosition(
           (position) => {
