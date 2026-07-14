@@ -439,12 +439,16 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* Table shape variants */
-    .table-card--sq  { width: 80px;  height: 80px; }
-    .table-card--md  { width: 96px;  height: 96px; }
-    .table-card--lg  { width: 116px; height: 116px; }
-    .table-card--rect { width: 140px; height: 80px; }
-    .table-card--wide { width: 200px; height: 80px; }
+     /* Table shape variants (single & combined)
+       - sq: 2 persone (100x100)
+       - rect-h / rect-v: 4 persone (140x100 or 100x140)
+       - wide-h / wide-v: 6 persone (200x100 or 100x200)
+     */
+     .table-card--sq      { width: 150px; height: 150px; }
+     .table-card--rect-h  { width: 190px; height: 150px; }
+     .table-card--rect-v  { width: 150px; height: 190px; }
+     .table-card--wide-h  { width: 250px; height: 150px; }
+     .table-card--wide-v  { width: 150px; height: 250px; }
 
     /* Mobile grid cards — override absolute positioning */
     .floor-canvas--grid .table-card {
@@ -1099,7 +1103,6 @@
     </div>
 
     <div class="topnav__actions">
-      <div class="topnav__time" id="clockDisplay">--:--</div>
       <button class="icon-btn" title="Impostazioni" onclick="showToast('⚙️', 'Impostazioni non ancora disponibili')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -1196,27 +1199,23 @@
 
           <!-- Architectural: Separator wall between inside and outside -->
           <div class="arch-divider arch-wall--label"
-               style="top:110px; left:0; right:0; height:3px; background: rgba(245,158,11,0.2);"></div>
-          <div class="zone-tag" style="top:12px; left:20px; color: rgba(245,158,11,0.5);">Esterno</div>
+               style="top:280px; left:0; right:0; height:3px; background: rgba(245,158,11,0.2);"></div>
+          <div class="zone-tag" style="top:260px; left:20px; color: rgba(245,158,11,0.5);">Esterno</div>
           
-          <!-- Bar counter on the right (architectural element) -->
-          <div class="arch-wall arch-wall--label"
-               style="top:150px; right:20px; width:120px; height:220px; border-radius:8px;">
-            BAR
-          </div>
+          
           <!-- Bar stools lines -->
-          <div style="position:absolute; top:155px; right:148px; display:flex; flex-direction:column; gap:20px; pointer-events:none;">
-            <div style="width:20px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:20px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:20px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:20px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:20px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:20px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:20px; height:2px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+          <div style="position:absolute; top:450px; right:10px; display:flex; flex-direction:column; gap:50px; pointer-events:none;">
+            <div style="width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:80px; height:3px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
           </div>
 
           <!-- Zone tag: Inside -->
-          <div class="zone-tag" style="top:122px; left:20px;">Sala Interna</div>
+          <div class="zone-tag" style="top:300px; left:20px;">Sala Interna</div>
 
           
 <div id="floor-canvas-pt-dynamic"></div>
@@ -1235,6 +1234,19 @@
         </div>
 
         <div class="floor-canvas" style="height: 700px;">
+
+          <!-- Bar stools lines -->
+          <div style="position:absolute; bottom:0px; left:150px; display:flex; flex-direction:line; gap:50px; pointer-events:none;">
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
+          </div>
 
           <!-- Outer area boundary hints -->
           <div class="arch-wall"
@@ -1407,18 +1419,18 @@ const STATUS_EMOJIS = {
    DATA — Slots & Tables
 ===================================================== */
 const tableSlots = {
-  'pt_1': { area: 'Piano Terra', left: '20px', top: '440px', type: 'sq', baseSeats: 2 },
-  'pt_2': { area: 'Piano Terra', left: '20px', top: '340px', type: 'sq', baseSeats: 2 },
-  'pt_3': { area: 'Piano Terra', left: '20px', top: '240px', type: 'sq', baseSeats: 2 },
-  'pt_4': { area: 'Piano Terra', left: '160px', top: '340px', type: 'sq', baseSeats: 2 },
-  'pt_5': { area: 'Piano Terra (Esterno)', left: '100px', top: '20px', type: 'sq', baseSeats: 2 },
-  'pt_6': { area: 'Piano Terra (Esterno)', left: '220px', top: '20px', type: 'sq', baseSeats: 4 },
-  'pt_7': { area: 'Piano Terra (Esterno)', left: '340px', top: '20px', type: 'sq', baseSeats: 2 },
-  'tr_20': { area: 'Terrazza', left: '20px', top: '390px', type: 'sq', baseSeats: 2 },
-  'tr_21a': { area: 'Terrazza', left: '60px', top: '240px', type: 'sq', baseSeats: 4 },
-  'tr_21b': { area: 'Terrazza', left: '160px', top: '240px', type: 'sq', baseSeats: 2 },
+  'pt_1': { area: 'Piano Terra', left: '20px', top: '940px', type: 'sq', baseSeats: 2 },
+  'pt_2': { area: 'Piano Terra', left: '20px', top: '690px', type: 'sq', baseSeats: 2 },
+  'pt_3': { area: 'Piano Terra', left: '20px', top: '440px', type: 'sq', baseSeats: 2 },
+  'pt_4': { area: 'Piano Terra', left: '360px', top: '590px', type: 'sq', baseSeats: 2 },
+  'pt_5': { area: 'Piano Terra (Esterno)', left: '30px', top: '20px', type: 'sq', baseSeats: 2 },
+  'pt_6': { area: 'Piano Terra (Esterno)', left: '250px', top: '20px', type: 'rect-v', baseSeats: 4 },
+  'pt_7': { area: 'Piano Terra (Esterno)', left: '470px', top: '20px', type: 'sq', baseSeats: 2 },
+  'tr_20': { area: 'Terrazza', left: '20px', top: '400px', type: 'sq', baseSeats: 2 },
+  'tr_21a': { area: 'Terrazza', left: '20px', top: '155px', type: 'rect-h', baseSeats: 4 },
+  'tr_21b': { area: 'Terrazza', left: '160px', top: '155px', type: 'sq', baseSeats: 2 },
   'tr_22': { area: 'Terrazza', right: '120px', top: '120px', type: 'sq', baseSeats: 2 },
-  'tr_23': { area: 'Terrazza', right: '120px', top: '260px', type: 'sq', baseSeats: 4 },
+  'tr_23': { area: 'Terrazza', right: '120px', top: '360px', type: 'rect-v', baseSeats: 4 },
 };
 
 let tables = [
@@ -1454,10 +1466,73 @@ function renderTables() {
   if(gridTR) gridTR.innerHTML = '';
   
   tables.forEach(t => {
+     // Gather slot objects for this table
+     const slots = t.slotIds.map(id => tableSlots[id]).filter(Boolean);
+
+     // If table spans multiple slots positioned on the same row/column, render a combined card
+     if (slots.length > 1) {
+       const lefts = slots.map(s => s.left ? parseInt(s.left, 10) : null).filter(v => v !== null);
+       const tops = slots.map(s => s.top ? parseInt(s.top, 10) : null).filter(v => v !== null);
+
+       const horiz = tops.length && tops.every(v => v === tops[0]);
+       const vert = lefts.length && lefts.every(v => v === lefts[0]);
+
+       if (horiz || vert) {
+         const minLeft = Math.min(...lefts);
+         const minTop = Math.min(...tops);
+         const orientation = horiz ? 'h' : 'v';
+         let visualClass = 'sq';
+         if (t.seats >= 6) visualClass = `wide-${orientation}`;
+         else if (t.seats >= 4) visualClass = `rect-${orientation}`;
+
+         const stylePos = `${minLeft !== undefined ? 'left:'+minLeft+'px;' : ''} ${minTop !== undefined ? 'top:'+minTop+'px;' : ''}`;
+
+         const cardHtml = `
+           <div class="table-card table-card--${visualClass}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
+                data-id="${t.id}" data-status="${t.status}"
+                style="${stylePos} opacity:1;">
+             <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
+             <div class="table-card__combine">⛓</div>
+             <div class="table-card__num">${t.id}</div>
+             <div class="table-card__seats">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                ${t.seats} posti
+             </div>
+             ${(t.startedAt) ? `<div class="table-card__timer" id="timer-${t.id}">...</div>` : ''}
+             ${(t.status === 'reserved' && t.reservedTime) ? `<div style="font-size:0.7rem; color:var(--s-reserved); font-weight:800; margin-top:2px;">${t.reservedTime}</div>` : ''}
+           </div>
+         `;
+
+         const gridCardHtml = `
+           <div class="table-card table-card--${visualClass}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
+                data-id="${t.id}" data-status="${t.status}">
+             <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
+             <div class="table-card__combine">⛓</div>
+             <div class="table-card__num">${t.id}</div>
+             <div class="table-card__seats">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                ${t.seats}p
+             </div>
+             ${(t.startedAt) ? `<div class="table-card__timer" id="timer-grid-${t.id}">...</div>` : ''}
+           </div>
+         `;
+
+         if (slots[0].area.startsWith('Piano Terra')) {
+           containerPT.innerHTML += cardHtml;
+           if (gridPT) gridPT.innerHTML += gridCardHtml;
+         } else {
+           containerTR.innerHTML += cardHtml;
+           if (gridTR) gridTR.innerHTML += gridCardHtml;
+         }
+         return; // already rendered combined card
+       }
+     }
+
+     // Fallback: render each slot separately
      t.slotIds.forEach((slotId, index) => {
        const slot = tableSlots[slotId];
        const isMain = index === 0;
-       
+       if(!slot) return;
        let cardHtml = `
          <div class="table-card table-card--${slot.type}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
               data-id="${t.id}" data-status="${t.status}"
@@ -1474,11 +1549,10 @@ function renderTables() {
          </div>
        `;
 
-       // Mobile grid card: only show the main slot (index 0), with seats updated to total
        let gridCardHtml = isMain ? `
          <div class="table-card table-card--sq${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
               data-id="${t.id}" data-status="${t.status}">
-           <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
+           <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}" ></div>
            ${t.slotIds.length > 1 ? '<div class="table-card__combine">⛓</div>' : ''}
            <div class="table-card__num">${t.id}</div>
            <div class="table-card__seats">
@@ -1489,7 +1563,7 @@ function renderTables() {
            ${(t.status === 'reserved' && t.reservedTime) ? `<div style="font-size:0.6rem; color:var(--s-reserved); font-weight:800;">${t.reservedTime}</div>` : ''}
          </div>
        ` : '';
-       
+
        if(slot.area.startsWith('Piano Terra')) {
           containerPT.innerHTML += cardHtml;
           if(gridPT && gridCardHtml) gridPT.innerHTML += gridCardHtml;
@@ -1610,19 +1684,6 @@ function setReservation(id) {
 /* =====================================================
    CLOCK & TIMERS
 ===================================================== */
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clockDisplay').textContent = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-}
-updateClock();
-setInterval(updateClock, 1000);
-
-function formatTimer(ms) {
-  const totalSec = Math.floor(ms / 1000);
-  const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
-  const s = (totalSec % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-}
 
 function updateTimers() {
   const now = Date.now();
