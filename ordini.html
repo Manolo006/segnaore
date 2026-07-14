@@ -175,6 +175,18 @@
       gap: 16px;
     }
 
+    .menu-section-heading {
+      grid-column: 1 / -1;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 16px 0 0;
+      padding: 0 12px;
+      letter-spacing: 0.01em;
+      text-transform: uppercase;
+      opacity: 0.88;
+    }
+
     /* --- MENU CARD --- */
     .menu-card {
       background: var(--surface);
@@ -594,13 +606,58 @@
     const categories = [
       { id: 'antipasti', name: 'Antipasti', icon: '🥓' },
       { id: 'primi',     name: 'Primi',     icon: '🍝' },
+      { id: 'secondi',   name: 'Secondi',   icon: '🍖' },
       { id: 'taglieri',  name: 'Taglieri',  icon: '🧀' },
       { id: 'pizze',     name: 'Pizze al Padellino', icon: '🍕' },
-      { id: 'focaccia',  name: 'Focaccia',  icon: '🥖' },
-      { id: 'fritti',    name: 'Fritti',    icon: '🍟' },
-      { id: 'dolci',     name: 'Dolci',     icon: '🍰' },
-      { id: 'bevande',   name: 'Bevande',   icon: '🥤' }
+      { id: 'fevande',   name: 'Bevande',   icon: '🥤' }
     ];
+
+    const topCategoryMap = {
+      bruschette: 'antipasti',
+      focacce: 'focacce',
+      taglieri: 'taglieri',
+      pizze: 'pizze',
+      fritti: 'fritti',
+      primi: 'primi',
+      secondi: 'secondi',
+      dolci: 'dolci',
+      vini: 'bevande',
+      bollicine: 'bevande',
+      birre: 'bevande',
+      aperitivi: 'bevande',
+      softdrinks: 'bevande',
+      caffetteria: 'bevande',
+      liquori: 'bevande',
+      cocktails: 'bevande',
+      gin: 'bevande',
+      bevande: 'bevande'
+    };
+
+    const sectionTitles = {
+      bruschette: 'Bruschette',
+      focacce: 'Focacce',
+      vini: 'Vini',
+      bollicine: 'Bollicine',
+      birre: 'Birre',
+      aperitivi: 'Aperitivi e Sangria',
+      softdrinks: 'Soft Drinks e Acqua',
+      caffetteria: 'Caffetteria',
+      liquori: 'Liquori e Digestivi',
+      cocktails: 'Cocktails',
+      gin: 'Gin Selection',
+      bevande: 'Bevande'
+    };
+
+    function getTopCategory(item) {
+      return topCategoryMap[item.cat] || item.cat;
+    }
+
+    function formatSectionTitle(section) {
+      return sectionTitles[section] || section
+        .split(/[- ]+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
 
     // Placeholder image: ./images/placeholder.jpg (or use gradients in CSS if missing)
     const menuItems = [
@@ -659,10 +716,10 @@
 
 
       // VINI DELLA CASA
-      { id: 'b1', cat: 'bevande', name: 'Vino della Casa (Calice)', desc: 'Toscana Rosso', price: 4.90, img: './images/placeholder.jpg' },
-      { id: 'b2', cat: 'bevande', name: 'Vino della Casa (Calice)', desc: 'Toscana Rosso', price: 4.90, img: './images/placeholder.jpg' },
-       { id: 'b3', cat: 'bevande', name: 'Vino della Casa (Bottiglia)', desc: 'Toscana Branco', price: 18.90, img: './images/placeholder.jpg' },
-      { id: 'b4', cat: 'bevande', name: 'Vino della Casa (Bottiglia)', desc: 'Toscana Branco', price: 18.90, img: './images/placeholder.jpg' },
+      { id: 'b1', cat: 'vini', name: 'Vino della Casa (Calice)', desc: 'Toscana Rosso', price: 4.90, img: './images/placeholder.jpg' },
+      { id: 'b2', cat: 'vini', name: 'Vino della Casa (Calice)', desc: 'Toscana Rosso', price: 4.90, img: './images/placeholder.jpg' },
+      { id: 'b3', cat: 'vini', name: 'Vino della Casa (Bottiglia)', desc: 'Toscana Branco', price: 18.90, img: './images/placeholder.jpg' },
+      { id: 'b4', cat: 'vini', name: 'Vino della Casa (Bottiglia)', desc: 'Toscana Branco', price: 18.90, img: './images/placeholder.jpg' },
       // VINI ITALIANI
       { id: 'vi1', cat: 'vini', name: 'Primitivo di Puglia zin', desc: 'Vino rosso italiano', price: 25.90, img: './images/placeholder.jpg' },
       { id: 'vi2', cat: 'vini', name: 'Valpolicella superiore ripasso', desc: 'Vino rosso italiano', price: 29.90, img: './images/placeholder.jpg' },
@@ -698,33 +755,33 @@
       { id: 'bi8', cat: 'birre', name: 'Birra Somersby', desc: 'Sidro in bottiglia', price: 4.20, img: './images/placeholder.jpg' },
 
       // APERITIVI E SANGRIA
-      { id: 'ap1', cat: 'bevande', name: 'Sangria Bianca (1L)', desc: 'Sangria bianca da 1 litro', price: 17.90, img: './images/placeholder.jpg' },
-      { id: 'ap2', cat: 'bevande', name: 'Sangria Tinta (1L)', desc: 'Sangria rossa da 1 litro', price: 17.90, img: './images/placeholder.jpg' },
-      { id: 'ap3', cat: 'bevande', name: 'Sangria Rosé (1L)', desc: 'Sangria rosata da 1 litro', price: 17.90, img: './images/placeholder.jpg' },
-      { id: 'ap4', cat: 'bevande', name: 'Sangria Espumante (1L)', desc: 'Sangria con spumante da 1 litro', price: 19.90, img: './images/placeholder.jpg' },
-      { id: 'ap5', cat: 'bevande', name: 'Martini Rosso', desc: 'Aperitivo', price: 6.00, img: './images/placeholder.jpg' },
-      { id: 'ap6', cat: 'bevande', name: 'Martini Dry', desc: 'Aperitivo', price: 6.00, img: './images/placeholder.jpg' },
-      { id: 'ap7', cat: 'bevande', name: 'Martini Bianco', desc: 'Aperitivo', price: 6.00, img: './images/placeholder.jpg' },
-      { id: 'ap8', cat: 'bevande', name: 'Vino di Porto Down\'s Tawny', desc: 'Vino liquoroso', price: 5.00, img: './images/placeholder.jpg' },
-      { id: 'ap9', cat: 'bevande', name: 'Vino di Porto Down\'s Ruby', desc: 'Vino liquoroso', price: 5.00, img: './images/placeholder.jpg' },
-      { id: 'ap10', cat: 'bevande', name: 'Vino di Porto Down\'s LBV', desc: 'Vino liquoroso tardivo imbottigliato', price: 5.00, img: './images/placeholder.jpg' },
+      { id: 'ap1', cat: 'bevande', section: 'aperitivi', name: 'Sangria Bianca (1L)', desc: 'Sangria bianca da 1 litro', price: 17.90, img: './images/placeholder.jpg' },
+      { id: 'ap2', cat: 'bevande', section: 'aperitivi', name: 'Sangria Tinta (1L)', desc: 'Sangria rossa da 1 litro', price: 17.90, img: './images/placeholder.jpg' },
+      { id: 'ap3', cat: 'bevande', section: 'aperitivi', name: 'Sangria Rosé (1L)', desc: 'Sangria rosata da 1 litro', price: 17.90, img: './images/placeholder.jpg' },
+      { id: 'ap4', cat: 'bevande', section: 'aperitivi', name: 'Sangria Espumante (1L)', desc: 'Sangria con spumante da 1 litro', price: 19.90, img: './images/placeholder.jpg' },
+      { id: 'ap5', cat: 'bevande', section: 'aperitivi', name: 'Martini Rosso', desc: 'Aperitivo', price: 6.00, img: './images/placeholder.jpg' },
+      { id: 'ap6', cat: 'bevande', section: 'aperitivi', name: 'Martini Dry', desc: 'Aperitivo', price: 6.00, img: './images/placeholder.jpg' },
+      { id: 'ap7', cat: 'bevande', section: 'aperitivi', name: 'Martini Bianco', desc: 'Aperitivo', price: 6.00, img: './images/placeholder.jpg' },
+      { id: 'ap8', cat: 'bevande', section: 'aperitivi', name: 'Vino di Porto Down\'s Tawny', desc: 'Vino liquoroso', price: 5.00, img: './images/placeholder.jpg' },
+      { id: 'ap9', cat: 'bevande', section: 'aperitivi', name: 'Vino di Porto Down\'s Ruby', desc: 'Vino liquoroso', price: 5.00, img: './images/placeholder.jpg' },
+      { id: 'ap10', cat: 'bevande', section: 'aperitivi', name: 'Vino di Porto Down\'s LBV', desc: 'Vino liquoroso tardivo imbottigliato', price: 5.00, img: './images/placeholder.jpg' },
 
       // SOFT DRINKS E ACQUA
-      { id: 'sd1', cat: 'bevande', name: 'Coca Cola', desc: 'Soft drink', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd2', cat: 'bevande', name: 'Coca Cola Zero', desc: 'Soft drink senza zuccheri', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd3', cat: 'bevande', name: 'Fanta', desc: 'Soft drink', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd4', cat: 'bevande', name: 'Sprite', desc: 'Soft drink', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd5', cat: 'bevande', name: 'Lipton Mango', desc: 'Tè freddo al mango', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd6', cat: 'bevande', name: 'Lipton Limone', desc: 'Tè freddo al limone', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd7', cat: 'bevande', name: 'Lipton Pesca', desc: 'Tè freddo alla pesca', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd8', cat: 'bevande', name: 'Ginger Ale', desc: 'Soft drink al ginger', price: 3.40, img: './images/placeholder.jpg' },
-      { id: 'sd9', cat: 'bevande', name: 'Tonica Schweppes', desc: 'Acqua tonica', price: 3.40, img: './images/placeholder.jpg' },
-      { id: 'sd10', cat: 'bevande', name: 'Succo d\'arancia naturale', desc: 'Spremuta fresca d\'arancia', price: 4.50, img: './images/placeholder.jpg' },
-      { id: 'sd11', cat: 'bevande', name: 'Succo di frutta', desc: 'Gusti assortiti', price: 3.90, img: './images/placeholder.jpg' },
-      { id: 'sd12', cat: 'bevande', name: 'Acqua Luso 1L', desc: 'Acqua naturale', price: 3.50, img: './images/placeholder.jpg' },
-      { id: 'sd13', cat: 'bevande', name: 'Acqua Luso 0.50L', desc: 'Acqua naturale', price: 2.50, img: './images/placeholder.jpg' },
-      { id: 'sd14', cat: 'bevande', name: 'Acqua San Pellegrino 0.50L', desc: 'Acqua frizzante', price: 4.20, img: './images/placeholder.jpg' },
-      { id: 'sd15', cat: 'bevande', name: 'Acqua Luso Gas 1L', desc: 'Acqua frizzante', price: 3.90, img: './images/placeholder.jpg' },
+      { id: 'sd1', cat: 'bevande', section: 'softdrinks', name: 'Coca Cola', desc: 'Soft drink', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd2', cat: 'bevande', section: 'softdrinks', name: 'Coca Cola Zero', desc: 'Soft drink senza zuccheri', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd3', cat: 'bevande', section: 'softdrinks', name: 'Fanta', desc: 'Soft drink', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd4', cat: 'bevande', section: 'softdrinks', name: 'Sprite', desc: 'Soft drink', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd5', cat: 'bevande', section: 'softdrinks', name: 'Lipton Mango', desc: 'Tè freddo al mango', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd6', cat: 'bevande', section: 'softdrinks', name: 'Lipton Limone', desc: 'Tè freddo al limone', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd7', cat: 'bevande', section: 'softdrinks', name: 'Lipton Pesca', desc: 'Tè freddo alla pesca', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd8', cat: 'bevande', section: 'softdrinks', name: 'Ginger Ale', desc: 'Soft drink al ginger', price: 3.40, img: './images/placeholder.jpg' },
+      { id: 'sd9', cat: 'bevande', section: 'softdrinks', name: 'Tonica Schweppes', desc: 'Acqua tonica', price: 3.40, img: './images/placeholder.jpg' },
+      { id: 'sd10', cat: 'bevande', section: 'softdrinks', name: 'Succo d\'arancia naturale', desc: 'Spremuta fresca d\'arancia', price: 4.50, img: './images/placeholder.jpg' },
+      { id: 'sd11', cat: 'bevande', section: 'softdrinks', name: 'Succo di frutta', desc: 'Gusti assortiti', price: 3.90, img: './images/placeholder.jpg' },
+      { id: 'sd12', cat: 'bevande', section: 'softdrinks', name: 'Acqua Luso 1L', desc: 'Acqua naturale', price: 3.50, img: './images/placeholder.jpg' },
+      { id: 'sd13', cat: 'bevande', section: 'softdrinks', name: 'Acqua Luso 0.50L', desc: 'Acqua naturale', price: 2.50, img: './images/placeholder.jpg' },
+      { id: 'sd14', cat: 'bevande', section: 'softdrinks', name: 'Acqua San Pellegrino 0.50L', desc: 'Acqua frizzante', price: 4.20, img: './images/placeholder.jpg' },
+      { id: 'sd15', cat: 'bevande', section: 'softdrinks', name: 'Acqua Luso Gas 1L', desc: 'Acqua frizzante', price: 3.90, img: './images/placeholder.jpg' },
 
       // CAFFETTERIA
       { id: 'cf1', cat: 'caffetteria', name: 'Caffè Espresso', desc: 'Espresso classico', price: 1.50, img: './images/placeholder.jpg' },
@@ -803,7 +860,7 @@
                   </button>`;
                   
       categories.forEach(c => {
-        const count = menuItems.filter(m => m.cat === c.id).length;
+        const count = menuItems.filter(m => getTopCategory(m) === c.id).length;
         html += `<button class="cat-btn ${currentCat === c.id ? 'active' : ''}" onclick="setCat('${c.id}')">
                    <span>${c.icon} ${c.name}</span>
                    <span class="cat-badge">${count}</span>
@@ -823,29 +880,39 @@
         title.innerHTML = `<span>${c.icon}</span> ${c.name}`;
       }
 
-      const items = currentCat === 'tutte' ? menuItems : menuItems.filter(m => m.cat === currentCat);
+      const items = currentCat === 'tutte' ? menuItems : menuItems.filter(m => getTopCategory(m) === currentCat);
       
       if (items.length === 0) {
         grid.innerHTML = `<div style="grid-column: 1/-1; color:var(--text-3); text-align:center; padding:40px;">Nessun prodotto in questa categoria</div>`;
         return;
       }
 
-      grid.innerHTML = items.map(item => `
-        <div class="menu-card">
-          <div class="menu-card__img">
-            <div class="menu-card__img-placeholder">${categories.find(c => c.id === item.cat)?.icon || '🍽️'}</div>
-            <!-- If image exists, it overlays the placeholder -->
-            <img src="${item.img}" alt="${item.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity: 0.5;" onerror="this.style.display='none'">
-          </div>
-          <div class="menu-card__info">
-            <div class="menu-card__title">${item.name}</div>
-            <div class="menu-card__desc">${item.desc}</div>
-            <div class="menu-card__bottom">
-              <div class="menu-card__price">${item.price.toFixed(2)} €</div>
-              <button class="menu-card__add" onclick="addToCart('${item.id}')">+</button>
+      const grouped = items.reduce((acc, item) => {
+        const section = item.section || item.cat;
+        if (!acc[section]) acc[section] = [];
+        acc[section].push(item);
+        return acc;
+      }, {});
+
+      grid.innerHTML = Object.entries(grouped).map(([section, sectionItems]) => `
+        <div class="menu-section-heading">${formatSectionTitle(section)}</div>
+        ${sectionItems.map(item => `
+          <div class="menu-card">
+            <div class="menu-card__img">
+              <div class="menu-card__img-placeholder">${categories.find(c => c.id === item.cat)?.icon || '🍽️'}</div>
+              <!-- If image exists, it overlays the placeholder -->
+              <img src="${item.img}" alt="${item.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity: 0.5;" onerror="this.style.display='none'">
+            </div>
+            <div class="menu-card__info">
+              <div class="menu-card__title">${item.name}</div>
+              <div class="menu-card__desc">${item.desc}</div>
+              <div class="menu-card__bottom">
+                <div class="menu-card__price">${item.price.toFixed(2)} €</div>
+                <button class="menu-card__add" onclick="addToCart('${item.id}')">+</button>
+              </div>
             </div>
           </div>
-        </div>
+        `).join('')}
       `).join('');
     }
 
