@@ -1331,7 +1331,7 @@
 </button>
 
 <!-- ===== TOAST ===== -->
-<div class="toast-wrap" id="toastWrap">
+<div class="toast-wrap" id="toastWrap" style="display:none">
   <div class="toast">
     <span class="toast__icon" id="toastIcon">ℹ️</span>
     <span id="toastMsg">Messaggio</span>
@@ -1718,7 +1718,7 @@ function buildPanelContent(id) {
       <!-- 2. RICHIEDI CONTO — only if occupied -->
       <button class="pact-btn pact-btn--orange"
         ${!isOccupied ? 'disabled title="Nessun tavolo attivo"' : ''}
-        onclick="setTableStatus(${id}, 'bill')">
+        onclick="window.setTableStatus(${id}, 'bill')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
         Richiedi Conto
       </button>
@@ -1726,7 +1726,7 @@ function buildPanelContent(id) {
       <!-- 3. LIBERA TAVOLO -->
       <button class="pact-btn pact-btn--ghost"
         ${isFree ? 'disabled' : ''}
-        onclick="freeTable(${id})">
+        onclick="window.freeTable(${id})">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
         Libera Tavolo
       </button>
@@ -1740,7 +1740,7 @@ function buildPanelContent(id) {
         <!-- PRENOTA: disabled if table is occupied -->
         <button class="pact-btn pact-btn--ghost" style="flex:1; justify-content:center; color:var(--s-reserved); border-color:var(--s-reserved-border);"
           ${isOccupied ? 'disabled title="Tavolo occupato, non puoi prenotarlo"' : ''}
-          onclick="startReservationMode(${id})">
+          onclick="window.startReservationMode(${id})">
           📅 Prenota
         </button>
 
@@ -1748,11 +1748,11 @@ function buildPanelContent(id) {
         ${d.slotIds.length > 1 ? `
         <button class="pact-btn pact-btn--ghost" style="flex:1; justify-content:center; color:#f87171; border-color:rgba(248,113,113,0.3);"
           ${isReserved ? 'disabled title="Tavolo prenotato, non puoi scollegarlo"' : ''}
-          onclick="unlinkTable(${id})">✂️ Scollega</button>
+          onclick="window.unlinkTable(${id})">✂️ Scollega</button>
         ` : `
         <button class="pact-btn pact-btn--ghost" style="flex:1; justify-content:center; color:var(--accent); border-color:rgba(59,130,246,0.3);"
           ${isReserved ? 'disabled title="Tavolo prenotato, non puoi collegarlo"' : ''}
-          onclick="startLinkMode(${id})">⛓ Collega</button>
+          onclick="window.startLinkMode(${id})">⛓ Collega</button>
         `}
       </div>
     </div>
@@ -1761,9 +1761,9 @@ function buildPanelContent(id) {
     <div class="panel-section-lbl" style="margin-top:16px;">Coperti</div>
     <div>
       <div class="guest-counter">
-        <button class="counter-btn" onclick="changeGuests(${id}, -1)">−</button>
+        <button class="counter-btn" onclick="window.changeGuests(${id}, -1)">−</button>
         <div><div class="counter-val" id="guest-val-${id}">${d.guests}</div></div>
-        <button class="counter-btn" onclick="changeGuests(${id}, +1)">+</button>
+        <button class="counter-btn" onclick="window.changeGuests(${id}, +1)">+</button>
       </div>
       <div class="counter-lbl">/ ${d.seats} posti disponibili</div>
     </div>
@@ -1774,7 +1774,7 @@ function buildPanelContent(id) {
       <textarea id="note-input-${id}" rows="2"
         style="flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); font-size:0.85rem; font-family:inherit; resize:none; outline:none;"
         placeholder="Aggiungi una nota (es. celiaco, allergie…)">${d.note || ''}</textarea>
-      <button onclick="saveNote(${id})" style="align-self:flex-end; background:var(--accent); border:none; color:#fff; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.85rem;">💾</button>
+      <button onclick="window.saveNote(${id})" style="align-self:flex-end; background:var(--accent); border:none; color:#fff; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.85rem;">💾</button>
     </div>
 
     <!-- === ORDINI === -->
@@ -1794,7 +1794,7 @@ function buildPanelContent(id) {
       ${Object.entries(STATUS_LABELS).map(([s, lbl]) => `
         <button class="status-btn ${d.status === s ? 'active' : ''}"
                 style="${d.status === s ? `border-color:${STATUS_COLORS[s]}; background:${STATUS_COLORS[s]}1a;` : ''}"
-                onclick="setTableStatus(${id}, '${s}')">
+                onclick="window.setTableStatus(${id}, '${s}')">
           <div class="status-btn__dot" style="background:${STATUS_COLORS[s]};"></div>
           ${lbl}
         </button>
@@ -1881,9 +1881,12 @@ function openPanel(id) {
   const isMobile = window.innerWidth <= 900;
   if (isMobile) {
     document.getElementById('sheetBody').innerHTML = `
-      <div style="padding:16px 20px 8px;">
-        <h3 style="font-size:1.1rem;font-weight:700;">Tavolo ${id}</h3>
-        <p style="font-size:0.8rem;color:var(--text-2);margin-top:2px;">${d.seats} posti</p>
+      <div style="padding:16px 20px 8px; display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <h3 style="font-size:1.1rem;font-weight:700;">Tavolo ${id}</h3>
+          <p style="font-size:0.8rem;color:var(--text-2);margin-top:2px;">${d.seats} posti</p>
+        </div>
+        <button onclick="window.closePanel()" style="background:#ef4444; color:white; border:none; width:34px; height:34px; border-radius:50%; font-size:1.1rem; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">✕</button>
       </div>
       <div style="padding:0 20px 20px;">${buildPanelContent(id)}</div>
     `;
@@ -2013,14 +2016,32 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
   });
 });
 
+
+// =====================================================
+// EXPOSE FUNCTIONS TO GLOBAL (needed because script type=module is scoped)
+// =====================================================
+window.openPanel = openPanel;
+window.closePanel = closePanel;
+window.setTableStatus = setTableStatus;
+window.freeTable = freeTable;
+window.changeGuests = changeGuests;
+window.saveNote = saveNote;
+window.startReservationMode = startReservationMode;
+window.startLinkMode = startLinkMode;
+window.unlinkTable = unlinkTable;
+window.cancelLinkMode = cancelLinkMode;
+window.showToast = showToast;
+window.promptLinkTable = promptLinkTable;
+
 let toastTimer = null;
 function showToast(icon, msg) {
   const wrap = document.getElementById('toastWrap');
   document.getElementById('toastIcon').textContent = icon;
   document.getElementById('toastMsg').textContent = msg;
+  wrap.style.display = 'block';
   wrap.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => wrap.classList.remove('show'), 3000);
+  toastTimer = setTimeout(() => { wrap.classList.remove('show'); setTimeout(() => wrap.style.display = 'none', 400); }, 3000);
 }
 
 document.querySelectorAll('.bnav-item').forEach(item => {
