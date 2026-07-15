@@ -1064,6 +1064,166 @@
     }
     .coming-soon h3 { font-size: 1.1rem; color: var(--text-2); }
     .coming-soon p { font-size: 0.85rem; max-width: 280px; text-align: center; line-height: 1.6; }
+
+    /* ===================================================
+       ORDER MODAL (replaces prompt())
+    =================================================== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 600;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--bg-2);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-xl);
+      padding: 28px 24px 24px;
+      width: min(480px, calc(100vw - 32px));
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+      animation: modal-in 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes modal-in {
+      from { opacity: 0; transform: scale(0.9) translateY(12px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-box__title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .modal-box__sub {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      margin-bottom: 20px;
+    }
+    .modal-tables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      max-height: 260px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+    .modal-table-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 12px 8px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      transition: all 0.18s;
+      font-weight: 700;
+    }
+    .modal-table-card:hover {
+      border-color: var(--accent);
+      background: rgba(59,130,246,0.12);
+      transform: translateY(-2px);
+    }
+    .modal-table-card__num {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+    .modal-table-card__status {
+      font-size: 0.6rem;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+    }
+    .modal-cancel-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .modal-cancel-btn:hover { background: var(--surface-hover); color: var(--text); }
+    .modal-asporto-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .modal-asporto-btn:hover { background: rgba(59,130,246,0.22); }
+
+    /* ===================================================
+       MOBILE SETTINGS DRAWER
+    =================================================== */
+    .settings-drawer {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      max-height: 80vh;
+      background: var(--bg-2);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      border-top: 1px solid var(--border);
+      z-index: 550;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.35s var(--ease);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .settings-drawer.open {
+      display: block;
+      transform: translateY(0);
+    }
+    .settings-drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 540;
+      backdrop-filter: blur(4px);
+    }
+    .settings-drawer-overlay.show { display: block; }
+    .settings-drawer__handle {
+      width: 40px; height: 4px;
+      background: var(--border-strong);
+      border-radius: 2px;
+      margin: 14px auto 8px;
+    }
+    .settings-drawer__title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--text-3);
+      padding: 0 20px 10px;
+    }
+    .settings-drawer__content {
+      padding: 0 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    @media (min-width: 901px) {
+      .settings-drawer, .settings-drawer-overlay { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -1095,15 +1255,10 @@
         Terrazza
         <span class="area-tab__badge" id="badge-terrazza">2</span>
       </button>
-      <button class="area-tab" data-area="primo-piano">
-        <span class="area-tab__dot" style="background: var(--text-3)"></span>
-        1° Piano
-        <span class="area-tab__badge" style="background: rgba(255,255,255,0.06); color: var(--text-3)">—</span>
-      </button>
     </div>
 
     <div class="topnav__actions">
-      <button class="icon-btn" title="Impostazioni" onclick="showToast('⚙️', 'Impostazioni non ancora disponibili')">
+      <button class="icon-btn" id="settingsBtn" title="Impostazioni" onclick="window.toggleSettingsDrawer()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
@@ -1225,44 +1380,25 @@
         <div class="floor-canvas--grid" id="floor-canvas-pt-grid"></div>
       </div><!-- end piano terra -->
 
-
-      <!-- TERRAZZA -->
       <div class="floor-area" id="area-terrazza">
         <div class="area-label">
           <div class="area-label__icon">☀️</div>
           Terrazza — Area Esterna
         </div>
 
-        <div class="floor-canvas" style="height: 700px;">
+        <div class="floor-canvas" style="height: 720px;">
 
-          <!-- Bar stools lines -->
-          <div style="position:absolute; bottom:0px; left:150px; display:flex; flex-direction:line; gap:50px; pointer-events:none;">
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-          </div>
+          <!-- Top boundary -->
+          <div class="arch-wall" style="top:0; left:0; right:0; height:2px; background:rgba(245,158,11,0.2);"></div>
+          <div class="arch-wall" style="top:0; left:0; bottom:0; width:2px; background:rgba(245,158,11,0.1);"></div>
 
-          <!-- Outer area boundary hints -->
-          <div class="arch-wall"
-               style="top:0; left:0; right:0; height:2px; background: rgba(245,158,11,0.2);"></div>
-          <div class="arch-wall"
-               style="top:0; left:0; bottom:0; width:2px; background: rgba(245,158,11,0.1);"></div>
+          <!-- Zone labels -->
+          <div class="zone-tag" style="top:10px; left:12px; color:rgba(245,158,11,0.5);">Zona A</div>
+          <div class="zone-tag" style="top:360px; left:12px; color:rgba(245,158,11,0.4);">Zona B</div>
 
-          <div class="zone-tag" style="top:10px; left:12px; color: rgba(245,158,11,0.5);">Esterno</div>
+          <!-- Dividing wall -->
+          <div class="arch-divider" style="top:310px; left:0; right:0; height:3px; background:rgba(245,158,11,0.25);"></div>
 
-
-
-
-
-
-
-          
 <div id="floor-canvas-tr-dynamic"></div>
 
 </div><!-- end floor-canvas -->
@@ -1270,24 +1406,6 @@
         <!-- MOBILE GRID (shown on phones) -->
         <div class="floor-canvas--grid" id="floor-canvas-tr-grid"></div>
       </div><!-- end terrazza -->
-
-
-      <!-- 1° PIANO -->
-      <div class="floor-area" id="area-primo-piano">
-        <div class="area-label">
-          <div class="area-label__icon">🏗️</div>
-          1° Piano — In allestimento
-        </div>
-        <div class="coming-soon">
-          <div class="coming-soon__icon">🏗️</div>
-          <h3>Area in allestimento</h3>
-          <p>Il layout del primo piano non è ancora configurato. Contatta il responsabile per abilitare questa area.</p>
-          <button class="pact-btn pact-btn--ghost" style="margin-top:8px; width:auto; padding:10px 20px; border-radius:10px; font-size:0.85rem; color:var(--text-2); background:var(--surface); border:1px solid var(--border);" onclick="showToast('🏗️', 'Funzione non ancora disponibile')">
-            Configura Area
-          </button>
-        </div>
-      </div>
-
     </div><!-- end floor-wrap -->
 
     <!-- ===== RIGHT SIDE PANEL ===== -->
@@ -1350,19 +1468,101 @@
   </div>
 </div>
 
+<!-- ===== MOBILE SETTINGS DRAWER ===== -->
+<div class="settings-drawer-overlay" id="settingsOverlay" onclick="window.closeSettingsDrawer()"></div>
+<div class="settings-drawer" id="settingsDrawer">
+  <div class="settings-drawer__handle"></div>
+  <div class="settings-drawer__title">Panoramica</div>
+  <div class="settings-drawer__content">
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-card__val" id="drawer-stat-total">—</div>
+        <div class="stat-card__lbl">Tavoli totali</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__val" id="drawer-stat-free" style="color: var(--s-free)">—</div>
+        <div class="stat-card__lbl">Liberi</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__val" id="drawer-stat-occupied" style="color: var(--s-preparing)">—</div>
+        <div class="stat-card__lbl">Occupati</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__val" id="drawer-stat-ready" style="color: var(--s-ready)">—</div>
+        <div class="stat-card__lbl">Da servire</div>
+      </div>
+    </div>
+    <!-- Filtri -->
+    <div>
+      <div class="settings-drawer__title" style="padding:0 4px 10px;">Filtri</div>
+      <div class="filter-row" style="padding:0; flex-wrap:wrap;">
+        <button class="filter-chip active" data-filter="all" id="drawer-filter-all">Tutti</button>
+        <button class="filter-chip" data-filter="free" id="drawer-filter-free">Liberi</button>
+        <button class="filter-chip" data-filter="occupied" id="drawer-filter-occupied">Occupati</button>
+        <button class="filter-chip" data-filter="ready" id="drawer-filter-ready">Pronti</button>
+      </div>
+    </div>
+    <!-- Legenda -->
+    <div>
+      <div class="settings-drawer__title" style="padding:0 4px 10px;">Legenda</div>
+      <div class="legend">
+        <div class="legend-item" data-filter="free"><div class="legend-dot" style="background:var(--s-free)"></div>Disponibile<span class="legend-count" id="drawer-lc-free">—</span></div>
+        <div class="legend-item" data-filter="preparing"><div class="legend-dot" style="background:var(--s-preparing)"></div>In preparazione<span class="legend-count" id="drawer-lc-prep">—</span></div>
+        <div class="legend-item" data-filter="ready"><div class="legend-dot" style="background:var(--s-ready)"></div>Pronto da servire<span class="legend-count" id="drawer-lc-ready">—</span></div>
+        <div class="legend-item" data-filter="bill"><div class="legend-dot" style="background:var(--s-bill)"></div>Attesa conto<span class="legend-count" id="drawer-lc-bill">—</span></div>
+        <div class="legend-item" data-filter="paid"><div class="legend-dot" style="background:var(--s-paid)"></div>Pagato / Chiuso<span class="legend-count" id="drawer-lc-paid">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ORDER MODAL ===== -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-box">
+    <div class="modal-box__title">🍽️ Nuovo Ordine</div>
+    <div class="modal-box__sub">Seleziona il tavolo o scegli Asporto</div>
+    <div class="modal-tables-grid" id="modalTablesGrid">
+      <!-- Filled by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel-btn" onclick="window.closeOrderModal()">Annulla</button>
+      <button class="modal-asporto-btn" onclick="window.goToAsporto()">🛵 Asporto</button>
+    </div>
+  </div>
+</div>
+
 
 <script type="module">
   window.startGlobalOrder = function() {
-    const tableIdStr = prompt("Inserisci il numero del tavolo per la comanda:");
-    if (!tableIdStr) return; // user cancelled
-    const tid = parseInt(tableIdStr);
-    if (isNaN(tid)) {
-      alert("Numero tavolo non valido");
-      return;
-    }
-    // Check if table exists (optional, but good)
+    // Build modal table grid
+    const grid = document.getElementById('modalTablesGrid');
+    grid.innerHTML = tables.map(t => {
+      const statusLabel = STATUS_LABELS[t.status] || t.status;
+      const statusColor = STATUS_COLORS[t.status] || '#475569';
+      return `
+        <div class="modal-table-card" onclick="window.openOrderForTable(${t.id})">
+          <div class="modal-table-card__num">${t.id}</div>
+          <div class="modal-table-card__status" style="background:${statusColor}22; color:${statusColor};">${statusLabel}</div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('orderModal').classList.add('open');
+  };
+
+  window.closeOrderModal = function() {
+    document.getElementById('orderModal').classList.remove('open');
+  };
+
+  window.openOrderForTable = function(tid) {
+    document.getElementById('orderModal').classList.remove('open');
     window.location.href = `ordini.html?table=${tid}`;
-  }
+  };
+
+  window.goToAsporto = function() {
+    document.getElementById('orderModal').classList.remove('open');
+    window.location.href = 'ordini.html';
+  };
 
 /* =====================================================
    DATA — Status definitions
@@ -1394,7 +1594,8 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
   'preparing':  'In preparazione',
   'ready':      'Pronto da servire',
   'bill':       'Attesa conto',
-  'paid':       'Pagato / Chiuso'
+  'paid':       'Pagato / Chiuso',
+  'linked':     'Unito'
 };
 
 const STATUS_COLORS = {
@@ -1403,7 +1604,8 @@ const STATUS_COLORS = {
   'preparing':  '#3b82f6',
   'ready':      '#a855f7',
   'bill':       '#f97316',
-  'paid':       '#475569'
+  'paid':       '#475569',
+  'linked':     '#78716c'
 };
 
 const STATUS_EMOJIS = {
@@ -1412,7 +1614,8 @@ const STATUS_EMOJIS = {
   'preparing':  '🔵',
   'ready':      '🟣',
   'bill':       '🟠',
-  'paid':       '⚫'
+  'paid':       '⚫',
+  'linked':     '🔗'
 };
 
 /* =====================================================
@@ -1426,11 +1629,14 @@ const tableSlots = {
   'pt_5': { area: 'Piano Terra (Esterno)', left: '1.875rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
   'pt_6': { area: 'Piano Terra (Esterno)', left: '15.625rem', top: '1.3rem', type: 'rect-v', baseSeats: 4 },
   'pt_7': { area: 'Piano Terra (Esterno)', left: '29.375rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
-  'tr_20': { area: 'Terrazza', left: '1.3rem', top: '25rem', type: 'sq', baseSeats: 2 },
-  'tr_21a': { area: 'Terrazza', left: '20px', top: '160px', type: 'rect-h', baseSeats: 4 },
-  'tr_21b': { area: 'Terrazza', left: '20px', top: '160px', type: 'sq', baseSeats: 2 },
-  'tr_22': { area: 'Terrazza', right: '7.5rem', top: '7.5rem', type: 'sq', baseSeats: 2 },
-  'tr_23': { area: 'Terrazza', right: '7.5rem', top: '22.5rem', type: 'rect-v', baseSeats: 4 },
+  // Terrazza — nuova disposizione
+  'tr_20': { area: 'Terrazza', left: '20px', top: '20px', type: 'rect-h', baseSeats: 4 },
+  'tr_21': { area: 'Terrazza', left: '240px', top: '20px', type: 'sq', baseSeats: 2 },
+  'tr_22': { area: 'Terrazza', left: '20px', top: '140px', type: 'sq', baseSeats: 2 },
+  'tr_23': { area: 'Terrazza', left: '240px', top: '110px', type: 'rect-v', baseSeats: 4 },
+  'tr_24': { area: 'Terrazza', left: '20px', top: '360px', type: 'sq', baseSeats: 2 },
+  'tr_25': { area: 'Terrazza', left: '150px', top: '440px', type: 'sq', baseSeats: 2 },
+  'tr_26': { area: 'Terrazza', left: '260px', top: '510px', type: 'sq', baseSeats: 2 },
 };
 
 let tables = [
@@ -1441,10 +1647,14 @@ let tables = [
   { id: 5, slotIds: ['pt_5'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 6, slotIds: ['pt_6'], status: 'free', guests: 0, seats: 4, startedAt: null },
   { id: 7, slotIds: ['pt_7'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 20, slotIds: ['tr_20'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 21, slotIds: ['tr_21a', 'tr_21b'], status: 'free', guests: 0, seats: 6, startedAt: null },
+  // Terrazza — nuova disposizione
+  { id: 20, slotIds: ['tr_20'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 21, slotIds: ['tr_21'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 22, slotIds: ['tr_22'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 23, slotIds: ['tr_23'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 24, slotIds: ['tr_24'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 25, slotIds: ['tr_25'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 26, slotIds: ['tr_26'], status: 'free', guests: 0, seats: 2, startedAt: null },
 ];
 
 let selectedTableId = null;
@@ -1606,16 +1816,17 @@ function promptLinkTable(id, knownTargetId = null) {
   const targetTable = tables[targetIdx];
   const sourceTable = tables[tableIdx];
   
-  sourceTable.slotIds.push(...targetTable.slotIds);
-  sourceTable.seats += targetTable.seats;
+  if (!sourceTable.linkedTables) sourceTable.linkedTables = [];
+  if (!sourceTable.linkedTables.includes(targetId)) {
+     sourceTable.linkedTables.push(targetId);
+     sourceTable.seats += targetTable.seats;
+  }
   
-  // Delete target table from array
-  tables.splice(targetIdx, 1);
+  targetTable.status = 'linked';
+  targetTable.linkedTo = id;
   
-  // Shift tables downwards to close gap
-  tables.forEach(t => {
-     if (t.id > targetId) t.id--;
-  });
+  syncTableToDB(sourceTable);
+  syncTableToDB(targetTable);
   
   renderTables();
   showToast('✅', `Tavolo ${targetId} unito al Tavolo ${id}!`);
@@ -1627,37 +1838,27 @@ function unlinkTable(id) {
   if (tableIdx === -1) return;
   const t = tables[tableIdx];
   
-  if (t.slotIds.length <= 1) {
+  if (!t.linkedTables || t.linkedTables.length === 0) {
     showToast('⚠️', 'Questo tavolo non è unito ad altri.');
     return;
   }
   
-  // Pop the last slot
-  const splitSlotId = t.slotIds.pop();
-  const splitSlot = tableSlots[splitSlotId];
-  
-  t.seats -= splitSlot.baseSeats;
-  const newId = id + 1;
-  
-  // Shift tables upwards to make space
-  tables.forEach(table => {
-     if (table.id >= newId) table.id++;
+  // Unlink all target tables
+  t.linkedTables.forEach(targetId => {
+    const targetTable = tables.find(tb => tb.id === targetId);
+    if(targetTable) {
+      t.seats -= targetTable.seats;
+      targetTable.status = 'free';
+      targetTable.linkedTo = null;
+      syncTableToDB(targetTable);
+    }
   });
   
-  // Insert new table directly after current
-  tables.splice(tableIdx + 1, 0, {
-    id: newId,
-    slotIds: [splitSlotId],
-    status: 'free',
-    guests: 0,
-    seats: splitSlot.baseSeats,
-    reservedTime: '',
-    reservedGuests: 0,
-    startedAt: null
-  });
+  t.linkedTables = [];
+  syncTableToDB(t);
   
   renderTables();
-  showToast('✂️', `Tavolo diviso. Creato nuovo Tavolo ${newId}`);
+  showToast('✂️', `Tavoli divisi.`);
   closePanel();
 }
 
@@ -1675,6 +1876,7 @@ function setReservation(id) {
   t.reservedGuests = parseInt(guests);
   t.guests = 0;
   t.startedAt = null;
+  syncTableToDB(t);
   
   renderTables();
   showToast('📅', `Tavolo ${id} prenotato per le ${time}`);
@@ -1714,7 +1916,7 @@ function updateStats() {
   document.getElementById('stat-occupied').textContent = occupied;
   document.getElementById('stat-ready').textContent = counts.ready || 0;
   
-  // Legend
+  // Legend (sidebar)
   const legendMap = {
     'lc-free': 'free', 'lc-prep': 'preparing', 
     'lc-ready': 'ready', 'lc-bill': 'bill', 'lc-paid': 'paid'
@@ -1724,12 +1926,75 @@ function updateStats() {
      if(el) el.textContent = counts[stat] || 0;
   });
 
+  // Drawer stats (mobile)
+  const drawerTotal = document.getElementById('drawer-stat-total');
+  const drawerFree  = document.getElementById('drawer-stat-free');
+  const drawerOcc   = document.getElementById('drawer-stat-occupied');
+  const drawerReady = document.getElementById('drawer-stat-ready');
+  if(drawerTotal) drawerTotal.textContent = total;
+  if(drawerFree)  drawerFree.textContent = counts.free || 0;
+  if(drawerOcc)   drawerOcc.textContent = occupied;
+  if(drawerReady) drawerReady.textContent = counts.ready || 0;
+  
+  // Drawer legend
+  const drawerLegendMap = {
+    'drawer-lc-free': 'free', 'drawer-lc-prep': 'preparing',
+    'drawer-lc-ready': 'ready', 'drawer-lc-bill': 'bill', 'drawer-lc-paid': 'paid'
+  };
+  Object.entries(drawerLegendMap).forEach(([elId, stat]) => {
+    const el = document.getElementById(elId);
+    if(el) el.textContent = counts[stat] || 0;
+  });
+
   // Area badges
   const ptCount = tables.filter(t => tableSlots[t.slotIds[0]].area.startsWith('Piano Terra') && t.status !== 'free').length;
   const terrCount = tables.filter(t => tableSlots[t.slotIds[0]].area.startsWith('Terrazza') && t.status !== 'free').length;
   document.getElementById('badge-piano-terra').textContent = ptCount;
   document.getElementById('badge-terrazza').textContent = terrCount;
 }
+
+// ---- SETTINGS DRAWER (mobile only) ----
+window.toggleSettingsDrawer = function() {
+  const drawer = document.getElementById('settingsDrawer');
+  const overlay = document.getElementById('settingsOverlay');
+  if (drawer.classList.contains('open')) {
+    drawer.classList.remove('open');
+    overlay.classList.remove('show');
+  } else {
+    drawer.classList.add('open');
+    overlay.classList.add('show');
+  }
+};
+window.closeSettingsDrawer = function() {
+  document.getElementById('settingsDrawer').classList.remove('open');
+  document.getElementById('settingsOverlay').classList.remove('show');
+};
+
+// Drawer filter chips
+document.querySelectorAll('#settingsDrawer .filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#settingsDrawer .filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    const filter = chip.dataset.filter;
+    document.querySelectorAll('.table-card').forEach(c => {
+      const match = !filter || filter === 'all' || c.dataset.status === filter || 
+        (filter === 'occupied' && !['free','paid','reserved'].includes(c.dataset.status));
+      c.style.display = match ? '' : 'none';
+    });
+  });
+});
+
+// Drawer legend items as filters
+document.querySelectorAll('#settingsDrawer .legend-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const filter = item.dataset.filter;
+    document.querySelectorAll('.table-card').forEach(c => {
+      const match = !filter || c.dataset.status === filter;
+      c.style.display = match ? '' : 'none';
+    });
+    window.closeSettingsDrawer();
+  });
+});
 
 /* =====================================================
    PANEL RENDERING
@@ -1913,7 +2178,7 @@ function buildOrdersList(id) {
       </div>
       <div style="text-align:right;">
         <div style="font-size:0.8rem; color:var(--accent); font-weight:700;">x${o.qty}</div>
-        <div style="font-size:0.75rem; color:var(--text-3);">${(o.price * o.qty).toFixed(2)} €</div>
+        <div style="font-size:0.75rem; color:var(--text-3);">${((o.price || 0) * (o.qty || 1)).toFixed(2)} €</div>
       </div>
     </div>
   `).join('');
@@ -1921,11 +2186,17 @@ function buildOrdersList(id) {
 
 function subscribeTableOrders(id) {
   if(!window._fbReady || !window._db) return;
-  const r = window._fbRef(window._db, `orders/table_${id}`);
+  const r = window._fbRef(window._db, `orders`);
   window._fbOnValue(r, (snapshot) => {
     const data = snapshot.val();
-    const t = tables.find(tb => tb.id === id);
-    if(t) t.orders = data ? Object.values(data) : [];
+    const allOrders = data ? Object.values(data) : [];
+    const tOrders = allOrders.filter(o => parseInt(o.tableId) === parseInt(id) && o.status !== 'done');
+    
+    const t = tables.find(tb => tb.id == id);
+    if(t) {
+      t.orders = tOrders.flatMap(o => o.items || []);
+    }
+    
     // Refresh order list in panel if still open
     const el = document.getElementById(`orders-list-${id}`);
     if(el) el.innerHTML = buildOrdersList(id);
@@ -1934,7 +2205,7 @@ function subscribeTableOrders(id) {
 
 function openPanel(id) {
   selectedTableId = id;
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t.id == id);
   if(!d) return;
   // Init orders array if needed
   if(!d.orders) d.orders = [];
@@ -1989,6 +2260,7 @@ function setTableStatus(id, newStatus) {
      d.reservedTime = '';
   }
 
+  syncTableToDB(d);
   renderTables();
   if (selectedTableId === id) openPanel(id);
   showToast(STATUS_EMOJIS[newStatus], `Tavolo ${id}: ${STATUS_LABELS[newStatus]}`);
@@ -2000,12 +2272,14 @@ function changeGuests(id, delta) {
   d.guests = Math.max(0, Math.min(d.seats, d.guests + delta));
   const el = document.getElementById(`guest-val-${id}`);
   if (el) el.textContent = d.guests;
+  syncTableToDB(d);
 }
 
 function freeTable(id) {
   const d = tables.find(t => t.id === id);
   if(d) d.guests = 0;
   setTableStatus(id, 'free');
+  // sync is called in setTableStatus
   closePanel();
 }
 
@@ -2116,35 +2390,20 @@ document.querySelectorAll('.bnav-item').forEach(item => {
 renderTables();
 
 // Polling per Firebase Sync
+// Polling per Firebase Sync
 function initSync() {
   if(window._fbReady) {
-    window._onValue(window._ref(window._db, 'orders'), (snapshot) => {
+    window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
       const data = snapshot.val();
-      const allOrders = data ? Object.values(data) : [];
-      
-      tables.forEach(t => {
-        const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
-        if (tOrders.length === 0) {
-          if (t.status !== 'reserved') {
-             t.status = 'free';
-             t.startedAt = null;
-          }
-        } else {
-          t.startedAt = Math.min(...tOrders.map(o => o.createdAt));
-          const allItems = tOrders.flatMap(o => o.items || []);
-          if (allItems.length === 0) {
-            t.status = 'preparing';
-          } else if (allItems.some(i => i.status === 'cooking')) {
-            t.status = 'preparing';
-          } else if (allItems.some(i => i.status === 'ready')) {
-            t.status = 'ready';
-          } else if (allItems.every(i => i.status === 'done')) {
-            t.status = 'paid';
-          } else {
-            t.status = 'preparing';
-          }
-        }
-      });
+      if (data) {
+        // Sort by ID to ensure correct ordering if needed
+        tables = Object.values(data).sort((a, b) => a.id - b.id);
+      } else {
+        // First load ever: initialize tables in DB
+        const initial = {};
+        tables.forEach(t => initial[t.id] = t);
+        window._fbSet(window._ref(window._db, 'tables'), initial);
+      }
       renderTables();
     });
   } else {
@@ -2152,6 +2411,19 @@ function initSync() {
   }
 }
 initSync();
+
+function syncTableToDB(tableObj) {
+  if (window._fbReady) {
+    window._fbSet(window._ref(window._db, 'tables/' + tableObj.id), tableObj);
+  }
+}
+function syncAllTablesToDB() {
+  if (window._fbReady) {
+    const data = {};
+    tables.forEach(t => data[t.id] = t);
+    window._fbSet(window._ref(window._db, 'tables'), data);
+  }
+}
 
 /* =====================================================
    NIGHTLY RESET (02:00 AM)

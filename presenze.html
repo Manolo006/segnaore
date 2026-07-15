@@ -272,6 +272,7 @@
     async function loadOwnerDashboard() {
       loadReviewList();
       loadStaffList();
+      loadAllAttendance();
 
       // Load Settings
       const settingsSnap = await get(ref(dbRealtime, 'settings/gps'));
@@ -425,7 +426,132 @@
         totalHours: h
       });
       loadReviewList();
+      loadAllAttendance();
     };
+    
+    window.editApprovedShift = async (id) => {
+      const inVal = document.getElementById(`in_${id}`).value;
+      const outVal = document.getElementById(`out_${id}`).value;
+      const noteVal = document.getElementById(`note_${id}`).value;
+      
+      let h = 0;
+      if (inVal && outVal) {
+        const t1 = inVal.split(':');
+        const t2 = outVal.split(':');
+        const m1 = parseInt(t1[0])*60 + parseInt(t1[1]);
+        const m2 = parseInt(t2[0])*60 + parseInt(t2[1]);
+        h = Math.max(0, m2 - m1) / 60;
+      }
+
+      await updateDoc(doc(dbFirestore, "attendance", id), {
+        approvedClockIn: inVal,
+        approvedClockOut: outVal,
+        note: noteVal,
+        totalHours: h
+      });
+      loadAllAttendance();
+      alert('Modifica salvata.');
+    };
+    
+    window.addAbsence = async () => {
+      const employeeId = document.getElementById('absence-employee').value;
+      const dateVal = document.getElementById('absence-date').value;
+      const reasonVal = document.getElementById('absence-reason').value;
+      const justifiedVal = document.getElementById('absence-justified').value === 'true';
+      
+      if(!employeeId || !dateVal) {
+        alert('Seleziona dipendente e data');
+        return;
+      }
+      
+      // Get employee name
+      const userSnap = await getDoc(doc(dbFirestore, 'users', employeeId));
+      const employeeName = userSnap.exists() ? userSnap.data().name : 'Sconosciuto';
+      
+      await addDoc(collection(dbFirestore, 'attendance'), {
+        userId: employeeId,
+        userName: employeeName,
+        dateString: dateVal,
+        realClockIn: null,
+        realClockOut: null,
+        approvedClockIn: '--:--',
+        approvedClockOut: '--:--',
+        status: justifiedVal ? 'Assenza Giustificata' : 'Assenza Ingiustificata',
+        note: reasonVal || '',
+        totalHours: 0,
+        isAbsence: true
+      });
+      
+      alert('Assenza registrata.');
+      document.getElementById('absence-date').value = '';
+      document.getElementById('absence-reason').value = '';
+      loadAllAttendance();
+    };
+    
+    async function loadAllAttendance() {
+      const list = document.getElementById('all-attendance-list');
+      if (!list) return;
+      list.innerHTML = '<div style="color:var(--text-2); font-size:0.85rem;">Caricamento...</div>';
+      
+      // Load employees for absence dropdown
+      const usersSnap = await getDocs(query(collection(dbFirestore, 'users')));
+      const empSelect = document.getElementById('absence-employee');
+      if (empSelect) {
+        empSelect.innerHTML = '<option value="">Seleziona dipendente...</option>';
+        usersSnap.forEach(d => {
+          const data = d.data();
+          if (data.role === 'employee') {
+            empSelect.innerHTML += `<option value="${d.id}">${data.name}</option>`;
+          }
+        });
+      }
+      
+      const q = query(collection(dbFirestore, 'attendance'), orderBy('dateString', 'desc'));
+      const snapshot = await getDocs(q);
+      list.innerHTML = '';
+      
+      if (snapshot.empty) {
+        list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">Nessuna presenza registrata.</div>';
+        return;
+      }
+      
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const isAbsence = data.isAbsence || false;
+        const statusColor = data.status === 'Approvato' ? 'var(--s-ready)' :
+          data.status === 'Assenza Giustificata' ? '#f59e0b' :
+          data.status === 'Assenza Ingiustificata' ? '#ef4444' :
+          data.status === 'In corso' ? 'var(--s-prep)' : 'var(--text-2)';
+        
+        list.innerHTML += `
+          <div class="card" style="margin-bottom:12px; border-color:${isAbsence ? (data.status === 'Assenza Giustificata' ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)') : 'var(--border)'}; ${isAbsence ? 'background:rgba(239,68,68,0.03);' : ''}">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div>
+                <div style="font-weight:700;">${data.userName || 'N/D'}</div>
+                <div style="font-size:0.75rem; color:var(--text-3);">${data.dateString}</div>
+              </div>
+              <div style="font-size:0.75rem; font-weight:700; color:${statusColor};">${data.status}</div>
+            </div>
+            ${!isAbsence ? `
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <div style="flex:1;">
+                <label style="font-size:0.68rem; color:var(--text-2);">Entrata</label>
+                <input type="time" id="in_${docSnap.id}" value="${data.approvedClockIn || ''}" class="input" style="padding:8px; margin-bottom:0;">
+              </div>
+              <div style="flex:1;">
+                <label style="font-size:0.68rem; color:var(--text-2);">Uscita</label>
+                <input type="time" id="out_${docSnap.id}" value="${data.approvedClockOut || ''}" class="input" style="padding:8px; margin-bottom:0;">
+              </div>
+            </div>
+            <input type="text" id="note_${docSnap.id}" placeholder="Nota / Giustificazione" value="${data.note || ''}" class="input" style="padding:8px; margin-bottom:8px;">
+            <button class="btn btn-outline" style="padding:10px; font-size:0.8rem;" onclick="editApprovedShift('${docSnap.id}')">💾 Salva modifiche</button>
+            ` : `
+            <div style="font-size:0.8rem; color:var(--text-2); margin-bottom:4px;">📝 ${data.note || 'Nessuna nota'}</div>
+            `}
+          </div>
+        `;
+      });
+    }
 
     window.saveSettings = async () => {
       const lat = parseFloat(document.getElementById('lat').value);
@@ -597,8 +723,9 @@
     
     <div class="tabs-row">
       <button class="tab-btn active" onclick="switchOwnerTab('tab-review', event)">Turni</button>
-      <button class="tab-btn" onclick="switchOwnerTab('tab-staff', event)">Gestione Personale</button>
-      <button class="tab-btn" onclick="switchOwnerTab('tab-gps', event)">Sede GPS</button>
+      <button class="tab-btn" onclick="switchOwnerTab('tab-staff', event)">Personale</button>
+      <button class="tab-btn" onclick="switchOwnerTab('tab-history', event)">Storico</button>
+      <button class="tab-btn" onclick="switchOwnerTab('tab-gps', event)">GPS</button>
     </div>
 
     <div id="tab-review" class="owner-tab">
@@ -609,6 +736,23 @@
     <div id="tab-staff" class="owner-tab" style="display:none;">
       <h3 style="margin-bottom:16px; font-size:1.1rem; color:var(--accent);">Gestione Personale</h3>
       <div id="staff-list"></div>
+    </div>
+
+    <div id="tab-history" class="owner-tab" style="display:none;">
+      <h3 style="margin-bottom:16px; font-size:1.1rem;">Storico Presenze</h3>
+      <!-- Manual absence recording -->
+      <div class="card" style="margin-bottom:20px; border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.03);">
+        <div style="font-size:0.85rem; font-weight:700; color:#ef4444; margin-bottom:14px;">➕ Registra Assenza</div>
+        <select id="absence-employee" class="input" style="margin-bottom:8px;"><option value="">Seleziona dipendente...</option></select>
+        <input type="date" id="absence-date" class="input" style="margin-bottom:8px;">
+        <input type="text" id="absence-reason" class="input" placeholder="Motivo (es. malattia, permesso)" style="margin-bottom:8px;">
+        <select id="absence-justified" class="input" style="margin-bottom:12px;">
+          <option value="true">Giustificata</option>
+          <option value="false">Ingiustificata</option>
+        </select>
+        <button class="btn btn-red" style="padding:12px; width:auto;" onclick="addAbsence()">Registra Assenza</button>
+      </div>
+      <div id="all-attendance-list"></div>
     </div>
 
     <div id="tab-gps" class="owner-tab" style="display:none;">
