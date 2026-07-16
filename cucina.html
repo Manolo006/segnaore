@@ -520,7 +520,7 @@ function renderTickets() {
     ` : order.status === 'cooking' ? `
       <button class="ticket__btn ticket__btn--ready" onclick="advanceOrder('${order.id}', 'ready')">🟢 Segna Pronta</button>
     ` : order.status === 'ready' ? `
-      <button class="ticket__btn ticket__btn--done" onclick="advanceOrder('${order.id}', 'done')">✅ Consegnata</button>
+      <button class="ticket__btn ticket__btn--done" onclick="advanceOrder('${order.id}', 'done ')">✅ Consegnata</button>
     ` : '';
 
     return `
