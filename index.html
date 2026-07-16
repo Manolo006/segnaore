@@ -1055,7 +1055,7 @@
        MOBILE BOTTOM NAV
     =================================================== */
     .bottom-nav {
-      display: none;
+      display: flex;
       position: fixed;
       bottom: 0; left: 0; right: 0;
       height: calc(var(--bnav-h) + env(safe-area-inset-bottom));
@@ -1143,8 +1143,7 @@
         padding-top: calc(24px + env(safe-area-inset-top));
         animation: modalIn 0.3s var(--ease);
       }
-      .side-panel { display: none; }
-      .bottom-nav { display: flex; }
+      .side-panel { display: none !important; } /* Mobile: usa bottom-sheet, non side-panel */
       .bottom-sheet-overlay { display: none; opacity: 0; transition: opacity 0.3s; }
       .bottom-sheet { display: block; }
       .bottom-sheet-overlay.show { display: block; pointer-events: auto; opacity: 1; }
@@ -1747,7 +1746,8 @@ function renderTables() {
          const cardHtml = `
            <div class="table-card table-card--${visualClass}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
                 data-id="${t.id}" data-status="${t.status}"
-                style="${stylePos} opacity:1;">
+                style="${stylePos} opacity:1;"
+                onclick="window.handleTableClick(${t.id})">
              <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
              <div class="table-card__combine">⛓</div>
              <div class="table-card__num">${t.id}</div>
@@ -1762,7 +1762,8 @@ function renderTables() {
 
          const gridCardHtml = `
            <div class="table-card table-card--${visualClass}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
-                data-id="${t.id}" data-status="${t.status}">
+                data-id="${t.id}" data-status="${t.status}"
+                onclick="window.handleTableClick(${t.id})">
              <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
              <div class="table-card__combine">⛓</div>
              <div class="table-card__num">${t.id}</div>
@@ -1793,7 +1794,8 @@ function renderTables() {
        let cardHtml = `
          <div class="table-card table-card--${slot.type}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
               data-id="${t.id}" data-status="${t.status}"
-              style="${slot.left ? 'left:'+slot.left+';' : ''} ${slot.right ? 'right:'+slot.right+';' : ''} top:${slot.top}; opacity: ${isMain ? 1 : 0.8};">
+              style="${slot.left ? 'left:'+slot.left+';' : ''} ${slot.right ? 'right:'+slot.right+';' : ''} top:${slot.top}; opacity: ${isMain ? 1 : 0.8};"
+              onclick="window.handleTableClick(${t.id})">
            <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
            ${t.slotIds.length > 1 ? '<div class="table-card__combine">⛓</div>' : ''}
            <div class="table-card__num">${t.id}</div>
@@ -1808,7 +1810,8 @@ function renderTables() {
 
        let gridCardHtml = isMain ? `
          <div class="table-card table-card--sq${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
-              data-id="${t.id}" data-status="${t.status}">
+              data-id="${t.id}" data-status="${t.status}"
+              onclick="window.handleTableClick(${t.id})">
            <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}" ></div>
            ${t.slotIds.length > 1 ? '<div class="table-card__combine">⛓</div>' : ''}
            <div class="table-card__num">${t.id}</div>
@@ -2354,27 +2357,32 @@ document.getElementById('areaTabs').addEventListener('click', (e) => {
   closePanel();
 });
 
-document.getElementById('floorWrap').addEventListener('click', (e) => {
-  const card = e.target.closest('.table-card');
-  if (!card) {
-    if (!e.target.closest('.side-panel')) {
-      if(linkingMode) cancelLinkMode();
-      else closePanel();
-    }
-    return;
-  }
-  const id = parseInt(card.dataset.id);
-
-  // LINK MODE: clicking a second table to merge
-  if(linkingMode !== null && linkingMode !== id) {
+/* =====================================================
+   GLOBAL TABLE CLICK HANDLER (direct onclick — no event delegation)
+===================================================== */
+window.handleTableClick = function(id) {
+  id = parseInt(id);
+  // LINK MODE
+  if (linkingMode !== null && linkingMode !== id) {
     promptLinkTable(linkingMode, id);
     linkingMode = null;
     return;
   }
-  if(linkingMode === id) { cancelLinkMode(); return; }
-
+  if (linkingMode === id) { cancelLinkMode(); return; }
+  // Normal: toggle panel
   if (selectedTableId === id) closePanel();
   else openPanel(id);
+};
+
+// Keep floorWrap listener only for closing panel when clicking empty space
+document.getElementById('floorWrap').addEventListener('click', (e) => {
+  const card = e.target.closest('.table-card');
+  if (!card) {
+    if (!e.target.closest('.side-panel') && !e.target.closest('#bottomSheet')) {
+      if (linkingMode) cancelLinkMode();
+      else closePanel();
+    }
+  }
 });
 
 document.getElementById('panelClose').addEventListener('click', closePanel);
