@@ -1343,7 +1343,7 @@
       <!-- IMPOSTAZIONI EXTRA (Cambio lingua, Statistiche Owner) -->
       <div class="sidebar-section" style="margin-top:24px;">
         <div class="sidebar__label">Preferenze</div>
-        <button class="pact-btn pact-btn--primary" style="width:100%; margin-bottom:8px; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="window.location.href='consumi.html'">
+        <button id="sidebarOwnerBtn" class="pact-btn pact-btn--primary" style="width:100%; margin-bottom:8px; display:none; justify-content:center; align-items:center; gap:8px;" onclick="window.location.href='consumi.html'">
           📊 Statistiche Owner
         </button>
         <button class="pact-btn pact-btn--ghost" style="width:100%; justify-content:center;" onclick="showToast('🇮🇹', 'Cambio lingua in arrivo!')">
@@ -1512,7 +1512,7 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     Presenze
   </button>
-  <button class="bnav-item" data-tab="owner" onclick="window.location.href='consumi.html'">
+  <button id="bnavOwnerBtn" class="bnav-item" data-tab="owner" style="display:none;" onclick="window.location.href='consumi.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
     Owner
   </button>
@@ -1536,6 +1536,8 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getDatabase, ref, onValue, set, push, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
   window.startGlobalOrder = function() {
     const container = document.getElementById('globalOrderTables');
@@ -1584,6 +1586,20 @@ import { getDatabase, ref, onValue, set, push, update } from 'https://www.gstati
   };
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
+  const dbFirestore = getFirestore(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
+      if (userDoc.exists() && userDoc.data().role === 'owner') {
+        const sBtn = document.getElementById('sidebarOwnerBtn');
+        const bBtn = document.getElementById('bnavOwnerBtn');
+        if (sBtn) sBtn.style.display = 'flex';
+        if (bBtn) bBtn.style.display = 'flex';
+      }
+    }
+  });
 
   window._db = db;
   window._ref = ref;
