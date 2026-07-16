@@ -1890,7 +1890,7 @@ function unlinkTable(id) {
 let activeResTableId = null;
 
 function setReservation(id) {
-  const t = tables.find(tb => tb.id === id);
+  const t = tables.find(tb => tb && tb.id === id);
   if(!t) return;
   
   activeResTableId = id;
@@ -1908,7 +1908,7 @@ function closeReservationModal() {
 
 function confirmReservation() {
   if(!activeResTableId) return;
-  const t = tables.find(tb => tb.id === activeResTableId);
+  const t = tables.find(tb => tb && tb.id === activeResTableId);
   if(!t) return;
   
   const time = document.getElementById('resTime').value;
@@ -1937,11 +1937,11 @@ function editTableId(oldId) {
    const newIdStr = prompt("Inserisci il nuovo numero per questo tavolo:", parsedOldId);
    if(!newIdStr) return;
    const newId = parseInt(newIdStr);
-   if(isNaN(newId) || tables.find(t => t.id === newId)) {
+   if(isNaN(newId) || tables.find(t => t && t.id === newId)) {
       showToast('❌', 'Numero non valido o già in uso');
       return;
    }
-   const t = tables.find(t => t.id === parsedOldId);
+   const t = tables.find(t => t && t.id === parsedOldId);
    if(t) t.id = newId;
    tables.sort((a,b) => a.id - b.id);
    renderTables();
@@ -2024,7 +2024,7 @@ let linkingMode = null; // null | tableId
 let reservingMode = null; // null | tableId
 
 function buildPanelContent(id) {
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t && t.id === id);
   if(!d) return '';
   const elapsed = d.startedAt ? formatTimer(Date.now() - d.startedAt) : '—';
   const baseSlot = d.slotIds && d.slotIds[0] ? tableSlots[d.slotIds[0]] : null;
@@ -2127,7 +2127,7 @@ function buildPanelContent(id) {
 
 // ---- LINK MODE ----
 function startLinkMode(id) {
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t && t.id === id);
   if(d && d.status === 'reserved') { showToast('⚠️', 'Non puoi collegare un tavolo prenotato.'); return; }
   linkingMode = id;
   renderTables();
@@ -2140,14 +2140,14 @@ function cancelLinkMode() {
 }
 
 function startReservationMode(id) {
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t && t.id === id);
   if(d && !['free','paid'].includes(d.status)) { showToast('⚠️', 'Non puoi prenotare un tavolo occupato.'); return; }
   setReservation(id);
 }
 
 // ---- SAVE NOTE ----
 function saveNote(id) {
-  const t = tables.find(tb => tb.id === id);
+  const t = tables.find(tb => tb && tb.id === id);
   if(!t) return;
   const el = document.getElementById(`note-input-${id}`);
   if(!el) return;
@@ -2162,7 +2162,7 @@ function saveNote(id) {
 
 // ---- ORDERS LIST from Firebase Realtime DB ----
 function buildOrdersList(id) {
-  const t = tables.find(tb => tb.id === id);
+  const t = tables.find(tb => tb && tb.id === id);
   if(!t || !t.orders || t.orders.length === 0) {
     return `<div style="color:var(--text-3); font-size:0.82rem; padding:6px 0;">Nessun ordine registrato</div>`;
   }
@@ -2185,7 +2185,7 @@ function subscribeTableOrders(id) {
   const r = window._fbRef(window._db, `orders/table_${id}`);
   window._fbOnValue(r, (snapshot) => {
     const data = snapshot.val();
-    const t = tables.find(tb => tb.id === id);
+    const t = tables.find(tb => tb && tb.id === id);
     if(t) t.orders = data ? Object.values(data) : [];
     // Refresh order list in panel if still open
     const el = document.getElementById(`orders-list-${id}`);
@@ -2224,7 +2224,7 @@ function closePanel() {
 }
 
 function setTableStatus(id, newStatus) {
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t && t.id === id);
   if(!d) return;
   d.status = newStatus;
   
@@ -2265,7 +2265,7 @@ function setTableStatus(id, newStatus) {
 }
 
 function changeGuests(id, delta) {
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t && t.id === id);
   if(!d) return;
   d.guests = Math.max(0, Math.min(d.seats, d.guests + delta));
   const el = document.getElementById(`guest-val-${id}`);
@@ -2274,7 +2274,7 @@ function changeGuests(id, delta) {
 }
 
 function freeTable(id) {
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t && t.id === id);
   if(d) d.guests = 0;
   setTableStatus(id, 'free');
   closePanel();
