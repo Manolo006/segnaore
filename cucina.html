@@ -569,12 +569,36 @@ function advanceOrder(orderId, newStatus) {
   else if (anyCookingOrReady) order.status = 'cooking';
   else order.status = 'new';
 
-  // Firebase sync
+  // Firebase sync — ordine
   if(window._fbReady && window._db) {
     window._fbUpdate(window._fbRef(window._db, `orders/${orderId}`), { 
       status: order.status,
       items: order.items 
     });
+
+    // Aggiorna status tavolo in base allo stato aggregato di tutti gli ordini del tavolo
+    const tId = order.tableId;
+    if (tId && tId !== 'Asporto') {
+      // Raccogli tutti gli ordini attivi per questo tavolo
+      const tableOrders = orders.filter(o => o.tableId === tId && !o.paidAt);
+
+      // Determina lo status globale del tavolo
+      const anyNew     = tableOrders.some(o => o.status === 'new');
+      const anyCooking = tableOrders.some(o => o.status === 'cooking');
+      const allOrdersDone = tableOrders.every(o => o.status === 'done' || o.status === 'ready');
+      const anyReady   = tableOrders.some(o => o.status === 'ready' || o.status === 'done');
+
+      let tableStatus = null;
+      if (anyCooking || anyNew) {
+        tableStatus = 'preparing'; // almeno uno in cottura → tavolo "In preparazione"
+      } else if (allOrdersDone && anyReady) {
+        tableStatus = 'ready';     // tutti pronti/consegnati → "Pronto da servire"
+      }
+
+      if (tableStatus) {
+        window._fbUpdate(window._fbRef(window._db, `tables/${tId}`), { status: tableStatus });
+      }
+    }
   }
 
   renderTickets();

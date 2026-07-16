@@ -1579,6 +1579,9 @@
 
 
 <script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
   window.startGlobalOrder = function() {
     const container = document.getElementById('globalOrderTables');
     container.innerHTML = tables.map(t => {
@@ -1615,9 +1618,6 @@
 /* =====================================================
    DATA — Status definitions
 ===================================================== */
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-
   const firebaseConfig = {
     apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
     authDomain:        "in-punto.firebaseapp.com",
