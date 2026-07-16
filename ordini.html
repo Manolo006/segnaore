@@ -173,33 +173,6 @@
       align-items: center;
       gap: 12px;
     }
-    
-    .search-bar-wrap {
-      position: relative;
-      margin-bottom: 0;
-    }
-    .search-bar-input {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 38px 10px 14px;
-      color: var(--text);
-      font-size: 0.9rem;
-      font-family: inherit;
-      transition: border-color 0.2s;
-      outline: none;
-    }
-    .search-bar-input:focus { border-color: var(--accent); }
-    .search-bar-input::placeholder { color: var(--text-3); }
-    .search-bar-icon {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-3);
-      pointer-events: none;
-    }
 
     .menu-grid {
       display: grid;
@@ -421,25 +394,6 @@
       color: var(--text-3);
       cursor: not-allowed;
     }
-    
-    .cart-item__note-input {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: #3b82f6;
-      padding: 4px 8px;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      margin-top: 6px;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .cart-item__note-input:focus {
-      border-color: #3b82f6;
-    }
-    .cart-item__note-input::placeholder {
-      color: rgba(59, 130, 246, 0.4);
-    }
 
     /* =====================================================
        MOBILE RESPONSIVE
@@ -592,10 +546,6 @@
 
     <!-- MAIN MENU GRID -->
     <main class="main-content" id="mainContent">
-      <div class="search-bar-wrap">
-        <input type="text" class="search-bar-input" id="menuSearchInput" placeholder="Cerca piatto o bevanda..." oninput="window.filterMenu(this.value)" />
-        <svg class="search-bar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
       <div class="cat-title" id="currentCatTitle">
         <span>🍽️</span> Tutte le categorie
       </div>
@@ -639,7 +589,7 @@
        FIREBASE — Inizializzazione diretta (GitHub Pages safe)
     ===================================================== */
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getDatabase, ref, push, set, get, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+    import { getDatabase, ref, push, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
     const firebaseConfig = {
       apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
@@ -893,7 +843,6 @@
     ===================================================== */
     let currentCat = 'tutte';
     let cart = []; // Array of { item: Object, qty: Number }
-    let searchQuery = '';
 
     // Leggi il numero del tavolo dall'URL (es: ordini.html?table=21)
     const urlParams = new URLSearchParams(window.location.search);
@@ -934,10 +883,7 @@
         title.innerHTML = `<span>${c.icon}</span> ${c.name}`;
       }
 
-      const rawItems = currentCat === 'tutte' ? menuItems : menuItems.filter(m => getTopCategory(m) === currentCat);
-      const items = searchQuery
-        ? rawItems.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
-        : rawItems;
+      const items = currentCat === 'tutte' ? menuItems : menuItems.filter(m => getTopCategory(m) === currentCat);
       
       if (items.length === 0) {
         grid.innerHTML = `<div style="grid-column: 1/-1; color:var(--text-3); text-align:center; padding:40px;">Nessun prodotto in questa categoria</div>`;
@@ -978,17 +924,9 @@
     ===================================================== */
     function setCat(id) {
       currentCat = id;
-      searchQuery = '';
-      const inp = document.getElementById('menuSearchInput');
-      if(inp) inp.value = '';
       renderCategories();
       renderMenu();
     }
-    
-    window.filterMenu = function(q) {
-      searchQuery = q;
-      renderMenu();
-    };
 
     function addToCart(itemId) {
       const item = menuItems.find(i => i.id === itemId);
@@ -1007,22 +945,17 @@
       setTimeout(() => fab.style.transform = 'scale(1)', 200);
     }
 
-    function changeQty(id, delta) {
-      const idx = cart.findIndex(c => c.item.id === id);
-      if (idx !== -1) {
-        cart[idx].qty += delta;
-        if (cart[idx].qty <= 0) {
-          cart.splice(idx, 1);
-        }
-        renderCart();
+    function changeQty(itemId, delta) {
+      const idx = cart.findIndex(c => c.item.id === itemId);
+      if (idx === -1) return;
+      
+      cart[idx].qty += delta;
+      if (cart[idx].qty <= 0) {
+        cart.splice(idx, 1);
       }
+      renderCart();
     }
-    
-    window.updateCartNote = function(id, note) {
-      const c = cart.find(x => x.item.id === id);
-      if (c) c.note = note;
-    }; 
-    
+
     function renderCart() {
       const container = document.getElementById('cartItems');
       const totalEl = document.getElementById('cartTotal');
@@ -1050,7 +983,6 @@
             <div class="cart-item__info">
               <span class="cart-item__name">${c.item.name}</span>
               <span class="cart-item__price">${c.item.price.toFixed(2)} €</span>
-              <input type="text" class="cart-item__note-input" placeholder="Aggiungi nota (es. senza pomodoro)" value="${(c.note || '').replace(/"/g, '&quot;')}" onchange="window.updateCartNote('${c.item.id}', this.value)" />
             </div>
             <div class="cart-item__actions">
               <button class="cart-btn" onclick="changeQty('${c.item.id}', -1)">-</button>
@@ -1079,27 +1011,14 @@
           name: c.item.name,
           qty: c.qty,
           status: 'new', // new, cooking, ready, done
-          note: c.note || ''
+          note: ''
         }))
       };
 
       try {
         const newOrderRef = push(ref(db, 'orders'));
         await set(newOrderRef, orderData);
-        
-        if (tableId && tableId !== 'Asporto') {
-          const tid = parseInt(tableId);
-          const tRef = ref(db, 'tables/' + tid);
-          const tSnap = await get(tRef);
-          if (tSnap.exists()) {
-            const table = tSnap.val();
-            const updates = { status: 'preparing' };
-            if (!table.startedAt) updates.startedAt = Date.now();
-            await update(tRef, updates);
-          }
-        }
-        
-        alert(tableId && tableId !== 'Asporto' ? `Ordine inviato in cucina per il Tavolo ${tableId}!` : `Ordine Asporto inviato in cucina!`);
+        alert(tableId ? `Ordine inviato in cucina per il Tavolo ${tableId}!` : `Ordine Asporto inviato in cucina!`);
         cart = [];
         renderCart();
         if(window.innerWidth <= 900) toggleMobileCart();

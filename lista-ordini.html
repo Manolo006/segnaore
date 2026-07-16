@@ -159,15 +159,12 @@
       "Gin Sul": 15.00
     };
 
-    let currentTab = 'active'; // 'active' or 'closed'
-
     function subscribeFirebase() {
       const r = ref(db, 'orders');
       onValue(r, (snapshot) => {
         const data = snapshot.val();
         if(data) {
-          // Sort by date ascending to get correct order for Invio #1, #2
-          allOrders = Object.entries(data).map(([id, o]) => ({ id, ...o })).sort((a,b) => a.createdAt - b.createdAt);
+          allOrders = Object.entries(data).map(([id, o]) => ({ id, ...o }));
         } else {
           allOrders = [];
         }
@@ -175,72 +172,68 @@
       });
     }
 
-    function setTab(tab) {
-      currentTab = tab;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
-      renderReceipts();
-    }
-
     function renderReceipts() {
       const container = document.getElementById('receipts-container');
       
-      const filteredOrders = currentTab === 'active' 
-        ? allOrders.filter(o => o.status !== 'done')
-        : allOrders.filter(o => o.status === 'done');
+      const activeOrders = allOrders.filter(o => o.status !== 'done');
       
-      if (filteredOrders.length === 0) {
+      if (activeOrders.length === 0) {
         container.innerHTML = `
-          <div style="text-align:center; padding: 40px 20px; color:var(--text-2); grid-column: 1/-1;">
+          <div style="text-align:center; padding: 40px 20px; color:var(--text-2);">
             <div style="font-size:3rem; margin-bottom:10px;">🧾</div>
-            <h3 style="font-weight:600;">Nessun scontrino ${currentTab === 'active' ? 'attivo' : 'chiuso'}</h3>
+            <h3 style="font-weight:600;">Nessun ordine attivo</h3>
+            <p>I tavoli sono vuoti o tutti gli ordini sono stati chiusi.</p>
           </div>
         `;
         return;
       }
 
       const tablesMap = {};
-      filteredOrders.forEach(o => {
+      activeOrders.forEach(o => {
         const tId = o.tableId;
-        if (!tablesMap[tId]) tablesMap[tId] = { id: tId, orders: [] };
-        tablesMap[tId].orders.push(o);
+        if (!tablesMap[tId]) tablesMap[tId] = { id: tId, items: [] };
+        
+        (o.items || []).forEach(item => {
+           const existing = tablesMap[tId].items.find(i => i.name === item.name);
+           if (existing) {
+             existing.qty += item.qty;
+           } else {
+             tablesMap[tId].items.push({ 
+               name: item.name, 
+               qty: item.qty, 
+               price: catalogPrices[item.name] || 0
+             });
+           }
+        });
       });
 
       let html = '';
       Object.values(tablesMap).forEach(table => {
-        let tableTotal = 0;
-        
-        const ordersHtml = table.orders.map((order, idx) => {
-          let orderHtml = `<div class="receipt__invio-title">Invio #${idx + 1} <span style="font-size:0.7rem; color:var(--text-3); font-weight:normal;">(${new Date(order.createdAt).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'})})</span></div>`;
-          orderHtml += `<div class="receipt__invio-items">`;
-          
-          (order.items || []).forEach(item => {
-            const price = catalogPrices[item.name] || 0;
-            const rowTotal = item.qty * price;
-            tableTotal += rowTotal;
-            const priceStr = price > 0 ? `${rowTotal.toFixed(2)} €` : '-- €';
-            orderHtml += `
-              <div class="receipt__row">
-                <div class="receipt__item">
-                  <span class="receipt__qty">${item.qty}x</span>
-                  <span class="receipt__name">${item.name}</span>
-                </div>
-                <div class="receipt__price">${priceStr}</div>
+        let total = 0;
+        const itemsHtml = table.items.map(item => {
+          const rowTotal = item.qty * item.price;
+          total += rowTotal;
+          const priceStr = item.price > 0 ? `${rowTotal.toFixed(2)} €` : '-- €';
+          return `
+            <div class="receipt__row">
+              <div class="receipt__item">
+                <span class="receipt__qty">${item.qty}x</span>
+                <span class="receipt__name">${item.name}</span>
               </div>
-            `;
-          });
-          orderHtml += `</div>`;
-          return orderHtml;
-        }).join('<div class="receipt__divider"></div>');
+              <div class="receipt__price">${priceStr}</div>
+            </div>
+          `;
+        }).join('');
 
         html += `
           <div class="receipt">
             <div class="receipt__header">
-              <div class="receipt__table">N. ${table.id}</div>
-              <div class="receipt__total">${tableTotal.toFixed(2)} €</div>
+              <div class="receipt__table">Tavolo ${table.id}</div>
+              <div class="receipt__total">${total.toFixed(2)} €</div>
             </div>
+            <div class="receipt__divider"></div>
             <div class="receipt__body">
-              ${ordersHtml}
+              ${itemsHtml || '<div style="color:var(--text-2); font-size:0.85rem; text-align:center; padding:10px 0;">(Ordine vuoto)</div>'}
             </div>
           </div>
         `;
@@ -376,39 +369,6 @@
       color: #cbd5e1;
       white-space: nowrap;
     }
-    .receipt__invio-title {
-      font-size: 0.85rem;
-      color: var(--accent);
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-    .receipt__invio-items {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .tabs-bar {
-      display: flex;
-      padding: 0 20px;
-      margin-top: 10px;
-      gap: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .tab-btn {
-      background: none;
-      border: none;
-      color: var(--text-2);
-      font-size: 0.95rem;
-      font-weight: 600;
-      padding: 10px 0;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
-    .tab-btn.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
 
     /* BOTTOM NAV */
     .bottom-nav {
@@ -433,14 +393,9 @@
   <nav class="topnav">
     <div class="topnav__brand">
       <div class="topnav__icon">🧾</div>
-      Scontrini
+      Scontrini (Ordini Attivi)
     </div>
   </nav>
-  
-  <div class="tabs-bar">
-    <button class="tab-btn active" data-tab="active" onclick="setTab('active')">Attivi</button>
-    <button class="tab-btn" data-tab="closed" onclick="setTab('closed')">Chiusi / Pagati</button>
-  </div>
 
   <main class="receipts-grid" id="receipts-container">
     <div style="padding:40px; text-align:center; color:var(--text-2); width:100%;">Caricamento ordini...</div>
