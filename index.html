@@ -11,18 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getDatabase, ref, onValue, push, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-    const fbApp = initializeApp(firebaseConfig);
-    window._db = db;
-    window._fbRef = ref;
-    window._fbOnValue = onValue;
-    window._fbPush = push;
-    window._fbSet = set;
-    window._fbReady = true;
-    console.log('[Sala] Firebase connesso ✅');
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* ===================================================
        DESIGN TOKENS
@@ -1596,7 +1585,7 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import { getDatabase, ref, onValue, set, push, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
   window.startGlobalOrder = function() {
     const container = document.getElementById('globalOrderTables');
@@ -1649,8 +1638,13 @@ import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebase
   window._db = db;
   window._ref = ref;
   window._onValue = onValue;
+  window._fbRef = ref;
+  window._fbOnValue = onValue;
   window._fbSet = set;
+  window._fbPush = push;
+  window._fbUpdate = update;
   window._fbReady = true;
+  console.log('[Sala] Firebase connesso ✅');
 
   const STATUS_LABELS = {
   'free':       'Disponibile',
@@ -2251,7 +2245,7 @@ function subscribeTableOrders(id) {
 
 function openPanel(id) {
   selectedTableId = id;
-  const d = tables.find(t => t.id === id);
+  const d = tables.find(t => t && t.id === id);
   if(!d) return;
   // Init orders array if needed
   if(!d.orders) d.orders = [];
@@ -2324,9 +2318,7 @@ function setTableStatus(id, newStatus) {
             }
           });
           if(Object.keys(updates).length > 0) {
-            import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js').then(module => {
-               module.update(window._ref(window._db), updates);
-            });
+            window._fbUpdate(window._ref(window._db), updates);
           }
         }
       }, { onlyOnce: true });
