@@ -1951,7 +1951,7 @@ function confirmReservation() {
   showToast('📅', `Tavolo ${activeResTableId} prenotato per le ${time}`);
   closeReservationModal();
   closePanel();
-  if(window.syncTablesToDB) window.syncTablesToDB();
+  if(window.syncTablesToDB) window.syncTablesToDB([activeResTableId]);
 }
 
 function editTableId(oldId) {
@@ -2283,7 +2283,7 @@ function setTableStatus(id, newStatus) {
   renderTables();
   if (selectedTableId === id) openPanel(id);
   showToast(STATUS_EMOJIS[newStatus], `Tavolo ${id}: ${STATUS_LABELS[newStatus]}`);
-  if(window.syncTablesToDB) window.syncTablesToDB();
+  if(window.syncTablesToDB) window.syncTablesToDB([id]);
 }
 
 function changeGuests(id, delta) {
@@ -2292,7 +2292,7 @@ function changeGuests(id, delta) {
   d.guests = Math.max(0, Math.min(d.seats, d.guests + delta));
   const el = document.getElementById(`guest-val-${id}`);
   if (el) el.textContent = d.guests;
-  if(window.syncTablesToDB) window.syncTablesToDB();
+  if(window.syncTablesToDB) window.syncTablesToDB([id]);
 }
 
 function freeTable(id) {
@@ -2300,7 +2300,6 @@ function freeTable(id) {
   if(d) d.guests = 0;
   setTableStatus(id, 'free');
   closePanel();
-  if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
 /* =====================================================
@@ -2426,10 +2425,23 @@ document.querySelectorAll('.bnav-item').forEach(item => {
 renderTables();
 
 // Polling per Firebase Sync
-window.syncTablesToDB = async function() {
+window.syncTablesToDB = async function(changedTableIds = null) {
   if (window._fbReady && window._db) {
     try {
-      await window._fbSet(window._ref(window._db, 'tables'), tables);
+      if (changedTableIds && Array.isArray(changedTableIds)) {
+        const updates = {};
+        changedTableIds.forEach(id => {
+          const idx = tables.findIndex(t => t && t.id === id);
+          if (idx !== -1) {
+            updates[idx] = tables[idx];
+          }
+        });
+        if (Object.keys(updates).length > 0) {
+          await window._fbUpdate(window._ref(window._db, 'tables'), updates);
+        }
+      } else {
+        await window._fbSet(window._ref(window._db, 'tables'), tables);
+      }
     } catch(e) { console.error("Error saving tables", e); }
   }
 };
@@ -2456,7 +2468,7 @@ function initSync() {
       const data = snapshot.val();
       const allOrders = data ? Object.values(data) : [];
       
-      let tableChanged = false;
+      const changedIds = [];
       tables.forEach(t => {
         const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
         if (tOrders.length > 0) {
@@ -2471,19 +2483,19 @@ function initSync() {
             }
             if (t.status !== newStatus) {
               t.status = newStatus;
-              tableChanged = true;
+              changedIds.push(t.id);
             }
           }
         } else {
           if (t.status === 'preparing' || t.status === 'ready') {
             t.status = 'free';
             t.startedAt = null;
-            tableChanged = true;
+            changedIds.push(t.id);
           }
         }
       });
-      if (tableChanged) {
-        window.syncTablesToDB();
+      if (changedIds.length > 0) {
+        window.syncTablesToDB(changedIds);
       }
       renderTables();
     });
