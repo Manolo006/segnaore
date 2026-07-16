@@ -737,21 +737,36 @@
     }
 
     /* ===================================================
-       RIGHT SIDE PANEL
+       RIGHT SIDE PANEL — fixed overlay from right
     =================================================== */
     .side-panel {
-      width: var(--panel-w);
+      position: fixed;
+      top: var(--nav-h);
+      right: 0;
+      bottom: var(--bnav-h);
+      width: min(380px, 90vw);
       background: var(--bg-2);
       border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       transform: translateX(100%);
-      transition: transform 0.3s var(--ease);
-      flex-shrink: 0;
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      z-index: 300;
       overflow: hidden;
-      z-index: 150;
+      box-shadow: -8px 0 40px rgba(0,0,0,0.5);
     }
     .side-panel.open { transform: translateX(0); }
+
+    /* Dark overlay behind side panel on desktop */
+    .panel-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 299;
+      backdrop-filter: blur(2px);
+    }
+    .panel-overlay.show { display: block; }
 
     .panel-header {
       display: flex;
@@ -1144,6 +1159,7 @@
         animation: modalIn 0.3s var(--ease);
       }
       .side-panel { display: none !important; } /* Mobile: usa bottom-sheet, non side-panel */
+      .panel-overlay { display: none !important; } /* Mobile: no overlay */
       .bottom-sheet-overlay { display: none; opacity: 0; transition: opacity 0.3s; }
       .bottom-sheet { display: block; }
       .bottom-sheet-overlay.show { display: block; pointer-events: auto; opacity: 1; }
@@ -1467,23 +1483,24 @@
 
     </div><!-- end floor-wrap -->
 
-    <!-- ===== RIGHT SIDE PANEL ===== -->
-    <aside class="side-panel" id="sidePanel">
-      <div class="panel-header">
-        <div class="panel-header__left">
-          <div class="panel-header__title" id="panelTitle">Tavolo —</div>
-          <div class="panel-header__sub" id="panelSub">Seleziona un tavolo</div>
-        </div>
-        <button class="panel-close" id="panelClose">✕</button>
-      </div>
-      <div class="panel-body" id="panelBody">
-        <!-- Filled by JS -->
-      </div>
-    </aside>
-
   </div><!-- end body-wrap -->
 
 </div><!-- end app -->
+
+<!-- ===== RIGHT SIDE PANEL (fixed, outside layout) ===== -->
+<div class="panel-overlay" id="panelOverlay"></div>
+<aside class="side-panel" id="sidePanel">
+  <div class="panel-header">
+    <div class="panel-header__left">
+      <div class="panel-header__title" id="panelTitle">Tavolo —</div>
+      <div class="panel-header__sub" id="panelSub">Seleziona un tavolo</div>
+    </div>
+    <button class="panel-close" id="panelClose">✕</button>
+  </div>
+  <div class="panel-body" id="panelBody">
+    <!-- Filled by JS -->
+  </div>
+</aside>
 
 <!-- Modale Prenotazione -->
 <div class="modal" id="reservationModal">
@@ -2267,6 +2284,7 @@ function openPanel(id) {
     `;
     document.getElementById('panelBody').innerHTML    = buildPanelContent(id);
     document.getElementById('sidePanel').classList.add('open');
+    document.getElementById('panelOverlay').classList.add('show');
   }
   
   document.querySelectorAll('.table-card').forEach(c => c.classList.remove('selected'));
@@ -2277,6 +2295,7 @@ function openPanel(id) {
 
 function closePanel() {
   document.getElementById('sidePanel').classList.remove('open');
+  document.getElementById('panelOverlay').classList.remove('show');
   document.getElementById('bottomSheet').classList.remove('open');
   document.getElementById('sheetOverlay').classList.remove('show');
   document.querySelectorAll('.table-card').forEach(c => c.classList.remove('selected'));
@@ -2386,6 +2405,7 @@ document.getElementById('floorWrap').addEventListener('click', (e) => {
 });
 
 document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('panelOverlay').addEventListener('click', closePanel);
 document.getElementById('sheetOverlay').addEventListener('click', closePanel);
 
 document.querySelectorAll('.legend-item, .filter-chip').forEach(el => {
