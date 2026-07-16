@@ -2432,20 +2432,16 @@ window.syncTablesToDB = async function(changedTableIds = null) {
       if (changedTableIds && Array.isArray(changedTableIds)) {
         const updates = {};
         changedTableIds.forEach(id => {
-          const t = tables.find(tb => tb && tb.id === id);
-          if (t) {
-            updates[id] = t; // Use the table ID as the Firebase key
+          const idx = tables.findIndex(t => t && t.id === id);
+          if (idx !== -1) {
+            updates[idx] = tables[idx];
           }
         });
         if (Object.keys(updates).length > 0) {
           await window._fbUpdate(window._ref(window._db, 'tables'), updates);
         }
       } else {
-        const allTablesObj = {};
-        tables.forEach(t => {
-          if (t) allTablesObj[t.id] = t;
-        });
-        await window._fbSet(window._ref(window._db, 'tables'), allTablesObj);
+        await window._fbSet(window._ref(window._db, 'tables'), tables);
       }
     } catch(e) { console.error("Error saving tables", e); }
   }
@@ -2459,13 +2455,15 @@ function initSync() {
     window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
       const data = snapshot.val();
       if (data) {
+        let parsedTables = [];
         if (Array.isArray(data)) {
-           // LEGACY FORMAT DETECTED: Migrate to Object
-           tables = data.filter(t => t);
-           window.syncTablesToDB(); 
-        } else {
-           tables = Object.values(data).filter(t => t);
+          parsedTables = data;
+        } else if (typeof data === 'object') {
+          Object.keys(data).forEach(k => {
+            parsedTables[parseInt(k, 10)] = data[k];
+          });
         }
+        tables = parsedTables;
         
         renderTables();
         if(selectedTableId) buildPanelContent(selectedTableId);
