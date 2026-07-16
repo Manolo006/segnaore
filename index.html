@@ -2434,16 +2434,17 @@ window.syncTablesToDB = async function(changedTableIds = null) {
         changedTableIds.forEach(id => {
           const t = tables.find(tb => tb && tb.id === id);
           if (t) {
-            updates[`t_${id}`] = t; // Use a string prefix to NEVER be coerced to an array
+            updates[`tables/table_${id}`] = t; 
           }
         });
         if (Object.keys(updates).length > 0) {
-          await window._fbUpdate(window._ref(window._db, 'tables'), updates);
+          // Atomic multi-path update from the root to avoid overriding siblings
+          await window._fbUpdate(window._ref(window._db), updates);
         }
       } else {
         const allTablesObj = {};
         tables.forEach(t => {
-          if (t) allTablesObj[`t_${t.id}`] = t;
+          if (t) allTablesObj[`table_${t.id}`] = t;
         });
         await window._fbSet(window._ref(window._db, 'tables'), allTablesObj);
       }
@@ -2459,17 +2460,26 @@ function initSync() {
     window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
       const data = snapshot.val();
       if (data) {
+        let isLegacy = false;
+        let parsedTables = [];
+        
         if (Array.isArray(data)) {
-           // If the database STILL has the old legacy Array format, force an immediate migration
-           tables = data.filter(t => t);
-           window.syncTablesToDB();
+           isLegacy = true;
+           parsedTables = data.filter(t => t);
         } else {
-           // New stable Object format with 't_' prefixes
-           tables = Object.values(data).filter(t => t);
+           const keys = Object.keys(data);
+           if (keys.length > 0 && !keys[0].startsWith('table_')) {
+              isLegacy = true;
+           }
+           parsedTables = Object.values(data).filter(t => t);
         }
         
-        // Sort by ID just in case
+        tables = parsedTables;
         tables.sort((a, b) => a.id - b.id);
+        
+        if (isLegacy) {
+           window.syncTablesToDB();
+        }
         
         renderTables();
         if(selectedTableId) buildPanelContent(selectedTableId);
