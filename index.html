@@ -2459,7 +2459,13 @@ function initSync() {
     window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        tables = Object.values(data).filter(t => t);
+        if (Array.isArray(data)) {
+           // LEGACY FORMAT DETECTED: Migrate to Object
+           tables = data.filter(t => t);
+           window.syncTablesToDB(); 
+        } else {
+           tables = Object.values(data).filter(t => t);
+        }
         
         renderTables();
         if(selectedTableId) buildPanelContent(selectedTableId);
