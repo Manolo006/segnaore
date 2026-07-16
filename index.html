@@ -1094,41 +1094,7 @@
     .bnav-item.active { color: var(--accent); }
     .bnav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
 
-    /* ===================================================
-       MOBILE BOTTOM SHEET for Table Panel
-    =================================================== */
-    .bottom-sheet-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 350;
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-    }
-    .bottom-sheet {
-      display: none;
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      max-height: 88vh;
-      background: var(--bg-2);
-      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-      border-top: 1px solid var(--border);
-      z-index: 420;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      transform: translateY(100%);
-      transition: transform 0.35s var(--ease);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .bottom-sheet.open { transform: translateY(0); }
-    .bottom-sheet__handle {
-      width: 40px; height: 4px;
-      background: var(--border-strong);
-      border-radius: 2px;
-      margin: 14px auto 4px;
-      flex-shrink: 0;
-    }
+
 
     /* ===================================================
        RESPONSIVE — TABLET
@@ -1147,11 +1113,6 @@
         padding-top: calc(24px + env(safe-area-inset-top));
         animation: modalIn 0.3s var(--ease);
       }
-      .side-panel { display: none !important; } /* Mobile: usa bottom-sheet, non side-panel */
-      .panel-overlay { display: none !important; } /* Mobile: no overlay */
-      .bottom-sheet-overlay { display: none; opacity: 0; transition: opacity 0.3s; }
-      .bottom-sheet { display: block; }
-      .bottom-sheet-overlay.show { display: block; pointer-events: auto; opacity: 1; }
       .main-content {
         padding: 0;
         margin-bottom: calc(var(--bnav-h) + env(safe-area-inset-bottom));
@@ -1223,9 +1184,6 @@
       /* Tighter fit for very small screens */
       .floor-canvas { transform: scale(0.55); width: 181%; }
       .floor-canvas--grid .table-card__num { font-size: 0.9rem !important; }
-
-      /* Bottom sheet: full-screen comfortable */
-      .bottom-sheet { max-height: 92vh; }
     }
 
     /* ===================================================
@@ -1560,14 +1518,6 @@
   </button>
 </nav>
 
-<!-- ===== MOBILE BOTTOM SHEET ===== -->
-<div class="bottom-sheet-overlay" id="sheetOverlay"></div>
-<div class="bottom-sheet" id="bottomSheet">
-  <div class="bottom-sheet__handle"></div>
-  <div class="panel-body" id="sheetBody" style="padding-bottom:80px;">
-    <!-- Filled by JS for mobile -->
-  </div>
-</div>
 
 <!-- ===== FAB ===== -->
 <button class="fab" id="fabBtn" title="Nuovo ordine" onclick="window.startGlobalOrder()">
@@ -2250,37 +2200,16 @@ function openPanel(id) {
   // Init orders array if needed
   if(!d.orders) d.orders = [];
 
-  const isMobile = window.innerWidth <= 900;
-  if (isMobile) {
-    document.getElementById('sheetBody').innerHTML = `
-      <div style="padding:16px 20px 8px; display:flex; justify-content:space-between; align-items:flex-start;">
-        <div>
-          <h3 style="font-size:1.1rem;font-weight:700;">Tavolo ${id} <span style="font-size:0.9rem; margin-left:6px; cursor:pointer; opacity:0.6;" onclick="editTableId('${id}')">✏️</span></h3>
-          <p style="font-size:0.8rem;color:var(--text-2);margin-top:2px;">
-            <span style="color:${STATUS_COLORS[d.status]}">${STATUS_LABELS[d.status]}</span> • 
-            ${d.guests > 0 ? d.guests : d.seats} persone
-          </p>
-        </div>
-        <button onclick="window.closePanel()" style="background:#ef4444; color:white; border:none; width:34px; height:34px; border-radius:50%; font-size:1.1rem; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">✕</button>
-      </div>
-      <div style="padding:0 20px 20px;">${buildPanelContent(id)}</div>
-    `;
-    document.getElementById('bottomSheet').classList.add('open');
-    document.getElementById('sheetOverlay').classList.add('show');
-  } else {
-    selectedTableId = id;
-  
-    document.getElementById('panelTitle').innerHTML = `Tavolo ${id} <span style="font-size:0.9rem; margin-left:8px; cursor:pointer; opacity:0.6;" onclick="editTableId('${id}')" title="Rinomina Tavolo">✏️</span>`;
-    document.getElementById('panelSub').innerHTML = `
-      <span style="color:${STATUS_COLORS[d.status]}">${STATUS_LABELS[d.status]}</span>
-      <span style="opacity:0.5; margin:0 6px;">•</span>
-      <span>${d.guests > 0 ? d.guests : d.seats} persone</span>
-    `;
-    document.getElementById('panelBody').innerHTML    = buildPanelContent(id);
-    document.getElementById('sidePanel').classList.add('open');
-    document.getElementById('panelOverlay').classList.add('show');
-  }
-  
+  document.getElementById('panelTitle').innerHTML = `Tavolo ${id} <span style="font-size:0.9rem; margin-left:8px; cursor:pointer; opacity:0.6;" onclick="editTableId('${id}')" title="Rinomina Tavolo">✏️</span>`;
+  document.getElementById('panelSub').innerHTML = `
+    <span style="color:${STATUS_COLORS[d.status]}">${STATUS_LABELS[d.status]}</span>
+    <span style="opacity:0.5; margin:0 6px;">•</span>
+    <span>${d.guests > 0 ? d.guests : d.seats} persone</span>
+  `;
+  document.getElementById('panelBody').innerHTML = buildPanelContent(id);
+  document.getElementById('sidePanel').classList.add('open');
+  document.getElementById('panelOverlay').classList.add('show');
+
   document.querySelectorAll('.table-card').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll(`[data-id="${id}"]`).forEach(c => c.classList.add('selected'));
   // Subscribe to real-time orders from Firebase
@@ -2290,8 +2219,6 @@ function openPanel(id) {
 function closePanel() {
   document.getElementById('sidePanel').classList.remove('open');
   document.getElementById('panelOverlay').classList.remove('show');
-  document.getElementById('bottomSheet').classList.remove('open');
-  document.getElementById('sheetOverlay').classList.remove('show');
   document.querySelectorAll('.table-card').forEach(c => c.classList.remove('selected'));
   selectedTableId = null;
 }
@@ -2434,6 +2361,13 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 // =====================================================
 window.openPanel = openPanel;
 window.closePanel = closePanel;
+window.setTableStatus = setTableStatus;
+window.freeTable = freeTable;
+window.startReservationMode = startReservationMode;
+window.unlinkTable = unlinkTable;
+window.startLinkMode = startLinkMode;
+window.editTableId = editTableId;
+window.cancelLinkMode = cancelLinkMode;
 window.setTableStatus = setTableStatus;
 window.freeTable = freeTable;
 window.changeGuests = changeGuests;
