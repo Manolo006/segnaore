@@ -1050,21 +1050,6 @@
        1° PIANO — COMING SOON
     =================================================== */
     .coming-soon {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: calc(100vh - var(--nav-h) - 80px);
-      gap: 16px;
-      color: var(--text-3);
-    }
-    .coming-soon__icon {
-      font-size: 3rem;
-      opacity: 0.4;
-    }
-    .coming-soon h3 { font-size: 1.1rem; color: var(--text-2); }
-    .coming-soon p { font-size: 0.85rem; max-width: 280px; text-align: center; line-height: 1.6; }
-
     /* ===================================================
        ORDER MODAL (replaces prompt())
     =================================================== */
@@ -1386,18 +1371,6 @@
           Terrazza — Area Esterna
         </div>
 
-        <div class="floor-canvas" style="height: 720px;">
-
-          <!-- Top boundary -->
-          <div class="arch-wall" style="top:0; left:0; right:0; height:2px; background:rgba(245,158,11,0.2);"></div>
-          <div class="arch-wall" style="top:0; left:0; bottom:0; width:2px; background:rgba(245,158,11,0.1);"></div>
-
-          <!-- Zone labels -->
-          <div class="zone-tag" style="top:10px; left:12px; color:rgba(245,158,11,0.5);">Zona A</div>
-          <div class="zone-tag" style="top:360px; left:12px; color:rgba(245,158,11,0.4);">Zona B</div>
-
-          <!-- Dividing wall -->
-          <div class="arch-divider" style="top:310px; left:0; right:0; height:3px; background:rgba(245,158,11,0.25);"></div>
 
 <div id="floor-canvas-tr-dynamic"></div>
 
@@ -1886,6 +1859,13 @@ function setReservation(id) {
 /* =====================================================
    CLOCK & TIMERS
 ===================================================== */
+
+function formatTimer(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+  const s = (totalSec % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
 
 function updateTimers() {
   const now = Date.now();
