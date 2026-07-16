@@ -2263,12 +2263,12 @@ function setTableStatus(id, newStatus) {
           const updates = {};
           Object.entries(data).forEach(([orderId, o]) => {
             if (o.tableId === id && !o.paidAt) {
-              updates[`orders/${orderId}/paidAt`] = now;
-              updates[`orders/${orderId}/paymentStatus`] = 'paid';
+              updates[`${orderId}/paidAt`] = now;
+              updates[`${orderId}/paymentStatus`] = 'paid';
             }
           });
           if(Object.keys(updates).length > 0) {
-            window._fbUpdate(window._ref(window._db), updates);
+            window._fbUpdate(window._ref(window._db, 'orders'), updates);
           }
         }
       }, { onlyOnce: true });
@@ -2496,7 +2496,9 @@ function initSync() {
       
       const changedIds = [];
       tables.forEach(t => {
-        const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
+        // Ignora gli ordini completati (done) o già pagati/archiviati (paid)
+        const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done' && o.paymentStatus !== 'paid');
+        
         if (tOrders.length > 0) {
           if (t.status !== 'bill' && t.status !== 'paid' && t.status !== 'occupied') {
             const firstOrderTime = Math.min(...tOrders.map(o => o.timestamp || o.createdAt || Date.now()));
@@ -2514,8 +2516,7 @@ function initSync() {
           }
         } else {
           if (t.status === 'preparing' || t.status === 'ready') {
-            t.status = 'free';
-            t.startedAt = null;
+            t.status = 'occupied'; // When kitchen finishes, people eat (table is occupied, not free)
             changedIds.push(t.id);
           }
         }
