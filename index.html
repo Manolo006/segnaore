@@ -2432,16 +2432,20 @@ window.syncTablesToDB = async function(changedTableIds = null) {
       if (changedTableIds && Array.isArray(changedTableIds)) {
         const updates = {};
         changedTableIds.forEach(id => {
-          const idx = tables.findIndex(t => t && t.id === id);
-          if (idx !== -1) {
-            updates[idx] = tables[idx];
+          const t = tables.find(tb => tb && tb.id === id);
+          if (t) {
+            updates[`t_${id}`] = t; // Use a string prefix to NEVER be coerced to an array
           }
         });
         if (Object.keys(updates).length > 0) {
           await window._fbUpdate(window._ref(window._db, 'tables'), updates);
         }
       } else {
-        await window._fbSet(window._ref(window._db, 'tables'), tables);
+        const allTablesObj = {};
+        tables.forEach(t => {
+          if (t) allTablesObj[`t_${t.id}`] = t;
+        });
+        await window._fbSet(window._ref(window._db, 'tables'), allTablesObj);
       }
     } catch(e) { console.error("Error saving tables", e); }
   }
@@ -2455,15 +2459,17 @@ function initSync() {
     window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        let parsedTables = [];
         if (Array.isArray(data)) {
-          parsedTables = data;
-        } else if (typeof data === 'object') {
-          Object.keys(data).forEach(k => {
-            parsedTables[parseInt(k, 10)] = data[k];
-          });
+           // If the database STILL has the old legacy Array format, force an immediate migration
+           tables = data.filter(t => t);
+           window.syncTablesToDB();
+        } else {
+           // New stable Object format with 't_' prefixes
+           tables = Object.values(data).filter(t => t);
         }
-        tables = parsedTables;
+        
+        // Sort by ID just in case
+        tables.sort((a, b) => a.id - b.id);
         
         renderTables();
         if(selectedTableId) buildPanelContent(selectedTableId);
