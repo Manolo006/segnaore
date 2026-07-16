@@ -1950,7 +1950,7 @@ function confirmReservation() {
   renderTables();
   showToast('📅', `Tavolo ${activeResTableId} prenotato per le ${time}`);
   closeReservationModal();
-  openPanel(activeResTableId);
+  closePanel();
   if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
@@ -2383,6 +2383,9 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
 window.openPanel = openPanel;
 window.closePanel = closePanel;
 window.setTableStatus = setTableStatus;
+window.setReservation = setReservation;
+window.closeReservationModal = closeReservationModal;
+window.confirmReservation = confirmReservation;
 window.freeTable = freeTable;
 window.startReservationMode = startReservationMode;
 window.unlinkTable = unlinkTable;
