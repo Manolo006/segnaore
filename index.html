@@ -504,13 +504,19 @@
     .floor-area {
       display: none;
       position: relative;
-      min-height: calc(100vh - var(--nav-h));
-      padding: 20px 16px;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .floor-area.active { display: block; }
+    .floor-area.active { display: flex; }
 
     /* Area label floating */
     .area-label {
+      position: absolute;
+      top: 16px; left: 16px;
+      z-index: 10;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -521,7 +527,6 @@
       font-size: 0.8rem;
       font-weight: 600;
       color: var(--text-2);
-      margin-bottom: 16px;
       letter-spacing: 0.2px;
     }
     .area-label__icon {
@@ -535,7 +540,9 @@
     /* DESKTOP: Floor canvas with absolute positions */
     .floor-canvas {
       position: relative;
-      width: 100%;
+      width: 600px;
+      height: 950px;
+      transform-origin: center center;
     }
 
     /* MOBILE: responsive grid for tables */
@@ -1124,7 +1131,6 @@
         position: relative;
         height: 100%;
       }
-      .floor-canvas { transform: scale(0.65); transform-origin: top left; width: 153%; }
       
       .floor-canvas--grid { display: none !important; }
       .floor-canvas--grid .table-card {
@@ -1182,7 +1188,6 @@
       .icon-btn { width: 32px; height: 32px; }
 
       /* Tighter fit for very small screens */
-      .floor-canvas { transform: scale(0.55); width: 181%; }
       .floor-canvas--grid .table-card__num { font-size: 0.9rem !important; }
     }
 
@@ -1190,7 +1195,6 @@
        RESPONSIVE — SMALL PHONE (SE, etc)
     =================================================== */
     @media (max-width: 375px) {
-      .floor-canvas { transform: scale(0.48); width: 208%; }
     }
 
     /* ===================================================
@@ -1362,7 +1366,7 @@
           Piano Terra — Layout Principale
         </div>
 
-        <div class="floor-canvas" style="height: 720px;">
+        <div class="floor-canvas">
 
           <!-- Architectural: Separator wall between inside and outside -->
           <div class="arch-divider arch-wall--label"
@@ -1400,7 +1404,7 @@
           Terrazza — Area Esterna
         </div>
 
-        <div class="floor-canvas" style="height: 700px;">
+        <div class="floor-canvas">
 
           <!-- Bar stools lines -->
           <div style="position:absolute; bottom:0px; left:150px; display:flex; flex-direction:line; gap:50px; pointer-events:none;">
@@ -2517,6 +2521,18 @@ setTimeout(() => {
   }
 }, 2000);
 
+document.addEventListener('DOMContentLoaded', () => {
+  const fw = document.getElementById('floorWrap');
+  if (fw) {
+    new ResizeObserver(() => {
+      const availW = fw.clientWidth - 32;
+      const availH = fw.clientHeight - 32;
+      let scale = Math.min(availW / 600, availH / 950);
+      if (scale > 1.3) scale = 1.3;
+      document.querySelectorAll('.floor-canvas').forEach(c => c.style.transform = `scale(${scale})`);
+    }).observe(fw);
+  }
+});
 </script>
 </body>
 </html>
