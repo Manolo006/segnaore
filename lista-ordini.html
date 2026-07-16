@@ -159,6 +159,8 @@
       "Gin Sul": 15.00
     };
 
+    let currentTab = 'attivi';
+
     function subscribeFirebase() {
       const r = ref(db, 'orders');
       onValue(r, (snapshot) => {
@@ -172,33 +174,56 @@
       });
     }
 
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      renderReceipts();
+    }
+    window.switchTab = switchTab;
+
     function renderReceipts() {
       const container = document.getElementById('receipts-container');
       
-      const activeOrders = allOrders.filter(o => o.status !== 'done');
-      
-      if (activeOrders.length === 0) {
+      const ordersToShow = currentTab === 'attivi' 
+        ? allOrders.filter(o => !o.paidAt) 
+        : allOrders.filter(o => o.paidAt);
+        
+      if (ordersToShow.length === 0) {
         container.innerHTML = `
           <div style="text-align:center; padding: 40px 20px; color:var(--text-2);">
             <div style="font-size:3rem; margin-bottom:10px;">🧾</div>
-            <h3 style="font-weight:600;">Nessun ordine attivo</h3>
-            <p>I tavoli sono vuoti o tutti gli ordini sono stati chiusi.</p>
+            <h3 style="font-weight:600;">Nessun ordine ${currentTab}</h3>
           </div>
         `;
         return;
       }
 
-      const tablesMap = {};
-      activeOrders.forEach(o => {
+      // Raggruppamento
+      const groups = {};
+      ordersToShow.forEach(o => {
+        // Se è attivo, raggruppiamo solo per tavolo
+        // Se è pagato, raggruppiamo per tavolo_ORARIO
         const tId = o.tableId;
-        if (!tablesMap[tId]) tablesMap[tId] = { id: tId, items: [] };
+        let groupKey = tId;
+        if (currentTab === 'pagati') {
+          groupKey = `${tId}_${o.paidAt}`;
+        }
+
+        if (!groups[groupKey]) {
+          groups[groupKey] = { 
+             id: tId, 
+             items: [], 
+             paidAt: o.paidAt 
+          };
+        }
         
         (o.items || []).forEach(item => {
-           const existing = tablesMap[tId].items.find(i => i.name === item.name);
+           const existing = groups[groupKey].items.find(i => i.name === item.name);
            if (existing) {
              existing.qty += item.qty;
            } else {
-             tablesMap[tId].items.push({ 
+             groups[groupKey].items.push({ 
                name: item.name, 
                qty: item.qty, 
                price: catalogPrices[item.name] || 0
@@ -207,10 +232,18 @@
         });
       });
 
+      // Ordinamento: per Attivi ordine tavoli crescente, per Pagati dal più recente al più vecchio
+      const sortedGroups = Object.values(groups);
+      if(currentTab === 'pagati') {
+         sortedGroups.sort((a,b) => b.paidAt - a.paidAt);
+      } else {
+         sortedGroups.sort((a,b) => (a.id === 'Asporto' ? 9999 : a.id) - (b.id === 'Asporto' ? 9999 : b.id));
+      }
+
       let html = '';
-      Object.values(tablesMap).forEach(table => {
+      sortedGroups.forEach(group => {
         let total = 0;
-        const itemsHtml = table.items.map(item => {
+        const itemsHtml = group.items.map(item => {
           const rowTotal = item.qty * item.price;
           total += rowTotal;
           const priceStr = item.price > 0 ? `${rowTotal.toFixed(2)} €` : '-- €';
@@ -225,11 +258,20 @@
           `;
         }).join('');
 
+        let headerExtra = '';
+        if(currentTab === 'pagati' && group.paidAt) {
+           const d = new Date(group.paidAt);
+           headerExtra = `<div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">🕒 ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${d.toLocaleDateString()}</div>`;
+        }
+
         html += `
           <div class="receipt">
             <div class="receipt__header">
-              <div class="receipt__table">Tavolo ${table.id}</div>
-              <div class="receipt__total">${total.toFixed(2)} €</div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="receipt__table">Tavolo ${group.id}</div>
+                <div class="receipt__total">${total.toFixed(2)} €</div>
+              </div>
+              ${headerExtra}
             </div>
             <div class="receipt__divider"></div>
             <div class="receipt__body">
@@ -284,20 +326,42 @@
       width: 32px; height: 32px;
       background: linear-gradient(135deg, #10b981, #3b82f6);
       border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem;
+      padding: 0 16px;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 9;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-2);
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 14px 4px;
+      cursor: pointer;
+      position: relative;
+    }
+    .tab-btn.active {
+      color: var(--text);
+    }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 3px 3px 0 0;
     }
 
-    /* GRID SCONTRINI */
-    .receipts-grid {
-      padding: 20px;
+    .receipts-container {
+      padding: 20px 16px 100px 16px;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 20px;
       align-content: start;
     }
 
-    /* SCONTRINO CARD */
     .receipt {
       background: var(--bg-2);
       border: 1px solid var(--border);
@@ -309,8 +373,7 @@
     }
     .receipt__header {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
       margin-bottom: 16px;
     }
     .receipt__table {
@@ -370,7 +433,6 @@
       white-space: nowrap;
     }
 
-    /* BOTTOM NAV */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
       background: rgba(10,10,15,0.9); backdrop-filter: blur(20px);
@@ -390,18 +452,22 @@
 </head>
 <body>
 
-  <nav class="topnav">
-    <div class="topnav__brand">
-      <div class="topnav__icon">🧾</div>
-      Scontrini (Ordini Attivi)
-    </div>
-  </nav>
+  <header class="header">
+    <button class="header-back" onclick="window.history.back()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Indietro
+    </button>
+    <div class="header-title">Scontrini</div>
+  </header>
 
-  <main class="receipts-grid" id="receipts-container">
-    <div style="padding:40px; text-align:center; color:var(--text-2); width:100%;">Caricamento ordini...</div>
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-attivi" onclick="switchTab('attivi')">Attivi</button>
+    <button class="tab-btn" id="tab-pagati" onclick="switchTab('pagati')">Pagati</button>
+  </div>
+
+  <main class="receipts-container" id="receipts-container">
   </main>
 
-  <!-- MOBILE BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="bnav-item" onclick="window.location.href='index.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>

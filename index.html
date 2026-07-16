@@ -235,6 +235,31 @@
       flex-shrink: 0;
     }
     .panel-close:hover { background: #dc2626; }
+    
+    /* MODALS */
+    .modal {
+      display: none;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal.open { display: flex; }
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%; max-width: 400px;
+      padding: 24px;
+      position: relative;
+      animation: modalIn 0.3s var(--ease);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
     .icon-btn {
       width: 36px; height: 36px;
       border-radius: var(--radius-sm);
@@ -966,6 +991,18 @@
     =================================================== */
     @media (max-width: 900px) {
       .sidebar { display: none; }
+      .sidebar.open {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: var(--bg);
+        width: 100%; height: 100%;
+        padding: 24px;
+        padding-top: calc(24px + env(safe-area-inset-top));
+        animation: modalIn 0.3s var(--ease);
+      }
       .side-panel { display: none; }
       .bottom-nav { display: flex; }
       .bottom-sheet-overlay { display: block; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
@@ -1103,15 +1140,10 @@
         Terrazza
         <span class="area-tab__badge" id="badge-terrazza">2</span>
       </button>
-      <button class="area-tab" data-area="primo-piano">
-        <span class="area-tab__dot" style="background: var(--text-3)"></span>
-        1° Piano
-        <span class="area-tab__badge" style="background: rgba(255,255,255,0.06); color: var(--text-3)">—</span>
-      </button>
     </div>
 
     <div class="topnav__actions">
-      <button class="icon-btn" title="Impostazioni" onclick="showToast('⚙️', 'Impostazioni non ancora disponibili')">
+      <button class="icon-btn" title="Impostazioni" onclick="document.querySelector('.sidebar').classList.add('open')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
@@ -1124,6 +1156,19 @@
 
     <!-- ===== LEFT SIDEBAR ===== -->
     <aside class="sidebar">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:1.2rem; display:none;" class="sidebar-mobile-title">Impostazioni & Statistiche</h2>
+        <button class="icon-btn close-sidebar-btn" style="display:none;" onclick="document.querySelector('.sidebar').classList.remove('open')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <style>
+        @media (max-width: 900px) {
+          .sidebar-mobile-title, .close-sidebar-btn { display: flex !important; }
+        }
+      </style>
+
       <div class="search-wrap">
         <input type="text" class="search-input" placeholder="Cerca tavolo..." id="searchInput">
         <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1188,11 +1233,14 @@
             <span class="legend-count" id="lc-paid">0</span>
           </div>
         </div>
-      <div class="sidebar-section">
-        <div class="sidebar__label">Owner Area</div>
-        <button class="pact-btn pact-btn--primary" style="width:100%; margin-top:8px; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="window.location.href='consumi.html'">
-           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
-           Statistiche
+      <!-- IMPOSTAZIONI EXTRA (Cambio lingua, Statistiche Owner) -->
+      <div class="sidebar-section" style="margin-top:24px;">
+        <div class="sidebar__label">Preferenze</div>
+        <button class="pact-btn pact-btn--primary" style="width:100%; margin-bottom:8px; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="window.location.href='consumi.html'">
+          📊 Statistiche Owner
+        </button>
+        <button class="pact-btn pact-btn--ghost" style="width:100%; justify-content:center;" onclick="showToast('🇮🇹', 'Cambio lingua in arrivo!')">
+          🌍 Lingua: Italiano
         </button>
       </div>
     </aside>
@@ -1271,21 +1319,7 @@
       </div><!-- end terrazza -->
 
 
-      <!-- 1° PIANO -->
-      <div class="floor-area" id="area-primo-piano">
-        <div class="area-label">
-          <div class="area-label__icon">🏗️</div>
-          1° Piano — In allestimento
-        </div>
-        <div class="coming-soon">
-          <div class="coming-soon__icon">🏗️</div>
-          <h3>Area in allestimento</h3>
-          <p>Il layout del primo piano non è ancora configurato. Contatta il responsabile per abilitare questa area.</p>
-          <button class="pact-btn pact-btn--ghost" style="margin-top:8px; width:auto; padding:10px 20px; border-radius:10px; font-size:0.85rem; color:var(--text-2); background:var(--surface); border:1px solid var(--border);" onclick="showToast('🏗️', 'Funzione non ancora disponibile')">
-            Configura Area
-          </button>
-        </div>
-      </div>
+
 
     </div><!-- end floor-wrap -->
 
@@ -1393,14 +1427,19 @@
   window.startGlobalOrder = function() {
     const container = document.getElementById('globalOrderTables');
     container.innerHTML = tables.map(t => {
-      let bg = 'rgba(255,255,255,0.05)';
-      let color = 'var(--text-2)';
-      if (t.status !== 'free' && t.status !== 'paid') {
-        bg = 'rgba(59,130,246,0.15)'; // occupied = blueish or accent
-        color = 'var(--accent)';
-      }
+      let bg = STATUS_COLORS[t.status] || 'rgba(255,255,255,0.05)';
+      // Aggiungo opacità al background per estetica o lo tengo solido? Solido è meglio.
+      // Se è libero verde, etc.
+      let opacityBg = t.status === 'free' ? 'rgba(34, 197, 94, 0.15)' : 
+                      t.status === 'reserved' ? 'rgba(14, 165, 233, 0.15)' :
+                      t.status === 'preparing' ? 'rgba(59, 130, 246, 0.15)' :
+                      t.status === 'ready' ? 'rgba(168, 85, 247, 0.15)' :
+                      t.status === 'bill' ? 'rgba(249, 115, 22, 0.15)' :
+                      'rgba(71, 85, 105, 0.15)'; // paid
+      let color = STATUS_COLORS[t.status] || '#fff';
+      
       return `
-        <button style="flex: 1 1 calc(25% - 10px); background: ${bg}; color: ${color}; border: 1px solid var(--border); border-radius: 8px; padding: 12px 0; font-size: 1.1rem; font-weight: 700; cursor:pointer;"
+        <button style="flex: 1 1 calc(25% - 10px); background: ${opacityBg}; color: ${color}; border: 1px solid ${color}; border-radius: 8px; padding: 12px 0; font-size: 1.1rem; font-weight: 700; cursor:pointer;"
           onclick="window.location.href='ordini.html?table=${t.id}'">
           ${t.id}
         </button>
@@ -1662,13 +1701,14 @@ function promptLinkTable(id, knownTargetId = null) {
   sourceTable.seats += targetTable.seats;
   
   // Delete target table from array
-  tables.splice(targetIdx, 1);
+  tables = tables.filter(t => t.id !== targetId);
   
   // NESSUNO SHIFT DEGLI ID! Manteniamo gli ID originali per non rompere i DB orders
   
   renderTables();
-  showToast('✅', `Tavolo ${targetId} unito al Tavolo ${id}!`);
+  showToast('🔗', `Tavolo ${targetId} unito al Tavolo ${id}!`);
   closePanel();
+  if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
 function unlinkTable(id) {
@@ -1692,7 +1732,7 @@ function unlinkTable(id) {
   const newId = maxId + 1;
   
   // Insert new table at the end
-  tables.push({
+  const newTable = {
     id: newId,
     slotIds: [splitSlotId],
     status: 'free',
@@ -1701,7 +1741,8 @@ function unlinkTable(id) {
     reservedTime: '',
     reservedGuests: 0,
     startedAt: null
-  });
+  };
+  tables.push(newTable);
   
   // Ordina i tavoli per ID così il DOM li renderizza correttamente (opzionale ma utile)
   tables.sort((a,b) => a.id - b.id);
@@ -1709,6 +1750,7 @@ function unlinkTable(id) {
   renderTables();
   showToast('✂️', `Tavolo diviso. Creato nuovo Tavolo ${newId}`);
   closePanel();
+  if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
 let activeResTableId = null;
@@ -1753,6 +1795,7 @@ function confirmReservation() {
   showToast('📅', `Tavolo ${activeResTableId} prenotato per le ${time}`);
   closeReservationModal();
   openPanel(activeResTableId);
+  if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
 function editTableId(oldId) {
@@ -1770,7 +1813,9 @@ function editTableId(oldId) {
    renderTables();
    closePanel();
    showToast('✅', `Tavolo rinominato in ${newId}`);
+   if(window.syncTablesToDB) window.syncTablesToDB();
 }
+window.editTableId = editTableId;
 
 /* =====================================================
    CLOCK & TIMERS
@@ -1916,38 +1961,13 @@ function buildPanelContent(id) {
       </div>
     </div>
 
-    <!-- === COPERTI === -->
-    <div class="panel-section-lbl" style="margin-top:16px;">Coperti</div>
-    <div>
-      <div class="guest-counter">
-        <button class="counter-btn" onclick="window.changeGuests(${id}, -1)">−</button>
-        <div><div class="counter-val" id="guest-val-${id}">${d.guests}</div></div>
-        <button class="counter-btn" onclick="window.changeGuests(${id}, +1)">+</button>
-      </div>
-      <div class="counter-lbl">/ ${d.seats} posti disponibili</div>
-    </div>
-
-    <!-- === NOTE === -->
-    <div class="panel-section-lbl" style="margin-top:16px;">Note Tavolo</div>
-    <div style="display:flex; gap:8px;">
-      <textarea id="note-input-${id}" rows="2"
-        style="flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); font-size:0.85rem; font-family:inherit; resize:none; outline:none;"
-        placeholder="Aggiungi una nota (es. celiaco, allergie…)">${d.note || ''}</textarea>
-      <button onclick="window.saveNote(${id})" style="align-self:flex-end; background:var(--accent); border:none; color:#fff; padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.85rem;">💾</button>
-    </div>
-
     <!-- === ORDINI === -->
     <div class="panel-section-lbl" style="margin-top:16px;">Ordini del Tavolo</div>
     <div id="orders-list-${id}" style="display:flex; flex-direction:column; gap:6px;">
       ${ordersHtml}
     </div>
 
-    <!-- === DETTAGLI === -->
-    <div class="panel-section-lbl" style="margin-top:16px;">Dettagli</div>
-    <div class="info-row"><span class="info-row__label">📍 Area</span><span class="info-row__val">${areaLabel}</span></div>
-    <div class="info-row"><span class="info-row__label">🪑 Posti</span><span class="info-row__val">${d.seats}</span></div>
 
-    <!-- === CAMBIA STATO === -->
     <div class="panel-section-lbl" style="margin-top:16px;">Cambia Stato</div>
     <div class="status-selector">
       ${Object.entries(STATUS_LABELS).map(([s, lbl]) => `
@@ -2088,6 +2108,28 @@ function setTableStatus(id, newStatus) {
   
   if (newStatus === 'free' || newStatus === 'paid' || newStatus === 'reserved') {
     d.startedAt = null;
+    
+    // Mark all active orders for this table as PAID in Firebase
+    if(window._fbReady && window._db) {
+      window._onValue(window._ref(window._db, 'orders'), (snapshot) => {
+        const data = snapshot.val();
+        if(data) {
+          const now = Date.now();
+          const updates = {};
+          Object.entries(data).forEach(([orderId, o]) => {
+            if (o.tableId === id && !o.paidAt) {
+              updates[`orders/${orderId}/paidAt`] = now;
+              updates[`orders/${orderId}/paymentStatus`] = 'paid';
+            }
+          });
+          if(Object.keys(updates).length > 0) {
+            import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js').then(module => {
+               module.update(window._ref(window._db), updates);
+            });
+          }
+        }
+      }, { onlyOnce: true });
+    }
   } else if (!d.startedAt) {
     d.startedAt = Date.now();
   }
@@ -2099,6 +2141,7 @@ function setTableStatus(id, newStatus) {
   renderTables();
   if (selectedTableId === id) openPanel(id);
   showToast(STATUS_EMOJIS[newStatus], `Tavolo ${id}: ${STATUS_LABELS[newStatus]}`);
+  if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
 function changeGuests(id, delta) {
@@ -2107,6 +2150,7 @@ function changeGuests(id, delta) {
   d.guests = Math.max(0, Math.min(d.seats, d.guests + delta));
   const el = document.getElementById(`guest-val-${id}`);
   if (el) el.textContent = d.guests;
+  if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
 function freeTable(id) {
@@ -2114,6 +2158,7 @@ function freeTable(id) {
   if(d) d.guests = 0;
   setTableStatus(id, 'free');
   closePanel();
+  if(window.syncTablesToDB) window.syncTablesToDB();
 }
 
 /* =====================================================
@@ -2200,6 +2245,7 @@ window.unlinkTable = unlinkTable;
 window.cancelLinkMode = cancelLinkMode;
 window.showToast = showToast;
 window.promptLinkTable = promptLinkTable;
+window.editTableId = editTableId;
 
 let toastTimer = null;
 function showToast(icon, msg) {
@@ -2223,35 +2269,59 @@ document.querySelectorAll('.bnav-item').forEach(item => {
 renderTables();
 
 // Polling per Firebase Sync
+window.syncTablesToDB = async function() {
+  if (window._fbReady && window._db) {
+    try {
+      await window._fbSet(window._ref(window._db, 'tables'), tables);
+    } catch(e) { console.error("Error saving tables", e); }
+  }
+};
+
+let isFirstLoad = true;
+
 function initSync() {
   if(window._fbReady) {
+    // 1. Sync Tables
+    window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
+      const data = snapshot.val();
+      if (data && Array.isArray(data)) {
+        tables = data;
+        renderTables();
+        if(selectedTableId) buildPanelContent(selectedTableId);
+      } else if (isFirstLoad) {
+        window.syncTablesToDB();
+      }
+      isFirstLoad = false;
+    });
+
+    // 2. Sync Orders to compute real-time status from KDS
     window._onValue(window._ref(window._db, 'orders'), (snapshot) => {
       const data = snapshot.val();
       const allOrders = data ? Object.values(data) : [];
       
+      let tableChanged = false;
       tables.forEach(t => {
         const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
-        if (tOrders.length === 0) {
-          if (t.status !== 'reserved') {
-             t.status = 'free';
-             t.startedAt = null;
-          }
-        } else {
-          t.startedAt = Math.min(...tOrders.map(o => o.createdAt));
-          const allItems = tOrders.flatMap(o => o.items || []);
-          if (allItems.length === 0) {
-            t.status = 'preparing';
-          } else if (allItems.some(i => i.status === 'cooking')) {
-            t.status = 'preparing';
-          } else if (allItems.some(i => i.status === 'ready')) {
-            t.status = 'ready';
-          } else if (allItems.every(i => i.status === 'done')) {
-            t.status = 'paid';
-          } else {
-            t.status = 'preparing';
+        if (tOrders.length > 0) {
+          if (t.status !== 'bill' && t.status !== 'paid') {
+            const firstOrderTime = Math.min(...tOrders.map(o => o.timestamp || o.createdAt || Date.now()));
+            if (!t.startedAt) t.startedAt = firstOrderTime;
+            
+            const allItems = tOrders.flatMap(o => o.items || []);
+            let newStatus = 'preparing';
+            if (allItems.length > 0 && allItems.some(i => i.status === 'ready')) {
+              newStatus = 'ready';
+            }
+            if (t.status !== newStatus) {
+              t.status = newStatus;
+              tableChanged = true;
+            }
           }
         }
       });
+      if (tableChanged) {
+        window.syncTablesToDB();
+      }
       renderTables();
     });
   } else {
@@ -2280,6 +2350,7 @@ function checkNightlyReset() {
       renderTables();
       localStorage.setItem('lastNightlyReset', todayStr);
       showToast('🧹', 'Reset notturno eseguito: i tavoli sono tornati liberi.');
+      if(window.syncTablesToDB) window.syncTablesToDB();
     }
   }
 }
