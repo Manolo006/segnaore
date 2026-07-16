@@ -62,6 +62,10 @@
       --s-bill-bg:     rgba(249,115,22,0.12);
       --s-bill-border: rgba(249,115,22,0.30);
 
+      --s-occupied:        #b00202;
+      --s-occupied-bg:     rgba(176,2,2,0.12);
+      --s-occupied-border: rgba(176,2,2,0.30);
+
       --s-paid:        #475569;
       --s-paid-bg:     rgba(71,85,105,0.12);
       --s-paid-border: rgba(71,85,105,0.25);
@@ -240,8 +244,9 @@
     .modal {
       display: none;
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       z-index: 9999;
       align-items: center; justify-content: center;
       padding: 20px;
@@ -259,6 +264,138 @@
     @keyframes modalIn {
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Redesigned Modern Order Modal */
+    .order-modal-content {
+      background: linear-gradient(135deg, rgba(22, 22, 33, 0.95), rgba(13, 13, 20, 0.98)) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.7) !important;
+      border-radius: 24px !important;
+      max-width: 450px !important;
+      padding: 0 !important;
+      overflow: hidden;
+    }
+    .order-modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .order-modal-header h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .order-modal-close {
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      color: var(--text-2);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+    }
+    .order-modal-close:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+    .order-modal-body {
+      padding: 28px;
+    }
+    .order-modal-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      margin: 0 0 24px 0;
+    }
+    .order-modal-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-bottom: 24px;
+    }
+    .order-modal-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+    .order-modal-grid::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+    }
+    .order-modal-table-btn {
+      aspect-ratio: 1;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s var(--spring);
+      position: relative;
+    }
+    .order-modal-table-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .order-modal-table-btn .table-status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      position: absolute;
+      top: 8px; right: 8px;
+    }
+    .order-modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .order-modal-asporto {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.25s var(--ease);
+    }
+    .order-modal-asporto:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2));
+      border-color: rgba(59, 130, 246, 0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+    }
+    .asporto-icon {
+      font-size: 1.8rem;
+    }
+    .asporto-text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .asporto-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .asporto-desc {
+      font-size: 0.78rem;
+      color: var(--text-2);
     }
     .icon-btn {
       width: 36px; height: 36px;
@@ -508,6 +645,7 @@
     .table-card[data-status="wait-order"]   { border-color: var(--s-wait-order-border); background: var(--s-wait-order-bg); }
     .table-card[data-status="preparing"]    { border-color: var(--s-preparing-border);  background: var(--s-preparing-bg); }
     .table-card[data-status="ready"]        { border-color: var(--s-ready-border);       background: var(--s-ready-bg); }
+    .table-card[data-status="occupied"]     { border-color: var(--s-occupied-border);    background: var(--s-occupied-bg); }
     .table-card[data-status="bill"]         { border-color: var(--s-bill-border);        background: var(--s-bill-bg); }
     .table-card[data-status="paid"]         { border-color: var(--s-paid-border);        background: var(--s-paid-bg); opacity: 0.6; }
 
@@ -554,6 +692,7 @@
     [data-status="wait-order"] .table-card__status-dot { background: var(--s-wait-order); box-shadow: 0 0 6px var(--s-wait-order); animation: pulse 1.8s ease-in-out infinite; }
     [data-status="preparing"]  .table-card__status-dot { background: var(--s-preparing); box-shadow: 0 0 6px var(--s-preparing); animation: pulse 1.4s ease-in-out infinite; }
     [data-status="ready"]      .table-card__status-dot { background: var(--s-ready); box-shadow: 0 0 8px var(--s-ready); animation: pulse 1s ease-in-out infinite; }
+    [data-status="occupied"]   .table-card__status-dot { background: var(--s-occupied); box-shadow: 0 0 8px var(--s-occupied); }
     [data-status="bill"]       .table-card__status-dot { background: var(--s-bill); box-shadow: 0 0 6px var(--s-bill); animation: pulse 1.6s ease-in-out infinite; }
     [data-status="paid"]       .table-card__status-dot { background: var(--s-paid); }
 
@@ -797,6 +936,7 @@
     .status-badge[data-s="wait-order"] { background: var(--s-wait-order-bg); color: var(--s-wait-order); border: 1px solid var(--s-wait-order-border); }
     .status-badge[data-s="preparing"]  { background: var(--s-preparing-bg);  color: var(--s-preparing);  border: 1px solid var(--s-preparing-border); }
     .status-badge[data-s="ready"]      { background: var(--s-ready-bg);      color: var(--s-ready);      border: 1px solid var(--s-ready-border); }
+    .status-badge[data-s="occupied"]   { background: var(--s-occupied-bg);   color: var(--s-occupied);   border: 1px solid var(--s-occupied-border); }
     .status-badge[data-s="bill"]       { background: var(--s-bill-bg);       color: var(--s-bill);       border: 1px solid var(--s-bill-border); }
     .status-badge[data-s="paid"]       { background: var(--s-paid-bg);       color: var(--s-paid);       border: 1px solid var(--s-paid-border); }
 
@@ -1005,9 +1145,9 @@
       }
       .side-panel { display: none; }
       .bottom-nav { display: flex; }
-      .bottom-sheet-overlay { display: block; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+      .bottom-sheet-overlay { display: none; opacity: 0; transition: opacity 0.3s; }
       .bottom-sheet { display: block; }
-      .bottom-sheet-overlay.show { pointer-events: auto; opacity: 1; }
+      .bottom-sheet-overlay.show { display: block; pointer-events: auto; opacity: 1; }
       .main-content {
         padding: 0;
         margin-bottom: calc(var(--bnav-h) + env(safe-area-inset-bottom));
@@ -1222,6 +1362,11 @@
             Pronto da servire
             <span class="legend-count" id="lc-ready">1</span>
           </div>
+          <div class="legend-item" data-filter="occupied">
+            <div class="legend-dot" style="background: var(--s-occupied)"></div>
+            Occupato
+            <span class="legend-count" id="lc-occupied">0</span>
+          </div>
           <div class="legend-item" data-filter="bill">
             <div class="legend-dot" style="background: var(--s-bill)"></div>
             Attesa conto
@@ -1362,19 +1507,29 @@
 
 <!-- Modale Nuovo Ordine -->
 <div class="modal" id="globalOrderModal">
-  <div class="modal-content" style="max-width:400px; padding: 24px;">
-    <h3 style="margin-bottom:16px;">Scegli il Tavolo</h3>
-    
-    <div style="display:flex; flex-wrap:wrap; gap:10px; max-height:300px; overflow-y:auto; margin-bottom: 20px;" id="globalOrderTables">
-      <!-- Injected via JS -->
+  <div class="modal-content order-modal-content">
+    <div class="order-modal-header">
+      <h3>Nuovo Ordine</h3>
+      <button class="order-modal-close" onclick="document.getElementById('globalOrderModal').classList.remove('open')">✕</button>
     </div>
-
-    <button class="pact-btn pact-btn--primary" style="width:100%; margin-bottom:10px;" onclick="window.location.href='ordini.html?table=Asporto'">
-      🛍️ Ordine da Asporto
-    </button>
-    <button class="pact-btn pact-btn--ghost" style="width:100%;" onclick="document.getElementById('globalOrderModal').classList.remove('open')">
-      Annulla
-    </button>
+    
+    <div class="order-modal-body">
+      <p class="order-modal-subtitle">Seleziona un tavolo o inserisci un ordine d'asporto:</p>
+      
+      <div class="order-modal-grid" id="globalOrderTables">
+        <!-- Injected via JS -->
+      </div>
+      
+      <div class="order-modal-actions">
+        <button class="order-modal-asporto" onclick="window.location.href='ordini.html?table=Asporto'">
+          <span class="asporto-icon">🛍️</span>
+          <div class="asporto-text-group">
+            <span class="asporto-title">Ordine da Asporto</span>
+            <span class="asporto-desc">Confezione, consegna o ritiro rapido</span>
+          </div>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 <nav class="bottom-nav" id="bottomNav">
@@ -1427,20 +1582,28 @@
   window.startGlobalOrder = function() {
     const container = document.getElementById('globalOrderTables');
     container.innerHTML = tables.map(t => {
-      let bg = STATUS_COLORS[t.status] || 'rgba(255,255,255,0.05)';
-      // Aggiungo opacità al background per estetica o lo tengo solido? Solido è meglio.
-      // Se è libero verde, etc.
-      let opacityBg = t.status === 'free' ? 'rgba(34, 197, 94, 0.15)' : 
-                      t.status === 'reserved' ? 'rgba(14, 165, 233, 0.15)' :
-                      t.status === 'preparing' ? 'rgba(59, 130, 246, 0.15)' :
-                      t.status === 'ready' ? 'rgba(168, 85, 247, 0.15)' :
-                      t.status === 'bill' ? 'rgba(249, 115, 22, 0.15)' :
-                      'rgba(71, 85, 105, 0.15)'; // paid
-      let color = STATUS_COLORS[t.status] || '#fff';
+      const color = STATUS_COLORS[t.status] || '#fff';
+      const opacityBg = t.status === 'free' ? 'rgba(34, 197, 94, 0.12)' : 
+                        t.status === 'reserved' ? 'rgba(14, 165, 233, 0.12)' :
+                        t.status === 'preparing' ? 'rgba(59, 130, 246, 0.12)' :
+                        t.status === 'ready' ? 'rgba(168, 85, 247, 0.12)' :
+                        t.status === 'occupied' ? 'rgba(176, 2, 2, 0.12)' :
+                        t.status === 'bill' ? 'rgba(249, 115, 22, 0.12)' :
+                        'rgba(71, 85, 105, 0.12)'; // paid
+      
+      const borderColor = t.status === 'free' ? 'rgba(34, 197, 94, 0.3)' : 
+                          t.status === 'reserved' ? 'rgba(14, 165, 233, 0.3)' :
+                          t.status === 'preparing' ? 'rgba(59, 130, 246, 0.3)' :
+                          t.status === 'ready' ? 'rgba(168, 85, 247, 0.3)' :
+                          t.status === 'occupied' ? 'rgba(176, 2, 2, 0.3)' :
+                          t.status === 'bill' ? 'rgba(249, 115, 22, 0.3)' :
+                          'rgba(71, 85, 105, 0.25)'; // paid
       
       return `
-        <button style="flex: 1 1 calc(25% - 10px); background: ${opacityBg}; color: ${color}; border: 1px solid ${color}; border-radius: 8px; padding: 12px 0; font-size: 1.1rem; font-weight: 700; cursor:pointer;"
+        <button class="order-modal-table-btn" 
+          style="background: ${opacityBg}; color: ${color}; border: 1px solid ${borderColor};"
           onclick="window.location.href='ordini.html?table=${t.id}'">
+          <span class="table-status-dot" style="background: ${color};"></span>
           ${t.id}
         </button>
       `;
@@ -1478,6 +1641,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
   'reserved':   'Prenotato',
   'preparing':  'In preparazione',
   'ready':      'Pronto da servire',
+  'occupied':   'Occupato',
   'bill':       'Attesa conto',
   'paid':       'Pagato / Chiuso'
 };
@@ -1487,6 +1651,7 @@ const STATUS_COLORS = {
   'reserved':   '#0ea5e9',
   'preparing':  '#3b82f6',
   'ready':      '#a855f7',
+  'occupied':   '#b00202',
   'bill':       '#f97316',
   'paid':       '#475569'
 };
@@ -1496,6 +1661,7 @@ const STATUS_EMOJIS = {
   'reserved':   '🩵',
   'preparing':  '🔵',
   'ready':      '🟣',
+  'occupied':   '🔴',
   'bill':       '🟠',
   'paid':       '⚫'
 };
@@ -1860,7 +2026,7 @@ function updateStats() {
   // Legend
   const legendMap = {
     'lc-free': 'free', 'lc-prep': 'preparing', 
-    'lc-ready': 'ready', 'lc-bill': 'bill', 'lc-paid': 'paid'
+    'lc-ready': 'ready', 'lc-occupied': 'occupied', 'lc-bill': 'bill', 'lc-paid': 'paid'
   };
   Object.entries(legendMap).forEach(([elId, stat]) => {
      const el = document.getElementById(elId);
@@ -2303,7 +2469,7 @@ function initSync() {
       tables.forEach(t => {
         const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
         if (tOrders.length > 0) {
-          if (t.status !== 'bill' && t.status !== 'paid') {
+          if (t.status !== 'bill' && t.status !== 'paid' && t.status !== 'occupied') {
             const firstOrderTime = Math.min(...tOrders.map(o => o.timestamp || o.createdAt || Date.now()));
             if (!t.startedAt) t.startedAt = firstOrderTime;
             
@@ -2316,6 +2482,12 @@ function initSync() {
               t.status = newStatus;
               tableChanged = true;
             }
+          }
+        } else {
+          if (t.status === 'preparing' || t.status === 'ready') {
+            t.status = 'free';
+            t.startedAt = null;
+            tableChanged = true;
           }
         }
       });
