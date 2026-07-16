@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
   <title>POS Ordini - Ristorante</title>
   
   <style>
@@ -322,15 +323,29 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
     .cart-item__name {
-      font-size: 0.95rem;
       font-weight: 600;
+      font-size: 0.95rem;
     }
     .cart-item__price {
       font-size: 0.85rem;
       color: var(--text-2);
+    }
+    .cart-item__note {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      color: #60a5fa;
+      width: 100%;
+      outline: none;
+    }
+    .cart-item__note::placeholder {
+      color: var(--text-3);
     }
     .cart-item__actions {
       display: flex;
@@ -605,8 +620,7 @@
     console.log('[Ordini] Firebase connesso ✅');
 
     /* =====================================================
-       DATI DEL MENU (Facili da modificare)
-       L'utente può aggiungere prodotti qui!
+       DATI DEL MENU
     ===================================================== */
     const categories = [
       { id: 'antipasti', name: 'Antipasti', icon: '🥓' },
@@ -664,7 +678,6 @@
         .join(' ');
     }
 
-    // Placeholder image: ./images/placeholder.jpg (or use gradients in CSS if missing)
     const menuItems = [
      // BRUSCHETTE
 { id: 'br1', cat: 'bruschette', name: 'Bruschetta vegetariana', desc: 'Stracciatella, pomodori secchi, zucchine grigliate e basilico', price: 8.50, img: 'http://googleusercontent.com/image_collection/image_retrieval/13892565192973452929_1' },
@@ -837,14 +850,12 @@
 { id: 'gn7', cat: 'gin', name: 'Gin Sul', desc: 'Gin', price: 15.00, img: 'https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=600&q=80' }
 ];
 
-
     /* =====================================================
        STATO DELL'APP
     ===================================================== */
     let currentCat = 'tutte';
-    let cart = []; // Array of { item: Object, qty: Number }
+    let cart = []; 
 
-    // Leggi il numero del tavolo dall'URL (es: ordini.html?table=21)
     const urlParams = new URLSearchParams(window.location.search);
     const tableId = urlParams.get('table');
     if(tableId) {
@@ -856,12 +867,10 @@
     ===================================================== */
     function renderCategories() {
       const catList = document.getElementById('catList');
-      
       let html = `<button class="cat-btn ${currentCat === 'tutte' ? 'active' : ''}" onclick="setCat('tutte')">
                     Tutte
                     <span class="cat-badge">${menuItems.length}</span>
                   </button>`;
-                  
       categories.forEach(c => {
         const count = menuItems.filter(m => getTopCategory(m) === c.id).length;
         html += `<button class="cat-btn ${currentCat === c.id ? 'active' : ''}" onclick="setCat('${c.id}')">
@@ -875,35 +884,29 @@
     function renderMenu() {
       const grid = document.getElementById('menuGrid');
       const title = document.getElementById('currentCatTitle');
-      
       if(currentCat === 'tutte') {
         title.innerHTML = `<span>🍽️</span> Tutte le categorie`;
       } else {
         const c = categories.find(x => x.id === currentCat);
         title.innerHTML = `<span>${c.icon}</span> ${c.name}`;
       }
-
       const items = currentCat === 'tutte' ? menuItems : menuItems.filter(m => getTopCategory(m) === currentCat);
-      
       if (items.length === 0) {
         grid.innerHTML = `<div style="grid-column: 1/-1; color:var(--text-3); text-align:center; padding:40px;">Nessun prodotto in questa categoria</div>`;
         return;
       }
-
       const grouped = items.reduce((acc, item) => {
         const section = item.section || item.cat;
         if (!acc[section]) acc[section] = [];
         acc[section].push(item);
         return acc;
       }, {});
-
       grid.innerHTML = Object.entries(grouped).map(([section, sectionItems]) => `
         <div class="menu-section-heading">${formatSectionTitle(section)}</div>
         ${sectionItems.map(item => `
           <div class="menu-card">
             <div class="menu-card__img">
               <div class="menu-card__img-placeholder">${categories.find(c => c.id === item.cat)?.icon || '🍽️'}</div>
-              <!-- If image exists, it overlays the placeholder -->
               <img src="${item.img}" alt="${item.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity: 0.5;" onerror="this.style.display='none'">
             </div>
             <div class="menu-card__info">
@@ -920,7 +923,7 @@
     }
 
     /* =====================================================
-       CARRELLO E LOGICA
+       CARRELLO
     ===================================================== */
     function setCat(id) {
       currentCat = id;
@@ -931,24 +934,17 @@
     function addToCart(itemId) {
       const item = menuItems.find(i => i.id === itemId);
       const existing = cart.find(c => c.item.id === itemId);
-      
       if (existing) {
         existing.qty++;
       } else {
-        cart.push({ item, qty: 1 });
+        cart.push({ item, qty: 1, note: '' });
       }
       renderCart();
-      
-      // Piccola animazione sul FAB mobile
-      const fab = document.getElementById('mobileCartBtn');
-      fab.style.transform = 'scale(1.05)';
-      setTimeout(() => fab.style.transform = 'scale(1)', 200);
     }
 
     function changeQty(itemId, delta) {
       const idx = cart.findIndex(c => c.item.id === itemId);
       if (idx === -1) return;
-      
       cart[idx].qty += delta;
       if (cart[idx].qty <= 0) {
         cart.splice(idx, 1);
@@ -956,19 +952,26 @@
       renderCart();
     }
 
+    window.updateItemNote = function(itemId, noteStr) {
+      const idx = cart.findIndex(c => c.item.id === itemId);
+      if (idx !== -1) {
+        cart[idx].note = noteStr.trim();
+      }
+    };
+
     function renderCart() {
       const container = document.getElementById('cartItems');
       const totalEl = document.getElementById('cartTotal');
       const btnSend = document.getElementById('btnSend');
-      const mobileTotal = document.getElementById('mobileCartTotal');
       const mobileBtn = document.getElementById('mobileCartBtn');
+      const mobileTotal = document.getElementById('mobileCartTotal');
 
       if (cart.length === 0) {
         container.innerHTML = `<div class="cart-empty">Il carrello è vuoto</div>`;
         totalEl.textContent = '0.00 €';
         mobileTotal.textContent = '0.00 €';
         btnSend.disabled = true;
-        mobileBtn.style.display = window.innerWidth <= 900 ? 'none' : 'none'; 
+        mobileBtn.style.display = 'none';
         return;
       }
 
@@ -983,6 +986,7 @@
             <div class="cart-item__info">
               <span class="cart-item__name">${c.item.name}</span>
               <span class="cart-item__price">${c.item.price.toFixed(2)} €</span>
+              <input type="text" class="cart-item__note" placeholder="Note (es. ben cotto)" value="${c.note || ''}" onchange="updateItemNote('${c.item.id}', this.value)" />
             </div>
             <div class="cart-item__actions">
               <button class="cart-btn" onclick="changeQty('${c.item.id}', -1)">-</button>
@@ -992,36 +996,30 @@
           </div>
         `;
       }).join('');
-
-      const totalStr = total.toFixed(2) + ' €';
-      totalEl.textContent = totalStr;
-      mobileTotal.textContent = totalStr;
+      totalEl.textContent = total.toFixed(2) + ' €';
+      mobileTotal.textContent = total.toFixed(2) + ' €';
     }
 
     async function sendOrder() {
       if (cart.length === 0) return;
-      
       const orderData = {
         tableId: tableId ? parseInt(tableId) : 'Asporto',
-        status: 'new',
-        createdAt: Date.now(),
-        tableNote: '', // TODO add note input in the future
+        status: 'cooking',
+        timestamp: Date.now(),
+        tableNote: '',
         items: cart.map(c => ({
-          id: 'item_' + Math.random().toString(36).substring(2, 9),
+          id: c.item.id,
           name: c.item.name,
+          price: c.item.price,
           qty: c.qty,
-          status: 'new', // new, cooking, ready, done
-          note: ''
+          note: c.note || '',
+          status: 'cooking'
         }))
       };
-
       try {
         const newOrderRef = push(ref(db, 'orders'));
         await set(newOrderRef, orderData);
-        alert(tableId ? `Ordine inviato in cucina per il Tavolo ${tableId}!` : `Ordine Asporto inviato in cucina!`);
-        cart = [];
-        renderCart();
-        if(window.innerWidth <= 900) toggleMobileCart();
+        window.location.href = 'index.html';
       } catch (e) {
         console.error("Errore invio ordine:", e);
         alert("Errore: " + e.message);

@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Sala — RistoGest</title>
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script type="module">
@@ -218,6 +219,22 @@
       padding: 0 12px;
       border-left: 1px solid var(--border);
     }
+    .panel-close {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: none;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .panel-close:hover { background: #dc2626; }
     .icon-btn {
       width: 36px; height: 36px;
       border-radius: var(--radius-sm);
@@ -521,6 +538,7 @@
       font-variant-numeric: tabular-nums;
       color: var(--text-2);
       letter-spacing: 0.3px;
+      pointer-events: none;
     }
 
     /* Combinable indicator */
@@ -588,17 +606,7 @@
       font-size: 0.8rem;
       color: var(--text-2);
     }
-    .panel-close {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-2);
-      font-size: 1rem;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .panel-close:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+
 
     .panel-body {
       flex: 1;
@@ -1180,9 +1188,13 @@
             <span class="legend-count" id="lc-paid">0</span>
           </div>
         </div>
+      <div class="sidebar-section">
+        <div class="sidebar__label">Owner Area</div>
+        <button class="pact-btn pact-btn--primary" style="width:100%; margin-top:8px; display:flex; justify-content:center; align-items:center; gap:8px;" onclick="window.location.href='consumi.html'">
+           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+           Statistiche
+        </button>
       </div>
-
-      
     </aside>
 
     <!-- ===== FLOOR CANVAS ===== -->
@@ -1242,26 +1254,13 @@
             <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
             <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
             <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
-            <div style="width:3px; height:80px; background:rgba(255,255,255,0.07); border-radius:1px;"></div>
           </div>
 
           <!-- Outer area boundary hints -->
-          <div class="arch-wall"
-               style="top:0; left:0; right:0; height:2px; background: rgba(245,158,11,0.2);"></div>
-          <div class="arch-wall"
-               style="top:0; left:0; bottom:0; width:2px; background: rgba(245,158,11,0.1);"></div>
+          <div class="arch-wall" style="top:0; left:0; right:0; height:2px; background:rgba(245,158,11,0.2);"></div>
+          <div class="arch-wall" style="top:0; left:0; bottom:0; width:2px; background:rgba(245,158,11,0.1);"></div>
 
           <div class="zone-tag" style="top:10px; left:12px; color: rgba(245,158,11,0.5);">Esterno</div>
-
-
-
-
-
-
-
           
 <div id="floor-canvas-tr-dynamic"></div>
 
@@ -1308,7 +1307,42 @@
 
 </div><!-- end app -->
 
-<!-- ===== MOBILE BOTTOM NAV ===== -->
+<!-- Modale Prenotazione -->
+<div class="modal" id="reservationModal">
+  <div class="modal-content" style="max-width:350px;">
+    <h3 style="margin-bottom:16px;">Prenotazione Tavolo <span id="resTableNum"></span></h3>
+    <div style="margin-bottom:15px;">
+      <label style="display:block; font-size:0.85rem; color:var(--text-2); margin-bottom:6px;">Orario d'arrivo</label>
+      <input type="time" id="resTime" class="pact-input" value="20:00" style="width:100%; font-size:1.1rem; padding:12px;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block; font-size:0.85rem; color:var(--text-2); margin-bottom:6px;">Numero di persone</label>
+      <input type="number" id="resGuests" class="pact-input" min="1" value="2" style="width:100%; font-size:1.1rem; padding:12px;">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="pact-btn pact-btn--ghost" onclick="closeReservationModal()" style="flex:1;">Annulla</button>
+      <button class="pact-btn pact-btn--primary" onclick="confirmReservation()" style="flex:1;">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Nuovo Ordine -->
+<div class="modal" id="globalOrderModal">
+  <div class="modal-content" style="max-width:400px; padding: 24px;">
+    <h3 style="margin-bottom:16px;">Scegli il Tavolo</h3>
+    
+    <div style="display:flex; flex-wrap:wrap; gap:10px; max-height:300px; overflow-y:auto; margin-bottom: 20px;" id="globalOrderTables">
+      <!-- Injected via JS -->
+    </div>
+
+    <button class="pact-btn pact-btn--primary" style="width:100%; margin-bottom:10px;" onclick="window.location.href='ordini.html?table=Asporto'">
+      🛍️ Ordine da Asporto
+    </button>
+    <button class="pact-btn pact-btn--ghost" style="width:100%;" onclick="document.getElementById('globalOrderModal').classList.remove('open')">
+      Annulla
+    </button>
+  </div>
+</div>
 <nav class="bottom-nav" id="bottomNav">
   <button class="bnav-item active" data-tab="sala">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -1325,6 +1359,10 @@
   <button class="bnav-item" data-tab="presenze" onclick="window.location.href='presenze.html'">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     Presenze
+  </button>
+  <button class="bnav-item" data-tab="owner" onclick="window.location.href='consumi.html'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+    Owner
   </button>
 </nav>
 
@@ -1353,16 +1391,24 @@
 
 <script type="module">
   window.startGlobalOrder = function() {
-    const tableIdStr = prompt("Inserisci il numero del tavolo per la comanda:");
-    if (!tableIdStr) return; // user cancelled
-    const tid = parseInt(tableIdStr);
-    if (isNaN(tid)) {
-      alert("Numero tavolo non valido");
-      return;
-    }
-    // Check if table exists (optional, but good)
-    window.location.href = `ordini.html?table=${tid}`;
-  }
+    const container = document.getElementById('globalOrderTables');
+    container.innerHTML = tables.map(t => {
+      let bg = 'rgba(255,255,255,0.05)';
+      let color = 'var(--text-2)';
+      if (t.status !== 'free' && t.status !== 'paid') {
+        bg = 'rgba(59,130,246,0.15)'; // occupied = blueish or accent
+        color = 'var(--accent)';
+      }
+      return `
+        <button style="flex: 1 1 calc(25% - 10px); background: ${bg}; color: ${color}; border: 1px solid var(--border); border-radius: 8px; padding: 12px 0; font-size: 1.1rem; font-weight: 700; cursor:pointer;"
+          onclick="window.location.href='ordini.html?table=${t.id}'">
+          ${t.id}
+        </button>
+      `;
+    }).join('');
+    
+    document.getElementById('globalOrderModal').classList.add('open');
+  };
 
 /* =====================================================
    DATA — Status definitions
@@ -1426,11 +1472,14 @@ const tableSlots = {
   'pt_5': { area: 'Piano Terra (Esterno)', left: '1.875rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
   'pt_6': { area: 'Piano Terra (Esterno)', left: '15.625rem', top: '1.3rem', type: 'rect-v', baseSeats: 4 },
   'pt_7': { area: 'Piano Terra (Esterno)', left: '29.375rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
-  'tr_20': { area: 'Terrazza', left: '1.3rem', top: '25rem', type: 'sq', baseSeats: 2 },
-  'tr_21a': { area: 'Terrazza', left: '20px', top: '160px', type: 'rect-h', baseSeats: 4 },
-  'tr_21b': { area: 'Terrazza', left: '20px', top: '160px', type: 'sq', baseSeats: 2 },
-  'tr_22': { area: 'Terrazza', right: '7.5rem', top: '7.5rem', type: 'sq', baseSeats: 2 },
-  'tr_23': { area: 'Terrazza', right: '7.5rem', top: '22.5rem', type: 'rect-v', baseSeats: 4 },
+  // Terrazza — nuova disposizione più spaziata
+  'tr_20': { area: 'Terrazza', left: '30px', top: '30px', type: 'rect-h', baseSeats: 4 },
+  'tr_21': { area: 'Terrazza', left: '340px', top: '30px', type: 'sq', baseSeats: 2 },
+  'tr_22': { area: 'Terrazza', left: '30px', top: '200px', type: 'sq', baseSeats: 2 },
+  'tr_23': { area: 'Terrazza', left: '340px', top: '160px', type: 'rect-v', baseSeats: 4 },
+  'tr_24': { area: 'Terrazza', left: '30px', top: '450px', type: 'sq', baseSeats: 2 },
+  'tr_25': { area: 'Terrazza', left: '210px', top: '560px', type: 'sq', baseSeats: 2 },
+  'tr_26': { area: 'Terrazza', left: '370px', top: '650px', type: 'sq', baseSeats: 2 },
 };
 
 let tables = [
@@ -1441,10 +1490,13 @@ let tables = [
   { id: 5, slotIds: ['pt_5'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 6, slotIds: ['pt_6'], status: 'free', guests: 0, seats: 4, startedAt: null },
   { id: 7, slotIds: ['pt_7'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 20, slotIds: ['tr_20'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 21, slotIds: ['tr_21a', 'tr_21b'], status: 'free', guests: 0, seats: 6, startedAt: null },
+  { id: 20, slotIds: ['tr_20'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 21, slotIds: ['tr_21'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 22, slotIds: ['tr_22'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 23, slotIds: ['tr_23'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 24, slotIds: ['tr_24'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 25, slotIds: ['tr_25'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 26, slotIds: ['tr_26'], status: 'free', guests: 0, seats: 2, startedAt: null },
 ];
 
 let selectedTableId = null;
@@ -1612,10 +1664,7 @@ function promptLinkTable(id, knownTargetId = null) {
   // Delete target table from array
   tables.splice(targetIdx, 1);
   
-  // Shift tables downwards to close gap
-  tables.forEach(t => {
-     if (t.id > targetId) t.id--;
-  });
+  // NESSUNO SHIFT DEGLI ID! Manteniamo gli ID originali per non rompere i DB orders
   
   renderTables();
   showToast('✅', `Tavolo ${targetId} unito al Tavolo ${id}!`);
@@ -1637,15 +1686,13 @@ function unlinkTable(id) {
   const splitSlot = tableSlots[splitSlotId];
   
   t.seats -= splitSlot.baseSeats;
-  const newId = id + 1;
   
-  // Shift tables upwards to make space
-  tables.forEach(table => {
-     if (table.id >= newId) table.id++;
-  });
+  // Trova un ID univoco nuovo senza rompere gli altri
+  const maxId = Math.max(...tables.map(tb => tb.id));
+  const newId = maxId + 1;
   
-  // Insert new table directly after current
-  tables.splice(tableIdx + 1, 0, {
+  // Insert new table at the end
+  tables.push({
     id: newId,
     slotIds: [splitSlotId],
     status: 'free',
@@ -1656,19 +1703,45 @@ function unlinkTable(id) {
     startedAt: null
   });
   
+  // Ordina i tavoli per ID così il DOM li renderizza correttamente (opzionale ma utile)
+  tables.sort((a,b) => a.id - b.id);
+  
   renderTables();
   showToast('✂️', `Tavolo diviso. Creato nuovo Tavolo ${newId}`);
   closePanel();
 }
 
+let activeResTableId = null;
+
 function setReservation(id) {
   const t = tables.find(tb => tb.id === id);
   if(!t) return;
   
-  const time = prompt("Inserisci orario prenotazione (es. 20:30):", t.reservedTime || "20:00");
-  if(!time) return;
-  const guests = prompt("Numero di persone:", t.reservedGuests || t.seats);
-  if(!guests) return;
+  activeResTableId = id;
+  document.getElementById('resTableNum').textContent = id;
+  document.getElementById('resTime').value = t.reservedTime || "20:00";
+  document.getElementById('resGuests').value = t.reservedGuests || t.seats;
+  
+  document.getElementById('reservationModal').classList.add('open');
+}
+
+function closeReservationModal() {
+  document.getElementById('reservationModal').classList.remove('open');
+  activeResTableId = null;
+}
+
+function confirmReservation() {
+  if(!activeResTableId) return;
+  const t = tables.find(tb => tb.id === activeResTableId);
+  if(!t) return;
+  
+  const time = document.getElementById('resTime').value;
+  const guests = document.getElementById('resGuests').value;
+  
+  if(!time || !guests) {
+    showToast('⚠️', 'Compila tutti i campi');
+    return;
+  }
   
   t.status = 'reserved';
   t.reservedTime = time;
@@ -1677,8 +1750,26 @@ function setReservation(id) {
   t.startedAt = null;
   
   renderTables();
-  showToast('📅', `Tavolo ${id} prenotato per le ${time}`);
-  openPanel(id);
+  showToast('📅', `Tavolo ${activeResTableId} prenotato per le ${time}`);
+  closeReservationModal();
+  openPanel(activeResTableId);
+}
+
+function editTableId(oldId) {
+   const parsedOldId = parseInt(oldId);
+   const newIdStr = prompt("Inserisci il nuovo numero per questo tavolo:", parsedOldId);
+   if(!newIdStr) return;
+   const newId = parseInt(newIdStr);
+   if(isNaN(newId) || tables.find(t => t.id === newId)) {
+      showToast('❌', 'Numero non valido o già in uso');
+      return;
+   }
+   const t = tables.find(t => t.id === parsedOldId);
+   if(t) t.id = newId;
+   tables.sort((a,b) => a.id - b.id);
+   renderTables();
+   closePanel();
+   showToast('✅', `Tavolo rinominato in ${newId}`);
 }
 
 /* =====================================================
@@ -1951,8 +2042,11 @@ function openPanel(id) {
     document.getElementById('sheetBody').innerHTML = `
       <div style="padding:16px 20px 8px; display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <h3 style="font-size:1.1rem;font-weight:700;">Tavolo ${id}</h3>
-          <p style="font-size:0.8rem;color:var(--text-2);margin-top:2px;">${d.seats} posti</p>
+          <h3 style="font-size:1.1rem;font-weight:700;">Tavolo ${id} <span style="font-size:0.9rem; margin-left:6px; cursor:pointer; opacity:0.6;" onclick="editTableId('${id}')">✏️</span></h3>
+          <p style="font-size:0.8rem;color:var(--text-2);margin-top:2px;">
+            <span style="color:${STATUS_COLORS[d.status]}">${STATUS_LABELS[d.status]}</span> • 
+            ${d.guests > 0 ? d.guests : d.seats} persone
+          </p>
         </div>
         <button onclick="window.closePanel()" style="background:#ef4444; color:white; border:none; width:34px; height:34px; border-radius:50%; font-size:1.1rem; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;">✕</button>
       </div>
@@ -1961,8 +2055,14 @@ function openPanel(id) {
     document.getElementById('bottomSheet').classList.add('open');
     document.getElementById('sheetOverlay').classList.add('show');
   } else {
-    document.getElementById('panelTitle').textContent = `Tavolo ${id}`;
-    document.getElementById('panelSub').textContent   = `${d.seats} posti`;
+    selectedTableId = id;
+  
+    document.getElementById('panelTitle').innerHTML = `Tavolo ${id} <span style="font-size:0.9rem; margin-left:8px; cursor:pointer; opacity:0.6;" onclick="editTableId('${id}')" title="Rinomina Tavolo">✏️</span>`;
+    document.getElementById('panelSub').innerHTML = `
+      <span style="color:${STATUS_COLORS[d.status]}">${STATUS_LABELS[d.status]}</span>
+      <span style="opacity:0.5; margin:0 6px;">•</span>
+      <span>${d.guests > 0 ? d.guests : d.seats} persone</span>
+    `;
     document.getElementById('panelBody').innerHTML    = buildPanelContent(id);
     document.getElementById('sidePanel').classList.add('open');
   }

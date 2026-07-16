@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <title>Statistiche e Consumi — RistoGest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0f1115;
+      --surface: #1a1d24;
+      --border: #2a2e39;
+      --text: #ffffff;
+      --text-2: #94a3b8;
+      --text-3: #64748b;
+      --accent: #3b82f6;
+      --radius: 12px;
+      
+      --s-new: #f59e0b;
+      --s-ready: #22c55e;
+      --s-done: #64748b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-back {
+      background: none;
+      border: none;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .header-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    /* MAIN */
+    .main-content {
+      padding: 20px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stat-card__title {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card__value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .item-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .item-row__name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .item-row__qty {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 1.1rem;
+    }
+    .item-row__revenue {
+      font-size: 0.85rem;
+      color: var(--text-2);
+      margin-top: 4px;
+    }
+    .loader {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-3);
+    }
+  </style>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
+      authDomain:        "in-punto.firebaseapp.com",
+      databaseURL:       "https://in-punto-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:         "in-punto",
+      storageBucket:     "in-punto.firebasestorage.app",
+      messagingSenderId: "851521503055",
+      appId:             "1:851521503055:web:7e23520cf67641f044cf3a"
+    };
+    const fbApp = initializeApp(firebaseConfig);
+    const db    = getDatabase(fbApp);
+
+    let allOrders = [];
+
+    const ordersRef = ref(db, 'orders');
+    onValue(ordersRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        document.getElementById('loader').style.display = 'none';
+        return;
+      }
+
+      allOrders = Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+
+      calculateStats();
+    });
+
+    function calculateStats() {
+      let totalRevenue = 0;
+      let totalItemsSold = 0;
+      let totalOrders = allOrders.length;
+
+      const itemsMap = {};
+
+      allOrders.forEach(order => {
+        if(order.items) {
+          order.items.forEach(item => {
+            totalItemsSold += item.qty;
+            const price = item.price || 0;
+            totalRevenue += price * item.qty;
+
+            if(!itemsMap[item.name]) {
+              itemsMap[item.name] = { qty: 0, revenue: 0 };
+            }
+            itemsMap[item.name].qty += item.qty;
+            itemsMap[item.name].revenue += price * item.qty;
+          });
+        }
+      });
+
+      document.getElementById('val-revenue').textContent = totalRevenue.toFixed(2) + ' €';
+      document.getElementById('val-orders').textContent = totalOrders;
+      document.getElementById('val-items').textContent = totalItemsSold;
+
+      const sortedItems = Object.entries(itemsMap)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.qty - a.qty);
+
+      const listContainer = document.getElementById('itemsList');
+      listContainer.innerHTML = sortedItems.map(item => `
+        <div class="item-row">
+          <div>
+            <div class="item-row__name">${item.name}</div>
+            <div class="item-row__revenue">Incasso: ${item.revenue.toFixed(2)} €</div>
+          </div>
+          <div class="item-row__qty">x${item.qty}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('statsContent').style.display = 'block';
+    }
+  </script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <button class="header-back" onclick="window.history.back()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Indietro
+    </button>
+    <div class="header-title">Statistiche e Consumi</div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div id="loader" class="loader">Caricamento dati in corso...</div>
+
+    <div id="statsContent" style="display:none;">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card__title">Incasso Totale</div>
+          <div class="stat-card__value" id="val-revenue">0.00 €</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__title">Ordini Totali</div>
+          <div class="stat-card__value" id="val-orders" style="color:var(--text)">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card__title">Piatti / Drink Venduti</div>
+          <div class="stat-card__value" id="val-items" style="color:var(--text)">0</div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <div class="section-title">Piatti e Bevande più venduti</div>
+        <div class="items-list" id="itemsList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>
