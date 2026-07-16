@@ -1929,8 +1929,9 @@ function closeReservationModal() {
 }
 
 function confirmReservation() {
-  if(!activeResTableId) return;
-  const t = tables.find(tb => tb && tb.id === activeResTableId);
+  const tableId = activeResTableId;
+  if(!tableId) return;
+  const t = tables.find(tb => tb && tb.id === tableId);
   if(!t) return;
   
   const time = document.getElementById('resTime').value;
@@ -1948,10 +1949,10 @@ function confirmReservation() {
   t.startedAt = null;
   
   renderTables();
-  showToast('📅', `Tavolo ${activeResTableId} prenotato per le ${time}`);
+  showToast('📅', `Tavolo ${tableId} prenotato per le ${time}`);
   closeReservationModal();
   closePanel();
-  if(window.syncTablesToDB) window.syncTablesToDB([activeResTableId]);
+  if(window.syncTablesToDB) window.syncTablesToDB([tableId]);
 }
 
 function editTableId(oldId) {
