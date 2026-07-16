@@ -2434,12 +2434,12 @@ window.syncTablesToDB = async function(changedTableIds = null) {
         changedTableIds.forEach(id => {
           const t = tables.find(tb => tb && tb.id === id);
           if (t) {
-            updates[`tables/table_${id}`] = t; 
+            updates[`table_${id}`] = t; 
           }
         });
         if (Object.keys(updates).length > 0) {
-          // Atomic multi-path update from the root to avoid overriding siblings
-          await window._fbUpdate(window._ref(window._db), updates);
+          // Atomic multi-path update directly on the 'tables' node to respect Security Rules
+          await window._fbUpdate(window._ref(window._db, 'tables'), updates);
         }
       } else {
         const allTablesObj = {};
