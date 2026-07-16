@@ -2454,8 +2454,18 @@ function initSync() {
     // 1. Sync Tables
     window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
       const data = snapshot.val();
-      if (data && Array.isArray(data)) {
-        tables = data;
+      if (data) {
+        let parsedTables = [];
+        if (Array.isArray(data)) {
+          parsedTables = data;
+        } else if (typeof data === 'object') {
+          Object.keys(data).forEach(k => {
+            parsedTables[parseInt(k)] = data[k];
+          });
+          parsedTables = parsedTables.filter(t => t); // rimuove eventuali buchi
+        }
+        
+        tables = parsedTables;
         renderTables();
         if(selectedTableId) buildPanelContent(selectedTableId);
       } else if (isFirstLoad) {
