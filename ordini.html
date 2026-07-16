@@ -1003,8 +1003,8 @@
     async function sendOrder() {
       if (cart.length === 0) return;
       const orderData = {
-        tableId: tableId ? parseInt(tableId) : 'Asporto',
-        status: 'cooking',
+        tableId: (tableId && tableId !== 'Asporto') ? parseInt(tableId) : 'Asporto',
+        status: 'new',
         timestamp: Date.now(),
         tableNote: '',
         items: cart.map(c => ({
@@ -1013,7 +1013,7 @@
           price: c.item.price,
           qty: c.qty,
           note: c.note || '',
-          status: 'cooking'
+          status: 'new'
         }))
       };
       try {

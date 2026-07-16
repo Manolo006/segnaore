@@ -1890,6 +1890,10 @@ function unlinkTable(id) {
   // Pop the last slot
   const splitSlotId = t.slotIds.pop();
   const splitSlot = tableSlots[splitSlotId];
+  if (!splitSlot) {
+    showToast('⚠️', 'Errore nella divisione: slot non valido.');
+    return;
+  }
   
   t.seats -= splitSlot.baseSeats;
   
@@ -2034,8 +2038,16 @@ function updateStats() {
   });
 
   // Area badges
-  const ptCount = tables.filter(t => tableSlots[t.slotIds[0]].area.startsWith('Piano Terra') && t.status !== 'free').length;
-  const terrCount = tables.filter(t => tableSlots[t.slotIds[0]].area.startsWith('Terrazza') && t.status !== 'free').length;
+  const ptCount = tables.filter(t => {
+    const slot = t.slotIds && t.slotIds[0] ? tableSlots[t.slotIds[0]] : null;
+    return slot && slot.area && slot.area.startsWith('Piano Terra') && t.status !== 'free';
+  }).length;
+  
+  const terrCount = tables.filter(t => {
+    const slot = t.slotIds && t.slotIds[0] ? tableSlots[t.slotIds[0]] : null;
+    return slot && slot.area && slot.area.startsWith('Terrazza') && t.status !== 'free';
+  }).length;
+  
   document.getElementById('badge-piano-terra').textContent = ptCount;
   document.getElementById('badge-terrazza').textContent = terrCount;
 }
@@ -2051,7 +2063,8 @@ function buildPanelContent(id) {
   const d = tables.find(t => t.id === id);
   if(!d) return '';
   const elapsed = d.startedAt ? formatTimer(Date.now() - d.startedAt) : '—';
-  const areaLabel = tableSlots[d.slotIds[0]].area;
+  const baseSlot = d.slotIds && d.slotIds[0] ? tableSlots[d.slotIds[0]] : null;
+  const areaLabel = baseSlot ? baseSlot.area : 'Generale';
   const isOccupied = !['free','reserved','paid'].includes(d.status);
   const isReserved = d.status === 'reserved';
   const isFree     = d.status === 'free';
