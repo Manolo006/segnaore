@@ -34,7 +34,7 @@
       focacce: 'focacce',
       taglieri: 'taglieri',
       pizze: 'pizze',
-      fritti: 'fritti',
+      fritti: 'antipasti',
       primi: 'primi',
       secondi: 'secondi',
       dolci: 'dolci',
@@ -252,7 +252,8 @@
        STATO DELL'APP
     ===================================================== */
     let currentCat = 'tutte';
-    let cart = []; 
+    let cart = [];
+    let searchTerm = '';
 
     const urlParams = new URLSearchParams(window.location.search);
     const tableId = urlParams.get('table');
@@ -288,7 +289,16 @@
         const c = categories.find(x => x.id === currentCat);
         title.innerHTML = `<span>${c.icon}</span> ${c.name}`;
       }
-      const items = currentCat === 'tutte' ? menuItems : menuItems.filter(m => getTopCategory(m) === currentCat);
+      let items = currentCat === 'tutte' ? menuItems : menuItems.filter(m => getTopCategory(m) === currentCat);
+      
+      // Apply search filter
+      if (searchTerm) {
+        items = items.filter(item =>
+          item.name.toLowerCase().includes(searchTerm) ||
+          item.desc.toLowerCase().includes(searchTerm)
+        );
+      }
+      
       if (items.length === 0) {
         grid.innerHTML = `<div style="grid-column: 1/-1; color:var(--text-3); text-align:center; padding:40px;">Nessun prodotto in questa categoria</div>`;
         return;
@@ -476,3 +486,11 @@
     renderCategories();
     renderMenu();
     renderCart();
+    // Search input handler
+    const searchInput = document.getElementById('orderSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value.toLowerCase();
+        renderMenu();
+      });
+    }

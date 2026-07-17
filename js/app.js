@@ -373,58 +373,21 @@ function promptLinkTable(id, knownTargetId = null) {
   // Delete target table from array
   tables = tables.filter(t => t.id !== targetId);
   
-  // NESSUNO SHIFT DEGLI ID! Manteniamo gli ID originali per non rompere i DB orders
-  
+  showToast('ℹ️', 'Funzione di collegamento disabilitata.');
+}
+
+function changeSeats(id, delta) {
+  const t = tables.find(tb => tb && tb.id === id);
+  if (!t) return;
+  t.seats = Math.max(1, t.seats + delta);
+  const el = document.getElementById(`seats-count-${id}`);
+  if (el) el.textContent = t.seats;
   renderTables();
-  showToast('🔗', `Tavolo ${targetId} unito al Tavolo ${id}!`);
-  closePanel();
-  if(window.syncTablesToDB) window.syncTablesToDB();
+  if (window.syncTablesToDB) window.syncTablesToDB();
 }
 
 function unlinkTable(id) {
-  const tableIdx = tables.findIndex(t => t.id === id);
-  if (tableIdx === -1) return;
-  const t = tables[tableIdx];
-  
-  if (t.slotIds.length <= 1) {
-    showToast('⚠️', 'Questo tavolo non è unito ad altri.');
-    return;
-  }
-  
-  // Pop the last slot
-  const splitSlotId = t.slotIds.pop();
-  const splitSlot = tableSlots[splitSlotId];
-  if (!splitSlot) {
-    showToast('⚠️', 'Errore nella divisione: slot non valido.');
-    return;
-  }
-  
-  t.seats -= splitSlot.baseSeats;
-  
-  // Trova un ID univoco nuovo senza rompere gli altri
-  const maxId = Math.max(...tables.map(tb => tb.id));
-  const newId = maxId + 1;
-  
-  // Insert new table at the end
-  const newTable = {
-    id: newId,
-    slotIds: [splitSlotId],
-    status: 'free',
-    guests: 0,
-    seats: splitSlot.baseSeats,
-    reservedTime: '',
-    reservedGuests: 0,
-    startedAt: null
-  };
-  tables.push(newTable);
-  
-  // Ordina i tavoli per ID così il DOM li renderizza correttamente (opzionale ma utile)
-  tables.sort((a,b) => a.id - b.id);
-  
-  renderTables();
-  showToast('✂️', `Tavolo diviso. Creato nuovo Tavolo ${newId}`);
-  closePanel();
-  if(window.syncTablesToDB) window.syncTablesToDB();
+  showToast('ℹ️', 'Funzione di scollegamento dei tavoli disabilitata.');
 }
 
 let activeResTableId = null;
@@ -667,14 +630,12 @@ function buildPanelContent(id) {
 }
 
 // ---- LINK MODE ----
+// startLinkMode disabled – linking of tables removed.
 function startLinkMode(id) {
-  const d = tables.find(t => t && t.id === id);
-  if(d && d.status === 'reserved') { showToast('⚠️', 'Non puoi collegare un tavolo prenotato.'); return; }
-  linkingMode = id;
-  renderTables();
-  showToast('⛓', `Modalità collegamento attiva — clicca il tavolo da unire al Tavolo ${id}`);
+  showToast('ℹ️', 'Funzione di collegamento dei tavoli disabilitata.');
 }
 
+// cancelLinkMode disabled – linking removed.
 function cancelLinkMode() {
   linkingMode = null;
   renderTables();
@@ -850,6 +811,37 @@ function changeGuests(id, delta) {
   }
 }
 
+// Cambia i coperti (seats) di un tavolo
+function changeSeats(id, delta) {
+  const d = tables.find(t => t && t.id === id);
+  if (!d) return;
+  const newSeats = Math.max(1, d.seats + delta);
+  const updatedTable = { ...d, seats: newSeats };
+  // Aggiorna tutti gli slot associati
+  d.slotIds.forEach(slotId => {
+    if (tableSlots[slotId]) {
+      tableSlots[slotId].baseSeats = newSeats;
+    }
+  });
+  delete updatedTable.orders;
+  delete updatedTable.salaLockAt;
+  delete updatedTable.salaStatus;
+  if (window._fbReady && window._db) {
+    // Aggiorna tavolo e slot su Firebase
+    const updates = { [`table_${id}`]: updatedTable };
+    d.slotIds.forEach(slotId => {
+      updates[`slot_${slotId}`] = tableSlots[slotId];
+    });
+    window._fbUpdate(window._ref(window._db, 'tables'), updates)
+      .catch(e => console.error('Errore changeSeats:', e));
+  }
+  // Aggiorna UI in tempo reale
+  const countEl = document.getElementById(`seats-count-${id}`);
+  if (countEl) countEl.textContent = newSeats;
+  renderTables();
+  showToast('✅', `Coperti aggiornati a ${newSeats}`);
+}
+
 function freeTable(id) {
   setTableStatus(id, 'free');
   closePanel();
@@ -941,11 +933,11 @@ window.confirmReservation = confirmReservation;
 window.freeTable = freeTable;
 window.startReservationMode = startReservationMode;
 window.unlinkTable = unlinkTable;
-window.startLinkMode = startLinkMode;
 window.editTableId = editTableId;
 window.cancelLinkMode = cancelLinkMode;
 window.setTableStatus = setTableStatus;
 window.freeTable = freeTable;
+window.changeSeats = changeSeats;
 window.changeGuests = changeGuests;
 window.saveNote = saveNote;
 window.startReservationMode = startReservationMode;
