@@ -116,13 +116,13 @@ const tableSlots = {
   'pt_6': { area: 'Piano Terra (Esterno)', left: '15.625rem', top: '1.3rem', type: 'rect-v', baseSeats: 4 },
   'pt_7': { area: 'Piano Terra (Esterno)', left: '29.375rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
   // Terrazza — nuova disposizione più spaziata
-  'tr_20': { area: 'Terrazza', left: '30px', top: '30px', type: 'rect-h', baseSeats: 4 },
-  'tr_21': { area: 'Terrazza', left: '340px', top: '30px', type: 'sq', baseSeats: 2 },
-  'tr_22': { area: 'Terrazza', left: '30px', top: '200px', type: 'sq', baseSeats: 2 },
-  'tr_23': { area: 'Terrazza', left: '340px', top: '200px', type: 'rect-v', baseSeats: 4 },
-  'tr_24': { area: 'Terrazza', left: '30px', top: '450px', type: 'sq', baseSeats: 2 },
-  'tr_25': { area: 'Terrazza', left: '210px', top: '560px', type: 'sq', baseSeats: 2 },
-  'tr_26': { area: 'Terrazza', left: '390px', top: '650px', type: 'sq', baseSeats: 2 },
+  'tr_10': { area: 'Terrazza', left: '30px', top: '30px', type: 'rect-h', baseSeats: 4 },
+  'tr_11': { area: 'Terrazza', left: '340px', top: '30px', type: 'sq', baseSeats: 2 },
+  'tr_12': { area: 'Terrazza', left: '30px', top: '200px', type: 'sq', baseSeats: 2 },
+  'tr_13': { area: 'Terrazza', left: '340px', top: '200px', type: 'rect-v', baseSeats: 4 },
+  'tr_14': { area: 'Terrazza', left: '30px', top: '450px', type: 'sq', baseSeats: 2 },
+  'tr_15': { area: 'Terrazza', left: '210px', top: '560px', type: 'sq', baseSeats: 2 },
+  'tr_16': { area: 'Terrazza', left: '390px', top: '650px', type: 'sq', baseSeats: 2 },
 };
 
 let tables = [
@@ -133,13 +133,13 @@ let tables = [
   { id: 5, slotIds: ['pt_5'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 6, slotIds: ['pt_6'], status: 'free', guests: 0, seats: 4, startedAt: null },
   { id: 7, slotIds: ['pt_7'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 20, slotIds: ['tr_20'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 21, slotIds: ['tr_21'], status: 'free', guests: 0, seats: 4, startedAt: null },
-  { id: 22, slotIds: ['tr_22'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 23, slotIds: ['tr_23'], status: 'free', guests: 0, seats: 4, startedAt: null },
-  { id: 24, slotIds: ['tr_24'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 25, slotIds: ['tr_25'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 26, slotIds: ['tr_26'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 10, slotIds: ['tr_10'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 11, slotIds: ['tr_11'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 12, slotIds: ['tr_12'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 13, slotIds: ['tr_13'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 14, slotIds: ['tr_14'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 15, slotIds: ['tr_15'], status: 'free', guests: 0, seats: 2, startedAt: null },
+  { id: 16, slotIds: ['tr_16'], status: 'free', guests: 0, seats: 2, startedAt: null },
 ];
 
 let selectedTableId = null;
