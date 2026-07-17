@@ -28,13 +28,6 @@ window.switchOwnerTab = (tabId, evt) => {
   if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
 };
 
-// DEMO MODE: Immediately show owner view and initialize dashboard
-const loadingEl = document.getElementById('view-loading');
-const ownerEl = document.getElementById('view-owner');
-if (loadingEl) loadingEl.style.display = 'none';
-if (ownerEl) ownerEl.style.display = 'block';
-initOwnerDashboard();
-
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -42,13 +35,21 @@ onAuthStateChanged(auth, async (user) => {
       const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
       const role = userDoc.exists() ? (userDoc.data().role || '').toLowerCase() : '';
       console.log('[Owner] Auth role:', role);
-      document.getElementById('userName').textContent = (user.displayName || "Proprietario") + ` (${role})`;
+      if (role === "owner") {
+        document.getElementById('view-loading').style.display = 'none';
+        document.getElementById('view-owner').style.display = 'block';
+        document.getElementById('userName').textContent = (user.displayName || "Proprietario") + ` (${role})`;
+        initOwnerDashboard();
+      } else {
+        console.warn('[Owner] Access denied, role:', role);
+        window.location.href = "index.html"; // Not an owner, redirect to index
+      }
     } catch (e) {
       console.error('Error fetching user role:', e);
-      document.getElementById('userName').textContent = user.displayName || "Proprietario";
+      window.location.href = "index.html"; // Fallback safe redirect on error
     }
   } else {
-    document.getElementById('userName').textContent = "Modalità Demo";
+    window.location.href = "presenze.html"; // Not logged in, redirect to login
   }
 });
 

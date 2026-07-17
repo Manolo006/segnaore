@@ -1,8 +1,9 @@
 const CACHE_NAME = 'ristogest-v1';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json',
+  './img/icon.jpg'
 ];
 
 self.addEventListener('install', (event) => {
