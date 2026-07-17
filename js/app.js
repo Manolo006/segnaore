@@ -998,10 +998,13 @@ function initSync() {
       const unpaidOrders = activeOrders.filter(o => o.paymentStatus !== 'paid');
 
       if (unpaidOrders.length > 0) {
-        // La cucina può passare da 'free' a 'preparing' SOLO se il tavolo è ancora libero
-        // (es: un cameriere ha preso un ordine ma non ha ancora messo il tavolo come occupato)
-        if (t.status === 'free') {
+        // KDS può passare a 'preparing' da questi stati di "non-cucina":
+        // - free: ordine arrivato, tavolo passa in preparazione
+        // - occupied: nuova comanda arrivata mentre la gente mangia (riordino)
+        // NON tocca: bill, paid, reserved (stati di cassa/sala puri)
+        if (t.status === 'free' || t.status === 'occupied') {
           const tCopy = { ...t, status: 'preparing' };
+          if (!tCopy.startedAt) tCopy.startedAt = Date.now();
           delete tCopy.orders;
           updates[`table_${t.id}`] = tCopy;
           return;
