@@ -551,6 +551,7 @@ window.changeSeats = function(id, delta) {
   window.syncTablesToDB([id]);
   renderTables();
   if (selectedTableId === id) {
+    updatePanelHeader(id);
     const panelBody = document.getElementById('panelBody');
     if (panelBody) panelBody.innerHTML = buildPanelContent(id);
   }
@@ -610,6 +611,23 @@ function subscribeTableOrders(id) {
   });
 }
 
+function updatePanelHeader(id) {
+  const d = tables.find(t => t && t.id === id);
+  if (!d) return;
+  const titleEl = document.getElementById('panelTitle');
+  if (titleEl) {
+    titleEl.innerHTML = `Tavolo ${id} <span style="font-size:0.9rem; margin-left:8px; cursor:pointer; opacity:0.6;" onclick="editTableId('${id}')" title="Rinomina Tavolo">✏️</span>`;
+  }
+  const subEl = document.getElementById('panelSub');
+  if (subEl) {
+    subEl.innerHTML = `
+      <span style="color:${STATUS_COLORS[d.status]}">${STATUS_LABELS[d.status]}</span>
+      <span style="opacity:0.5; margin:0 6px;">•</span>
+      <span>${d.guests > 0 ? d.guests : d.seats} persone</span>
+    `;
+  }
+}
+
 function openPanel(id) {
   selectedTableId = id;
   const d = tables.find(t => t && t.id === id);
@@ -617,12 +635,7 @@ function openPanel(id) {
   // Init orders array if needed
   if(!d.orders) d.orders = [];
 
-  document.getElementById('panelTitle').innerHTML = `Tavolo ${id} <span style="font-size:0.9rem; margin-left:8px; cursor:pointer; opacity:0.6;" onclick="editTableId('${id}')" title="Rinomina Tavolo">✏️</span>`;
-  document.getElementById('panelSub').innerHTML = `
-    <span style="color:${STATUS_COLORS[d.status]}">${STATUS_LABELS[d.status]}</span>
-    <span style="opacity:0.5; margin:0 6px;">•</span>
-    <span>${d.guests > 0 ? d.guests : d.seats} persone</span>
-  `;
+  updatePanelHeader(id);
   document.getElementById('panelBody').innerHTML = buildPanelContent(id);
   document.getElementById('sidePanel').classList.add('open');
   document.getElementById('panelOverlay').classList.add('show');
@@ -675,10 +688,19 @@ function setTableStatus(id, newStatus, opts = {}) {
       updatedTable.reservedTime   = '';
       updatedTable.reservedGuests = 0;
       updatedTable.startedAt      = null;
+    } else if (newStatus === 'occupied' && d.status === 'reserved') {
+      updatedTable.guests         = d.reservedGuests || d.seats;
     }
     if (!updatedTable.startedAt && newStatus !== 'free')
       updatedTable.startedAt = Date.now();
   }
+
+  // Update locally first for instant feedback
+  d.status = updatedTable.status;
+  d.guests = updatedTable.guests;
+  d.reservedTime = updatedTable.reservedTime;
+  d.reservedGuests = updatedTable.reservedGuests;
+  d.startedAt = updatedTable.startedAt;
 
   // Se il tavolo viene liberato/pagato, marca tutti gli ordini attivi come pagati
   if (newStatus === 'free' || newStatus === 'paid') {
@@ -715,7 +737,8 @@ function changeGuests(id, delta) {
   const d = tables.find(t => t && t.id === id);
   if (!d) return;
   const newGuests = Math.max(0, Math.min(d.seats, d.guests + delta));
-  const updatedTable = { ...d, guests: newGuests };
+  d.guests = newGuests;
+  const updatedTable = { ...d };
   delete updatedTable.orders;
   delete updatedTable.salaLockAt;
   delete updatedTable.salaStatus;
@@ -723,6 +746,12 @@ function changeGuests(id, delta) {
     window._fbUpdate(window._ref(window._db, 'tables'), {
       [`table_${id}`]: updatedTable
     }).catch(e => console.error('Errore changeGuests:', e));
+  }
+  renderTables();
+  if (selectedTableId === id) {
+    updatePanelHeader(id);
+    const panelBody = document.getElementById('panelBody');
+    if (panelBody) panelBody.innerHTML = buildPanelContent(id);
   }
 }
 
@@ -903,6 +932,7 @@ function initSync() {
     renderTables();
     // Se il panel è aperto, aggiornalo con i dati freschi da Firebase
     if (selectedTableId) {
+      updatePanelHeader(selectedTableId);
       const panelBody = document.getElementById('panelBody');
       if (panelBody) panelBody.innerHTML = buildPanelContent(selectedTableId);
     }
