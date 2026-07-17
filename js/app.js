@@ -705,6 +705,10 @@ function closePanel() {
 }
 
 function setTableStatus(id, newStatus) {
+  // LOCK: Previene che il KDS sovrascriva questa scelta manuale nei prossimi 4 secondi
+  window._manualLock = window._manualLock || {};
+  window._manualLock[id] = Date.now();
+
   const d = tables.find(t => t && t.id === id);
   if(!d) return;
   d.status = newStatus;
@@ -960,7 +964,12 @@ function initSync() {
       const allOrders = data ? Object.values(data) : [];
       
       const changedIds = [];
+      const now = Date.now();
       tables.forEach(t => {
+        // Se il cameriere ha appena cambiato lo stato a mano, ignoriamo il KDS per 4 secondi per evitare race-conditions
+        const manualLockTime = (window._manualLock && window._manualLock[t.id]) || 0;
+        if (now - manualLockTime < 4000) return;
+
         // Find all active orders for the table (not done)
         const tAllActiveOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
         
@@ -969,7 +978,7 @@ function initSync() {
         
         if (tOrdersUnpaid.length > 0) {
           if (t.status !== 'bill' && t.status !== 'paid' && t.status !== 'occupied') {
-            const firstOrderTime = Math.min(...tOrdersUnpaid.map(o => o.timestamp || o.createdAt || Date.now()));
+            const firstOrderTime = Math.min(...tOrdersUnpaid.map(o => o.timestamp || o.createdAt || now));
             if (!t.startedAt) t.startedAt = firstOrderTime;
             
             const allItems = tOrdersUnpaid.flatMap(o => o.items || []);
