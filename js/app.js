@@ -112,17 +112,26 @@ const tableSlots = {
   'pt_2': { area: 'Piano Terra', left: '1.3rem', top: '36.875rem', type: 'sq', baseSeats: 2 },
   'pt_3': { area: 'Piano Terra', left: '1.3rem', top: '21.25rem', type: 'sq', baseSeats: 2 },
   'pt_4': { area: 'Piano Terra', left: '22.5rem', top: '36.875rem', type: 'sq', baseSeats: 2 },
-  'pt_5': { area: 'Piano Terra (Esterno)', left: '1.875rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
-  'pt_6': { area: 'Piano Terra (Esterno)', left: '15.625rem', top: '1.3rem', type: 'rect-v', baseSeats: 4 },
+  'pt_5': { area: 'Piano Terra (Esterno)', left: '1.875rem', top: '1.3rem', type: 'rect-h', baseSeats: 4 },
+  'pt_6': { area: 'Piano Terra (Esterno)', left: '15.625rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
   'pt_7': { area: 'Piano Terra (Esterno)', left: '29.375rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
-  // Terrazza — nuova disposizione più spaziata
-  'tr_10': { area: 'Terrazza', left: '30px', top: '30px', type: 'rect-h', baseSeats: 4 },
-  'tr_11': { area: 'Terrazza', left: '340px', top: '30px', type: 'sq', baseSeats: 2 },
-  'tr_12': { area: 'Terrazza', left: '30px', top: '200px', type: 'sq', baseSeats: 2 },
-  'tr_13': { area: 'Terrazza', left: '340px', top: '200px', type: 'rect-v', baseSeats: 4 },
-  'tr_14': { area: 'Terrazza', left: '30px', top: '450px', type: 'sq', baseSeats: 2 },
-  'tr_15': { area: 'Terrazza', left: '210px', top: '560px', type: 'sq', baseSeats: 2 },
-  'tr_16': { area: 'Terrazza', left: '390px', top: '650px', type: 'sq', baseSeats: 2 },
+  // Terrazza — layout aggiornato secondo la disposizione reale
+  //  ZONA ALTA (prima della linea):
+  //    T10: rettangolo verticale a sinistra
+  //    T11: quadrato piccolo in alto al centro
+  //    T12: rettangolo verticale a destra
+  //  ZONA BASSA (dopo la linea), in diagonale:
+  //    T13: quadrato in alto a sinistra
+  //    T14: quadrato al centro
+  //    T15: quadrato in basso al centro-destra
+  //    T16: quadrato in basso a destra
+  'tr_10': { area: 'Terrazza', left: '20px',  top: '100px', type: 'rect-v', baseSeats: 4 },
+  'tr_11': { area: 'Terrazza', left: '180px', top: '20px',  type: 'sq',     baseSeats: 2 },
+  'tr_12': { area: 'Terrazza', left: '330px', top: '80px',  type: 'rect-v', baseSeats: 4 },
+  'tr_13': { area: 'Terrazza', left: '30px',  top: '370px', type: 'sq',     baseSeats: 2 },
+  'tr_14': { area: 'Terrazza', left: '160px', top: '460px', type: 'sq',     baseSeats: 2 },
+  'tr_15': { area: 'Terrazza', left: '260px', top: '550px', type: 'sq',     baseSeats: 2 },
+  'tr_16': { area: 'Terrazza', left: '360px', top: '630px', type: 'sq',     baseSeats: 2 },
 };
 
 let tables = [
@@ -130,13 +139,13 @@ let tables = [
   { id: 2, slotIds: ['pt_2'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 3, slotIds: ['pt_3'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 4, slotIds: ['pt_4'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 5, slotIds: ['pt_5'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 6, slotIds: ['pt_6'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 5, slotIds: ['pt_5'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 6, slotIds: ['pt_6'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 7, slotIds: ['pt_7'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 10, slotIds: ['tr_10'], status: 'free', guests: 0, seats: 4, startedAt: null },
   { id: 11, slotIds: ['tr_11'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 12, slotIds: ['tr_12'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 13, slotIds: ['tr_13'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 12, slotIds: ['tr_12'], status: 'free', guests: 0, seats: 4, startedAt: null },
+  { id: 13, slotIds: ['tr_13'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 14, slotIds: ['tr_14'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 15, slotIds: ['tr_15'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 16, slotIds: ['tr_16'], status: 'free', guests: 0, seats: 2, startedAt: null },
@@ -525,7 +534,11 @@ function buildPanelContent(id) {
     <div class="info-row" style="background:var(--s-reserved-bg); border-color:var(--s-reserved-border); margin-bottom:8px;">
       <span style="color:var(--s-reserved); font-weight:700;">📅 ${d.reservedTime}</span>
       <span style="color:var(--text-2);">👥 ${d.reservedGuests} persone</span>
-    </div>` : ''}
+    </div>
+    <button class="pact-btn pact-btn--primary" style="width:100%; justify-content:center; margin-bottom:8px; background:linear-gradient(135deg,#059669,#10b981);"
+      onclick="window.setTableStatus(${id}, 'occupied')">
+      ✅ Arrivati — Segna come Occupato
+    </button>` : ''}
 
     <!-- === PRIMARY ACTIONS (most important first) === -->
     <div class="panel-actions" style="margin-top:8px;">
