@@ -78,9 +78,9 @@
 
     const menuItems = [
      // BRUSCHETTE
-{ id: 'br1', cat: 'bruschette', name: 'Bruschetta vegetariana', desc: 'Stracciatella, pomodori secchi, zucchine grigliate e basilico', price: 8.50, img: 'http://googleusercontent.com/image_collection/image_retrieval/13892565192973452929_1' },
-{ id: 'br2', cat: 'bruschette', name: 'Bruschetta italiana', desc: 'Pomodori, aglio e basilico', price: 5.50, img: 'http://googleusercontent.com/image_collection/image_retrieval/13892565192973452929_0' },
-{ id: 'br3', cat: 'bruschette', name: 'Bruschetta In Punto', desc: 'Prosciutto di Parma, burrata e glassa balsamica', price: 10.50, img: 'http://googleusercontent.com/image_collection/image_retrieval/13892565192973452929_2' },
+{ id: 'br1', cat: 'bruschette', name: 'Bruschetta vegetariana', desc: 'Stracciatella, pomodori secchi, zucchine grigliate e basilico', price: 8.50, img: 'img/bruschetta.png' },
+{ id: 'br2', cat: 'bruschette', name: 'Bruschetta italiana', desc: 'Pomodori, aglio e basilico', price: 5.50, img: 'img/bruschetta.png' },
+{ id: 'br3', cat: 'bruschette', name: 'Bruschetta In Punto', desc: 'Prosciutto di Parma, burrata e glassa balsamica', price: 10.50, img: 'img/bruschetta.png' },
 
 // FOCACCE
 { id: 'fo1', cat: 'focacce', name: 'Focaccia Capri', desc: 'Prosciutto di Parma, mozzarella di bufala e pomodoro', price: 11.90, img: 'https://images.unsplash.com/photo-1541744573515-478c959628a0?auto=format&fit=crop&w=600&q=80' },
@@ -89,9 +89,9 @@
 { id: 'fo4', cat: 'focacce', name: 'Focaccia di Recco (per 2 persone)', desc: 'Ripiena di stracchino', price: 12.90, img: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80' },
 
 // TAGLIERI
-{ id: 't1', cat: 'taglieri', name: 'Tagliere salumi italiani', desc: 'Selezione di salumi italiani', price: 24.90, img: 'http://googleusercontent.com/image_collection/image_retrieval/4612288917924318343_1' },
-{ id: 't2', cat: 'taglieri', name: 'Tagliere formaggi italiani', desc: 'Selezione di formaggi italiani', price: 22.50, img: 'http://googleusercontent.com/image_collection/image_retrieval/4612288917924318343_2' },
-{ id: 't3', cat: 'taglieri', name: 'Tagliere misto', desc: 'Salumi e formaggi italiani', price: 26.90, img: 'http://googleusercontent.com/image_collection/image_retrieval/4612288917924318343_0' },
+{ id: 't1', cat: 'taglieri', name: 'Tagliere salumi italiani', desc: 'Selezione di salumi italiani', price: 24.90, img: 'img/tagliere.jpg' },
+{ id: 't2', cat: 'taglieri', name: 'Tagliere formaggi italiani', desc: 'Selezione di formaggi italiani', price: 22.50, img: 'img/tagliere.jpg' },
+{ id: 't3', cat: 'taglieri', name: 'Tagliere misto', desc: 'Salumi e formaggi italiani', price: 26.90, img: 'img/tagliere.jpg' },
 
 // PIZZE AL PADELLINO
 { id: 'pz1', cat: 'pizze', name: 'Golosa', desc: 'Burrata, mortadella e pesto di limone', price: 14.50, img: 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?auto=format&fit=crop&w=600&q=80' },
@@ -100,9 +100,9 @@
 { id: 'pz4', cat: 'pizze', name: 'Gourmet', desc: 'Prosciutto Parma, rucola, Grana Padano e glassa balsamica', price: 14.50, img: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80' },
 
 // FRITTI
-{ id: 'fr1', cat: 'fritti', name: 'Arancino siciliano', desc: 'Riso, carne macinata, piselli, formaggio', price: 7.50, img: 'https://images.unsplash.com/photo-1628191139360-408a06492299?auto=format&fit=crop&w=600&q=80' },
+{ id: 'fr1', cat: 'fritti', name: 'Arancino siciliano', desc: 'Riso, carne macinata, piselli, formaggio', price: 7.50, img: 'img/fritto.jpg' },
 { id: 'fr2', cat: 'fritti', name: 'Cuori di parmigiano', desc: 'Parmigiano fritto', price: 7.50, img: 'https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=600&q=80' },
-{ id: 'fr3', cat: 'fritti', name: 'Olive ascolane', desc: 'Olive ripiene fritte', price: 6.50, img: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80' },
+{ id: 'fr3', cat: 'fritti', name: 'Olive ascolane', desc: 'Olive ripiene fritte', price: 6.50, img: 'img/fritto.jpg' },
 { id: 'fr4', cat: 'fritti', name: 'Chicken nuggets', desc: 'Bocconcini di pollo fritti', price: 7.50, img: 'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=600&q=80' },
 { id: 'fr5', cat: 'fritti', name: 'Patatine fritte', desc: 'Patate fritte', price: 4.50, img: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80' },
 
