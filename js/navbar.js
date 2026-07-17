@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (path.includes('lista-ordini') || path.includes('ordini')) activeTab = 'ordini';
       else if (path.includes('cucina')) activeTab = 'cucina';
       else if (path.includes('presenze')) activeTab = 'presenze';
-      else if (path.includes('consumi')) activeTab = 'owner';
+      else if (path.includes('consumi') || path.includes('owner')) activeTab = 'owner';
 
       const nav = document.getElementById('bottomNav');
       if (nav) {
