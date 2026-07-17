@@ -1103,46 +1103,6 @@
     }
     .bnav-item.active { color: var(--accent); }
     .bnav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
-    
-    <script>
-      let currentCat = 'tutte';
-      let cart = []; 
-      let searchTerm = '';
-      const topCategoryMap = {
-        bruschette: 'antipasti',
-        focacce: 'focacce',
-        fritti: 'antipasti'
-      };
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const tableId = urlParams.get('table');
-      if(tableId) {
-        document.getElementById('tableIndicator').textContent = `Tavolo ${tableId}`;
-      }
-
-      window.addEventListener('resize', () => {
-        if(window.innerWidth > 900) {
-          cartPanel.classList.remove('open');
-          overlay.classList.remove('show');
-          renderCart();
-        }
-      });
-
-      const searchInput = document.getElementById('orderSearch');
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          searchTerm = e.target.value.trim().toLowerCase();
-          renderMenu();
-        });
-      }
-    </script>
-
-    <div class="cat-title" id="currentCatTitle">
-      <span>🍽️</span> Tutte le categorie
-    </div>
-    <div class="order-search" style="margin-top:12px; display:flex; gap:8px;">
-      <input type="text" id="orderSearch" placeholder="Cerca nel menu..." style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background: var(--surface); color: var(--text);" />
-    </div>
 
     /* ===================================================
        RESPONSIVE — TABLET
