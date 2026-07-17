@@ -705,13 +705,17 @@ function closePanel() {
 }
 
 function setTableStatus(id, newStatus) {
-  // LOCK: Previene che il KDS sovrascriva questa scelta manuale nei prossimi 4 secondi
+  // SALA PRIORITY LOCK:
+  // Scrive 'salaLockAt' nel tavolo. Il KDS non potrà mai sovrascrivere stati
+  // impostati dalla sala come: free, bill, reserved, paid, occupied.
   window._manualLock = window._manualLock || {};
   window._manualLock[id] = Date.now();
 
   const d = tables.find(t => t && t.id === id);
   if(!d) return;
   d.status = newStatus;
+  d.salaLockAt = Date.now(); // Persistente su Firebase
+  d.salaStatus = newStatus;  // Stato imposto dalla sala
   
   if (newStatus === 'free' || newStatus === 'paid' || newStatus === 'reserved') {
     d.startedAt = null;
@@ -966,9 +970,26 @@ function initSync() {
       const changedIds = [];
       const now = Date.now();
       tables.forEach(t => {
-        // Se il cameriere ha appena cambiato lo stato a mano, ignoriamo il KDS per 4 secondi per evitare race-conditions
+        // SALA PRIORITY LOCK:
+        // Se il cameriere ha impostato uno stato manualmente (salaLockAt recente, entro 30 sec)
+        // oppure lo stato corrente è un "sala-state" critico, la cucina non può intervenire.
         const manualLockTime = (window._manualLock && window._manualLock[t.id]) || 0;
-        if (now - manualLockTime < 4000) return;
+        if (now - manualLockTime < 4000) return; // lock locale 4 sec (anti-race)
+        
+        // Stati impostati dalla sala che il KDS NON deve mai sovrascrivere:
+        // - free (tavolo liberato dal cameriere)
+        // - reserved (prenotazione fatta dal cameriere)
+        // - bill (il cameriere ha richiesto il conto)
+        // - paid (il cameriere ha chiuso il tavolo)
+        // - occupied (il cameriere ha confermato che il tavolo è occupato)
+        const SALA_PRIORITY_STATUSES = ['free', 'reserved', 'bill', 'paid', 'occupied'];
+        
+        // Se il tavolo ha un salaLockAt recente (< 60 secondi) E lo status attuale
+        // è uno stato di sala, la cucina non può sovrascriverlo.
+        const salaLockAge = t.salaLockAt ? (now - t.salaLockAt) : Infinity;
+        const isInSalaLock = salaLockAge < 60000 && SALA_PRIORITY_STATUSES.includes(t.salaStatus || t.status);
+        
+        if (isInSalaLock) return; // La sala comanda, ignoriamo il KDS
 
         // Find all active orders for the table (not done)
         const tAllActiveOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
@@ -977,7 +998,9 @@ function initSync() {
         const tOrdersUnpaid = tAllActiveOrders.filter(o => o.paymentStatus !== 'paid');
         
         if (tOrdersUnpaid.length > 0) {
-          if (t.status !== 'bill' && t.status !== 'paid' && t.status !== 'occupied') {
+          // La cucina può solo impostare 'preparing' o 'ready'
+          // NON tocca mai: free, reserved, bill, paid, occupied
+          if (!SALA_PRIORITY_STATUSES.includes(t.status)) {
             const firstOrderTime = Math.min(...tOrdersUnpaid.map(o => o.timestamp || o.createdAt || now));
             if (!t.startedAt) t.startedAt = firstOrderTime;
             
@@ -998,8 +1021,13 @@ function initSync() {
             changedIds.push(t.id);
           } else if (tAllActiveOrders.length > 0 && (t.status === 'occupied' || t.status === 'bill')) {
             // All active orders have been marked as PAID!
-            t.status = 'paid';
-            changedIds.push(t.id);
+            // Solo se lo status è 'bill' (sala ha richiesto conto) lo aggiorniamo a 'paid'
+            // Questo è l'unico caso in cui il sistema può aggiornare uno stato 'sala'
+            // perché è consequenza diretta della marcatura pagamento in lista ordini
+            if (t.status === 'bill') {
+              t.status = 'paid';
+              changedIds.push(t.id);
+            }
           }
         }
       });
