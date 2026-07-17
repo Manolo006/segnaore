@@ -57,9 +57,7 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10
     if (user) {
       const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
       if (userDoc.exists() && userDoc.data().role === 'owner') {
-        const sBtn = document.getElementById('sidebarOwnerBtn');
         const bBtn = document.getElementById('bnavOwnerBtn');
-        if (sBtn) sBtn.style.display = 'flex';
         if (bBtn) bBtn.style.display = 'flex';
       }
     }
@@ -400,17 +398,13 @@ function confirmReservation() {
     return;
   }
   
-  t.status = 'reserved';
-  t.reservedTime = time;
-  t.reservedGuests = parseInt(guests);
-  t.guests = 0;
-  t.startedAt = null;
+  setTableStatus(tableId, 'reserved', {
+    reservedTime: time,
+    reservedGuests: parseInt(guests, 10)
+  });
   
-  renderTables();
-  showToast('📅', `Tavolo ${tableId} prenotato per le ${time}`);
   closeReservationModal();
   closePanel();
-  if(window.syncTablesToDB) window.syncTablesToDB([tableId]);
 }
 
 function editTableId(oldId) {
@@ -704,7 +698,7 @@ function closePanel() {
   selectedTableId = null;
 }
 
-function setTableStatus(id, newStatus) {
+function setTableStatus(id, newStatus, opts = {}) {
   // La sala scrive direttamente su Firebase.
   // Il listener onValue('tables') si occuperà di aggiornare lo stato locale e la UI.
   // Questo è l'unico pattern corretto: Firebase è la source of truth.
@@ -719,15 +713,29 @@ function setTableStatus(id, newStatus) {
   delete updatedTable.salaLockAt;
   delete updatedTable.salaStatus;
 
-  if (newStatus === 'free' || newStatus === 'paid') {
-    updatedTable.startedAt = null;
-    updatedTable.reservedTime = '';
+  // ----------- Prenotazione ----------
+  if (newStatus === 'reserved') {
+    updatedTable.reservedTime   = opts.reservedTime   || '';
+    updatedTable.reservedGuests = opts.reservedGuests || d.seats;
+    updatedTable.startedAt      = null;
+  }
+  // ----------- Pagamento ----------
+  else if (newStatus === 'paid') {
+    updatedTable.guests         = 0;
+    updatedTable.reservedTime   = '';
     updatedTable.reservedGuests = 0;
-    updatedTable.guests = 0;
-  } else if (newStatus === 'reserved') {
-    updatedTable.startedAt = null;
-  } else if (!updatedTable.startedAt) {
-    updatedTable.startedAt = Date.now();
+    updatedTable.startedAt      = null;
+  }
+  // ----------- Altri stati ----------
+  else {
+    if (newStatus === 'free') {
+      updatedTable.guests         = 0;
+      updatedTable.reservedTime   = '';
+      updatedTable.reservedGuests = 0;
+      updatedTable.startedAt      = null;
+    }
+    if (!updatedTable.startedAt && newStatus !== 'free')
+      updatedTable.startedAt = Date.now();
   }
 
   // Se il tavolo viene liberato/pagato, marca tutti gli ordini attivi come pagati
