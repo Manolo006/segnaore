@@ -53,31 +53,52 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function initOwnerDashboard() {
-  // Load Consumi
-  const ordersRef = ref(dbRealtime, 'orders');
-  onValue(ordersRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      allOrders = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-    } else {
-      allOrders = [];
-    }
-    calculateStats();
-  });
+  console.log('[Owner] Initializing dashboard...');
+  try {
+    // Load Consumi
+    const ordersRef = ref(dbRealtime, 'orders');
+    onValue(ordersRef, (snapshot) => {
+      try {
+        const data = snapshot.val();
+        if (data) {
+          allOrders = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        } else {
+          allOrders = [];
+        }
+        calculateStats();
+      } catch (e) {
+        console.error('[Owner] Error in orders onValue callback:', e);
+      }
+    }, (error) => {
+      console.warn('[Owner] Failed to listen to orders (Permission Denied?):', error);
+      calculateStats(); // Draw stats with empty data
+    });
+  } catch (e) {
+    console.error('[Owner] Error setting up orders onValue:', e);
+  }
 
   // Load Dipendenti (Staff & Turni)
-  loadReviewList();
-  loadStaffList();
+  loadReviewList().catch(e => console.error('[Owner] Error in loadReviewList:', e));
+  loadStaffList().catch(e => console.error('[Owner] Error in loadStaffList:', e));
   
-  // Load GPS settings
-  get(ref(dbRealtime, 'settings/gps')).then(settingsSnap => {
-    if (settingsSnap.exists()) {
-      const s = settingsSnap.val();
-      document.getElementById('lat').value = s.lat;
-      document.getElementById('lng').value = s.lng;
-      document.getElementById('rad').value = s.radius;
-    }
-  });
+  try {
+    // Load GPS settings
+    get(ref(dbRealtime, 'settings/gps')).then(settingsSnap => {
+      if (settingsSnap.exists()) {
+        const s = settingsSnap.val();
+        const latEl = document.getElementById('lat');
+        const lngEl = document.getElementById('lng');
+        const radEl = document.getElementById('rad');
+        if (latEl) latEl.value = s.lat || '';
+        if (lngEl) lngEl.value = s.lng || '';
+        if (radEl) radEl.value = s.radius || '';
+      }
+    }).catch(e => {
+      console.warn('[Owner] Failed to load GPS settings (Permission Denied?):', e);
+    });
+  } catch (e) {
+    console.error('[Owner] Error fetching GPS settings:', e);
+  }
 }
 
 // ==========================================
@@ -133,54 +154,63 @@ function calculateStats() {
 // DIPENDENTI LOGIC (Turni & Staff)
 // ==========================================
 async function loadReviewList() {
-  const q = query(collection(dbFirestore, "attendance"), where("status", "==", "Da approvare"));
-  const snapshot = await getDocs(q);
-  const list = document.getElementById('review-list');
-  list.innerHTML = '';
-  
-  if(snapshot.empty) {
-    list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">Nessun turno da approvare.</div>';
-  }
-
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    let isLate = false;
-    if(data.approvedClockIn && data.expectedIn) {
-      if (data.approvedClockIn > data.expectedIn) isLate = true;
+  try {
+    const q = query(collection(dbFirestore, "attendance"), where("status", "==", "Da approvare"));
+    const snapshot = await getDocs(q);
+    const list = document.getElementById('review-list');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    if(snapshot.empty) {
+      list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">Nessun turno da approvare.</div>';
     }
 
-    list.innerHTML += `
-      <div class="card history-card" style="flex-direction:column; align-items:flex-start; gap:12px;">
-        <div style="display:flex; justify-content:space-between; width:100%;">
-          <div>
-            <div style="font-weight:700;">${data.userName}</div>
-            <div style="font-size:0.75rem; color:var(--text-3); margin-top:2px;">Atteso: ${data.expectedIn || '?'} - ${data.expectedOut || '?'}</div>
-          </div>
-          <div style="font-size:0.8rem; color:var(--text-2); text-align:right;">
-            ${data.dateString}
-            ${isLate ? \`<div style="color:var(--s-error); font-weight:700; font-size:0.7rem; margin-top:4px;">⚠️ RITARDO</div>\` : ''}
-          </div>
-        </div>
-        
-        <div style="display:flex; gap:12px; width:100%;">
-          <div style="flex:1;">
-            <label style="font-size:0.7rem; color:var(--text-2);">Entrata Effettiva</label>
-            <input type="time" id="in_${docSnap.id}" value="${data.approvedClockIn}" class="input">
-          </div>
-          <div style="flex:1;">
-            <label style="font-size:0.7rem; color:var(--text-2);">Uscita Effettiva</label>
-            <input type="time" id="out_${docSnap.id}" value="${data.approvedClockOut}" class="input">
-          </div>
-        </div>
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      let isLate = false;
+      if(data.approvedClockIn && data.expectedIn) {
+        if (data.approvedClockIn > data.expectedIn) isLate = true;
+      }
 
-        <div style="width:100%;">
-          <input type="text" id="note_${docSnap.id}" placeholder="Nota / Giustificazione (es. Traffico)" value="${data.note || ''}" class="input" style="padding:10px;">
-        </div>
+      list.innerHTML += `
+        <div class="card history-card" style="flex-direction:column; align-items:flex-start; gap:12px;">
+          <div style="display:flex; justify-content:space-between; width:100%;">
+            <div>
+              <div style="font-weight:700;">${data.userName}</div>
+              <div style="font-size:0.75rem; color:var(--text-3); margin-top:2px;">Atteso: ${data.expectedIn || '?'} - ${data.expectedOut || '?'}</div>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-2); text-align:right;">
+              ${data.dateString}
+              ${isLate ? '<div style="color:var(--s-error); font-weight:700; font-size:0.7rem; margin-top:4px;">⚠️ RITARDO</div>' : ''}
+            </div>
+          </div>
+          
+          <div style="display:flex; gap:12px; width:100%;">
+            <div style="flex:1;">
+              <label style="font-size:0.7rem; color:var(--text-2);">Entrata Effettiva</label>
+              <input type="time" id="in_${docSnap.id}" value="${data.approvedClockIn}" class="input">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:0.7rem; color:var(--text-2);">Uscita Effettiva</label>
+              <input type="time" id="out_${docSnap.id}" value="${data.approvedClockOut}" class="input">
+            </div>
+          </div>
 
-        <button class="btn btn-green" onclick="approveShift('${docSnap.id}')" style="padding:12px;">Conferma & Approva</button>
-      </div>
-    `;
-  });
+          <div style="width:100%;">
+            <input type="text" id="note_${docSnap.id}" placeholder="Nota / Giustificazione (es. Traffico)" value="${data.note || ''}" class="input" style="padding:10px;">
+          </div>
+
+          <button class="btn btn-green" onclick="approveShift('${docSnap.id}')" style="padding:12px;">Conferma & Approva</button>
+        </div>
+      `;
+    });
+  } catch (err) {
+    console.warn('[Owner] Failed to load review list (Permission Denied?):', err);
+    const list = document.getElementById('review-list');
+    if (list) {
+      list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">(Demo: i turni non sono caricabili senza permessi completi)</div>';
+    }
+  }
 }
 
 window.approveShift = async (id) => {
@@ -208,54 +238,63 @@ window.approveShift = async (id) => {
 };
 
 async function loadStaffList() {
-  const q = query(collection(dbFirestore, "users"));
-  const snapshot = await getDocs(q);
-  const list = document.getElementById('staff-list');
-  list.innerHTML = '';
+  try {
+    const q = query(collection(dbFirestore, "users"));
+    const snapshot = await getDocs(q);
+    const list = document.getElementById('staff-list');
+    if (!list) return;
+    list.innerHTML = '';
 
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    const isPending = data.role === 'pending';
-    
-    list.innerHTML += `
-      <div class="card" style="margin-bottom:12px; ${isPending ? 'border-color:var(--s-new); background:rgba(245,158,11,0.05);' : ''}">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <div>
-            <div style="font-weight:700;">${data.name}</div>
-            <div style="font-size:0.75rem; color:var(--text-2);">${data.email}</div>
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const isPending = data.role === 'pending';
+      
+      list.innerHTML += `
+        <div class="card" style="margin-bottom:12px; ${isPending ? 'border-color:var(--s-new); background:rgba(245,158,11,0.05);' : ''}">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <div style="font-weight:700;">${data.name}</div>
+              <div style="font-size:0.75rem; color:var(--text-2);">${data.email}</div>
+            </div>
+            <div style="font-size:0.75rem; padding:4px 8px; border-radius:12px; background:var(--surface); text-transform:uppercase;">
+              ${data.role}
+            </div>
           </div>
-          <div style="font-size:0.75rem; padding:4px 8px; border-radius:12px; background:var(--surface); text-transform:uppercase;">
-            ${data.role}
+
+          <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <select id="role_${docSnap.id}" class="input" style="padding:8px; flex:1;">
+              <option value="pending" ${data.role === 'pending' ? 'selected' : ''}>In Attesa</option>
+              <option value="employee" ${data.role === 'employee' ? 'selected' : ''}>Dipendente</option>
+              <option value="owner" ${data.role === 'owner' ? 'selected' : ''}>Proprietario</option>
+            </select>
+            <select id="contract_${docSnap.id}" class="input" style="padding:8px; flex:1;">
+              <option value="fulltime" ${data.contractType === 'fulltime' ? 'selected' : ''}>Full-Time</option>
+              <option value="parttime" ${data.contractType === 'parttime' ? 'selected' : ''}>Part-Time</option>
+            </select>
           </div>
+
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1;">
+              <label style="font-size:0.7rem; color:var(--text-2);">Orario Inizio</label>
+              <input type="time" id="start_${docSnap.id}" value="${data.shiftStart || '09:00'}" class="input" style="padding:8px;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:0.7rem; color:var(--text-2);">Orario Fine</label>
+              <input type="time" id="end_${docSnap.id}" value="${data.shiftEnd || '18:00'}" class="input" style="padding:8px;">
+            </div>
+          </div>
+
+          <button class="btn btn-outline" style="padding:10px; margin-top:8px; font-size:0.85rem;" onclick="saveUser('${docSnap.id}')">💾 Salva Dipendente</button>
         </div>
-
-        <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <select id="role_${docSnap.id}" class="input" style="padding:8px; flex:1;">
-            <option value="pending" ${data.role === 'pending' ? 'selected' : ''}>In Attesa</option>
-            <option value="employee" ${data.role === 'employee' ? 'selected' : ''}>Dipendente</option>
-            <option value="owner" ${data.role === 'owner' ? 'selected' : ''}>Proprietario</option>
-          </select>
-          <select id="contract_${docSnap.id}" class="input" style="padding:8px; flex:1;">
-            <option value="fulltime" ${data.contractType === 'fulltime' ? 'selected' : ''}>Full-Time</option>
-            <option value="parttime" ${data.contractType === 'parttime' ? 'selected' : ''}>Part-Time</option>
-          </select>
-        </div>
-
-        <div style="display:flex; gap:8px;">
-          <div style="flex:1;">
-            <label style="font-size:0.7rem; color:var(--text-2);">Orario Inizio</label>
-            <input type="time" id="start_${docSnap.id}" value="${data.shiftStart || '09:00'}" class="input" style="padding:8px;">
-          </div>
-          <div style="flex:1;">
-            <label style="font-size:0.7rem; color:var(--text-2);">Orario Fine</label>
-            <input type="time" id="end_${docSnap.id}" value="${data.shiftEnd || '18:00'}" class="input" style="padding:8px;">
-          </div>
-        </div>
-
-        <button class="btn btn-outline" style="padding:10px; margin-top:8px; font-size:0.85rem;" onclick="saveUser('${docSnap.id}')">💾 Salva Dipendente</button>
-      </div>
-    `;
-  });
+      `;
+    });
+  } catch (err) {
+    console.warn('[Owner] Failed to load staff list (Permission Denied?):', err);
+    const list = document.getElementById('staff-list');
+    if (list) {
+      list.innerHTML = '<div style="color:var(--text-2); font-size:0.9rem;">(Demo: la lista dipendenti non è caricabile senza permessi completi)</div>';
+    }
+  }
 }
 
 window.saveUser = async (id) => {
