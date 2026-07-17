@@ -190,7 +190,7 @@ function renderTables() {
          const stylePos = `${minLeft !== undefined ? 'left:'+minLeft+'px;' : ''} ${minTop !== undefined ? 'top:'+minTop+'px;' : ''}`;
 
          const cardHtml = `
-           <div class="table-card table-card--${visualClass}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
+           <div class="table-card table-card--${visualClass}" 
                 data-id="${t.id}" data-status="${t.status}"
                 style="${stylePos} opacity:1;"
                 onclick="window.handleTableClick(${t.id})">
@@ -207,7 +207,7 @@ function renderTables() {
          `;
 
          const gridCardHtml = `
-           <div class="table-card table-card--${visualClass}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
+           <div class="table-card table-card--${visualClass}" 
                 data-id="${t.id}" data-status="${t.status}"
                 onclick="window.handleTableClick(${t.id})">
              <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
@@ -261,7 +261,7 @@ function renderTables() {
        }
 
        let cardHtml = `
-         <div class="table-card table-card--${slot.type}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
+         <div class="table-card table-card--${slot.type}" 
               data-id="${t.id}" data-status="${t.status}"
               style="${posStyle} opacity: ${isMain ? 1 : 0.7};"
               onclick="window.handleTableClick(${t.id})">
@@ -278,7 +278,7 @@ function renderTables() {
        `;
 
        let gridCardHtml = isMain ? `
-         <div class="table-card table-card--sq${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
+         <div class="table-card table-card--sq" 
               data-id="${t.id}" data-status="${t.status}"
               onclick="window.handleTableClick(${t.id})">
            <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}" ></div>
