@@ -1041,4 +1041,41 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.floor-canvas').forEach(c => c.style.transform = `scale(${scale})`);
     }).observe(fw);
   }
+
+  // Bind PWA install button
+  const installBtn = document.getElementById('installPwaBtn');
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+        const { outcome } = await window.deferredPrompt.userChoice;
+        console.log(`User ${outcome} the install prompt`);
+        window.deferredPrompt = null;
+        installBtn.style.display = 'none';
+      }
+    });
+  }
 });
+
+/* =====================================================
+   PWA INSTALLATION EVENT
+===================================================== */
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.deferredPrompt = e;
+  const installBtn = document.getElementById('installPwaBtn');
+  if (installBtn) {
+    installBtn.style.display = 'flex';
+  }
+});
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then((registration) => {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }, (err) => {
+      console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
