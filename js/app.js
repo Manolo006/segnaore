@@ -808,21 +808,11 @@ window.closeReservationModal = closeReservationModal;
 window.confirmReservation = confirmReservation;
 window.freeTable = freeTable;
 window.startReservationMode = startReservationMode;
-window.unlinkTable = unlinkTable;
-window.startLinkMode = startLinkMode;
 window.editTableId = editTableId;
-window.cancelLinkMode = cancelLinkMode;
 window.setTableStatus = setTableStatus;
-window.freeTable = freeTable;
 window.changeGuests = changeGuests;
 window.saveNote = saveNote;
-window.startReservationMode = startReservationMode;
-window.startLinkMode = startLinkMode;
-window.unlinkTable = unlinkTable;
-window.cancelLinkMode = cancelLinkMode;
 window.showToast = showToast;
-window.promptLinkTable = promptLinkTable;
-window.editTableId = editTableId;
 
 let toastTimer = null;
 function showToast(icon, msg) {
