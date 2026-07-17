@@ -310,86 +310,6 @@ function renderTables() {
   }
 }
 
-/* =====================================================
-   LINK & UNLINK LOGIC
-===================================================== */
-function promptLinkTable(id, knownTargetId = null) {
-  const tableIdx = tables.findIndex(t => t.id === id);
-  if (tableIdx === -1) return;
-  
-  let targetId;
-  if(knownTargetId !== null) {
-    targetId = knownTargetId;
-  } else {
-    const targetIdStr = prompt(`Inserisci il numero del tavolo da unire al Tavolo ${id}:`);
-    if (!targetIdStr) return;
-    targetId = parseInt(targetIdStr);
-  }
-  const targetIdx = tables.findIndex(t => t.id === targetId);
-  
-  if (targetIdx === -1) {
-    showToast('❌', 'Tavolo non trovato');
-    return;
-  }
-  
-  const targetTable = tables[targetIdx];
-  const sourceTable = tables[tableIdx];
-  
-  // Merge slots from target into source
-  sourceTable.slotIds.push(...targetTable.slotIds);
-  sourceTable.seats += targetTable.seats;
-
-  // Ask server how to extend the mother table (horizontal or vertical)
-  const orientation = prompt(`Come vuoi collegare i tavoli? Inserisci 'h' per orizzontale o 'v' per verticale (default: h)`);
-  const horiz = orientation && orientation.toLowerCase() === 'h';
-
-  // Determine bounds of merged slots
-  const allSlots = sourceTable.slotIds.map(id => tableSlots[id]).filter(Boolean);
-  const lefts = allSlots.map(s => parseInt(s.left,10) || 0);
-  const tops = allSlots.map(s => parseInt(s.top,10) || 0);
-  const minLeft = Math.min(...lefts);
-  const minTop = Math.min(...tops);
-  const maxLeft = Math.max(...lefts);
-  const maxTop = Math.max(...tops);
-
-  // Build a new combined slot id
-  const combinedSlotId = `combined_${sourceTable.id}`;
-  const combinedType = horiz ? 'rect-h' : 'rect-v';
-  const width = maxLeft - minLeft + (horiz ? 0 : 0); // not used directly, type defines shape
-  const height = maxTop - minTop + (horiz ? 0 : 0);
-
-  // Create the combined slot (positioned at the top‑left of the merged area)
-  tableSlots[combinedSlotId] = {
-    area: 'Terrazza',
-    left: `${minLeft}px`,
-    top: `${minTop}px`,
-    type: combinedType,
-    baseSeats: sourceTable.seats,
-  };
-
-  // The source table now references only the combined slot
-  sourceTable.slotIds = [combinedSlotId];
-  
-  // Delete target table from array
-  tables = tables.filter(t => t.id !== targetId);
-  
-  showToast('ℹ️', 'Funzione di collegamento disabilitata.');
-}
-
-function changeSeats(id, delta) {
-  const t = tables.find(tb => tb && tb.id === id);
-  if (!t) return;
-  t.seats = Math.max(1, t.seats + delta);
-  const el = document.getElementById(`seats-count-${id}`);
-  if (el) el.textContent = t.seats;
-  renderTables();
-  if (window.syncTablesToDB) window.syncTablesToDB();
-}
-
-function unlinkTable(id) {
-  showToast('ℹ️', 'Funzione di scollegamento dei tavoli disabilitata.');
-}
-
 let activeResTableId = null;
 
 function setReservation(id) {
@@ -519,8 +439,7 @@ function updateStats() {
 /* =====================================================
    PANEL RENDERING
 ===================================================== */
-// Tracks which table is in "link mode" or "reserve mode"
-let linkingMode = null; // null | tableId
+// Tracks which table is in "reserve mode"
 let reservingMode = null; // null | tableId
 
 function buildPanelContent(id) {
@@ -595,16 +514,11 @@ function buildPanelContent(id) {
           📅 Prenota
         </button>
 
-        <!-- COLLEGA/SCOLLEGA: disabled if reserved -->
-        ${d.slotIds.length > 1 ? `
-        <button class="pact-btn pact-btn--ghost" style="flex:1; justify-content:center; color:#f87171; border-color:rgba(248,113,113,0.3);"
-          ${isReserved ? 'disabled title="Tavolo prenotato, non puoi scollegarlo"' : ''}
-          onclick="window.unlinkTable(${id})">✂️ Scollega</button>
-        ` : `
-        <button class="pact-btn pact-btn--ghost" style="flex:1; justify-content:center; color:var(--accent); border-color:rgba(59,130,246,0.3);"
-          ${isReserved ? 'disabled title="Tavolo prenotato, non puoi collegarlo"' : ''}
-          onclick="window.startLinkMode(${id})">⛓ Collega</button>
-        `}
+        <div style="flex:1; display:flex; align-items:center; justify-content:space-between; border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; background: rgba(255,255,255,0.02);">
+          <button class="icon-btn" onclick="window.changeSeats(${id}, -1)" style="width:28px; height:28px;">-</button>
+          <span style="font-size:0.9rem; font-weight:600;">${d.seats} posti</span>
+          <button class="icon-btn" onclick="window.changeSeats(${id}, 1)" style="width:28px; height:28px;">+</button>
+        </div>
       </div>
     </div>
 
@@ -629,17 +543,18 @@ function buildPanelContent(id) {
   `;
 }
 
-// ---- LINK MODE ----
-// startLinkMode disabled – linking of tables removed.
-function startLinkMode(id) {
-  showToast('ℹ️', 'Funzione di collegamento dei tavoli disabilitata.');
-}
-
-// cancelLinkMode disabled – linking removed.
-function cancelLinkMode() {
-  linkingMode = null;
+window.changeSeats = function(id, delta) {
+  const d = tables.find(t => t && t.id === id);
+  if (!d) return;
+  const newSeats = Math.max(1, d.seats + delta);
+  d.seats = newSeats;
+  window.syncTablesToDB([id]);
   renderTables();
-}
+  if (selectedTableId === id) {
+    const panelBody = document.getElementById('panelBody');
+    if (panelBody) panelBody.innerHTML = buildPanelContent(id);
+  }
+};
 
 function startReservationMode(id) {
   const d = tables.find(t => t && t.id === id);
@@ -811,37 +726,6 @@ function changeGuests(id, delta) {
   }
 }
 
-// Cambia i coperti (seats) di un tavolo
-function changeSeats(id, delta) {
-  const d = tables.find(t => t && t.id === id);
-  if (!d) return;
-  const newSeats = Math.max(1, d.seats + delta);
-  const updatedTable = { ...d, seats: newSeats };
-  // Aggiorna tutti gli slot associati
-  d.slotIds.forEach(slotId => {
-    if (tableSlots[slotId]) {
-      tableSlots[slotId].baseSeats = newSeats;
-    }
-  });
-  delete updatedTable.orders;
-  delete updatedTable.salaLockAt;
-  delete updatedTable.salaStatus;
-  if (window._fbReady && window._db) {
-    // Aggiorna tavolo e slot su Firebase
-    const updates = { [`table_${id}`]: updatedTable };
-    d.slotIds.forEach(slotId => {
-      updates[`slot_${slotId}`] = tableSlots[slotId];
-    });
-    window._fbUpdate(window._ref(window._db, 'tables'), updates)
-      .catch(e => console.error('Errore changeSeats:', e));
-  }
-  // Aggiorna UI in tempo reale
-  const countEl = document.getElementById(`seats-count-${id}`);
-  if (countEl) countEl.textContent = newSeats;
-  renderTables();
-  showToast('✅', `Coperti aggiornati a ${newSeats}`);
-}
-
 function freeTable(id) {
   setTableStatus(id, 'free');
   closePanel();
@@ -866,13 +750,6 @@ document.getElementById('areaTabs').addEventListener('click', (e) => {
 ===================================================== */
 window.handleTableClick = function(id) {
   id = parseInt(id);
-  // LINK MODE
-  if (linkingMode !== null && linkingMode !== id) {
-    promptLinkTable(linkingMode, id);
-    linkingMode = null;
-    return;
-  }
-  if (linkingMode === id) { cancelLinkMode(); return; }
   // Normal: toggle panel
   if (selectedTableId === id) closePanel();
   else openPanel(id);
@@ -883,8 +760,7 @@ document.getElementById('floorWrap').addEventListener('click', (e) => {
   const card = e.target.closest('.table-card');
   if (!card) {
     if (!e.target.closest('.side-panel') && !e.target.closest('#bottomSheet')) {
-      if (linkingMode) cancelLinkMode();
-      else closePanel();
+      closePanel();
     }
   }
 });
@@ -933,11 +809,11 @@ window.confirmReservation = confirmReservation;
 window.freeTable = freeTable;
 window.startReservationMode = startReservationMode;
 window.unlinkTable = unlinkTable;
+window.startLinkMode = startLinkMode;
 window.editTableId = editTableId;
 window.cancelLinkMode = cancelLinkMode;
 window.setTableStatus = setTableStatus;
 window.freeTable = freeTable;
-window.changeSeats = changeSeats;
 window.changeGuests = changeGuests;
 window.saveNote = saveNote;
 window.startReservationMode = startReservationMode;
