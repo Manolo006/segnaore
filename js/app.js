@@ -108,7 +108,7 @@ const STATUS_EMOJIS = {
    DATA — Slots & Tables
 ===================================================== */
 const tableSlots = {
-  'pt_1': { area: 'Piano Terra', left: '1.3rem', top: '50rem', type: 'sq', baseSeats: 2 },
+  'pt_1': { area: 'Piano Terra', left: '1.3rem', top: '43rem', type: 'sq', baseSeats: 2 },
   'pt_2': { area: 'Piano Terra', left: '1.3rem', top: '36.875rem', type: 'sq', baseSeats: 2 },
   'pt_3': { area: 'Piano Terra', left: '1.3rem', top: '21.25rem', type: 'sq', baseSeats: 2 },
   'pt_4': { area: 'Piano Terra', left: '22.5rem', top: '36.875rem', type: 'sq', baseSeats: 2 },
@@ -120,18 +120,16 @@ const tableSlots = {
   //    T10: rettangolo verticale a sinistra
   //    T11: quadrato piccolo in alto al centro
   //    T12: rettangolo verticale a destra
-  //  ZONA BASSA (dopo la linea), in diagonale:
+  //  ZONA BASSA (dopo la linea), in diagonale (solo 3 tavoli):
   //    T13: quadrato in alto a sinistra
   //    T14: quadrato al centro
-  //    T15: quadrato in basso al centro-destra
-  //    T16: quadrato in basso a destra
+  //    T15: quadrato in basso a destra
   'tr_10': { area: 'Terrazza', left: '20px',  top: '100px', type: 'rect-v', baseSeats: 4 },
   'tr_11': { area: 'Terrazza', left: '180px', top: '20px',  type: 'sq',     baseSeats: 2 },
   'tr_12': { area: 'Terrazza', left: '330px', top: '80px',  type: 'rect-v', baseSeats: 4 },
-  'tr_13': { area: 'Terrazza', left: '30px',  top: '370px', type: 'sq',     baseSeats: 2 },
-  'tr_14': { area: 'Terrazza', left: '160px', top: '460px', type: 'sq',     baseSeats: 2 },
-  'tr_15': { area: 'Terrazza', left: '260px', top: '550px', type: 'sq',     baseSeats: 2 },
-  'tr_16': { area: 'Terrazza', left: '360px', top: '630px', type: 'sq',     baseSeats: 2 },
+  'tr_13': { area: 'Terrazza', left: '40px',  top: '370px', type: 'sq',     baseSeats: 2 },
+  'tr_14': { area: 'Terrazza', left: '175px', top: '470px', type: 'sq',     baseSeats: 2 },
+  'tr_15': { area: 'Terrazza', left: '310px', top: '560px', type: 'sq',     baseSeats: 2 },
 };
 
 let tables = [
@@ -148,8 +146,8 @@ let tables = [
   { id: 13, slotIds: ['tr_13'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 14, slotIds: ['tr_14'], status: 'free', guests: 0, seats: 2, startedAt: null },
   { id: 15, slotIds: ['tr_15'], status: 'free', guests: 0, seats: 2, startedAt: null },
-  { id: 16, slotIds: ['tr_16'], status: 'free', guests: 0, seats: 2, startedAt: null },
 ];
+
 
 let selectedTableId = null;
 
@@ -235,14 +233,37 @@ function renderTables() {
      }
 
      // Fallback: render each slot separately
+     // Per i tavoli con più slot NON allineati (fallback), la card figlia
+     // viene posizionata VICINO alla madre (offset dalla posizione della madre)
+     // così non finisce a 0,0 e non va sotto altre card.
      t.slotIds.forEach((slotId, index) => {
        const slot = tableSlots[slotId];
        const isMain = index === 0;
        if(!slot) return;
+
+       // Posizione: la carta figlia si piazza vicino alla madre con un offset
+       let posStyle;
+       if (isMain) {
+         posStyle = `${slot.left ? 'left:'+slot.left+';' : ''} ${slot.right ? 'right:'+slot.right+';' : ''} top:${slot.top};`;
+       } else {
+         // Prendi la posizione della slot madre (index 0)
+         const mainSlot = tableSlots[t.slotIds[0]];
+         if (mainSlot) {
+           const mainLeft = parseInt(mainSlot.left) || 0;
+           const mainTop  = parseInt(mainSlot.top)  || 0;
+           // Offset: a destra della madre, leggermente sotto
+           const offsetLeft = mainLeft + 90;
+           const offsetTop  = mainTop  + 10;
+           posStyle = `left:${offsetLeft}px; top:${offsetTop}px;`;
+         } else {
+           posStyle = `${slot.left ? 'left:'+slot.left+';' : ''} top:${slot.top};`;
+         }
+       }
+
        let cardHtml = `
          <div class="table-card table-card--${slot.type}${linkingMode !== null && linkingMode !== t.id ? ' link-target' : ''}" 
               data-id="${t.id}" data-status="${t.status}"
-              style="${slot.left ? 'left:'+slot.left+';' : ''} ${slot.right ? 'right:'+slot.right+';' : ''} top:${slot.top}; opacity: ${isMain ? 1 : 0.8};"
+              style="${posStyle} opacity: ${isMain ? 1 : 0.7};"
               onclick="window.handleTableClick(${t.id})">
            <div class="table-card__status-dot" style="background:${STATUS_COLORS[t.status]}"></div>
            ${t.slotIds.length > 1 ? '<div class="table-card__combine">⛓</div>' : ''}
