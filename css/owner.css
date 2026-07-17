@@ -139,3 +139,23 @@ body {
 .item-row__name { font-weight: 600; font-size: 0.95rem; }
 .item-row__qty { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
 .item-row__revenue { font-size: 0.85rem; color: var(--text-2); margin-top: 4px; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 70px;
+  background: rgba(10,10,15,0.97); backdrop-filter: blur(20px);
+  border-top: 1px solid #2a2e39;
+  display: flex; justify-content: space-around; align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 400;
+}
+.bnav-item {
+  background: none; border: none; color: #64748b;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-size: 0.72rem; font-weight: 600; cursor: pointer; padding: 6px 12px;
+  border-radius: 12px; transition: color 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.bnav-item svg { width: 22px; height: 22px; }
+.bnav-item.active { color: #3b82f6; }
+
