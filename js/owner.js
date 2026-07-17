@@ -177,9 +177,9 @@ async function loadReviewList() {
 }
 
 window.approveShift = async (id) => {
-  const inVal = document.getElementById(\`in_${id}\`).value;
-  const outVal = document.getElementById(\`out_${id}\`).value;
-  const noteVal = document.getElementById(\`note_${id}\`).value;
+  const inVal = document.getElementById(`in_${id}`).value;
+  const outVal = document.getElementById(`out_${id}`).value;
+  const noteVal = document.getElementById(`note_${id}`).value;
   
   let h = 0;
   if (inVal && outVal) {
@@ -252,10 +252,10 @@ async function loadStaffList() {
 }
 
 window.saveUser = async (id) => {
-  const role = document.getElementById(\`role_${id}\`).value;
-  const contract = document.getElementById(\`contract_${id}\`).value;
-  const start = document.getElementById(\`start_${id}\`).value;
-  const end = document.getElementById(\`end_${id}\`).value;
+  const role = document.getElementById(`role_${id}`).value;
+  const contract = document.getElementById(`contract_${id}`).value;
+  const start = document.getElementById(`start_${id}`).value;
+  const end = document.getElementById(`end_${id}`).value;
 
   await updateDoc(doc(dbFirestore, "users", id), {
     role: role,
@@ -325,7 +325,7 @@ window.eseguiChiusuraCassa = async () => {
         
         if (Array.isArray(tables)) {
             tables.forEach(t => {
-                if(t) updates[\`table_${t.id}\`] = { ...t, status: 'free', startedAt: null, guests: 0, reservedTime: '', reservedGuests: 0 };
+                if(t) updates[`table_${t.id}`] = { ...t, status: 'free', startedAt: null, guests: 0, reservedTime: '', reservedGuests: 0 };
             });
         } else {
             Object.keys(tables).forEach(k => {
