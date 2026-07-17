@@ -29,13 +29,11 @@ window.switchOwnerTab = (tabId, evt) => {
 };
 
 // DEMO MODE: Immediately show owner view and initialize dashboard
-document.addEventListener('DOMContentLoaded', () => {
-  const loadingEl = document.getElementById('view-loading');
-  const ownerEl = document.getElementById('view-owner');
-  if (loadingEl) loadingEl.style.display = 'none';
-  if (ownerEl) ownerEl.style.display = 'block';
-  initOwnerDashboard();
-});
+const loadingEl = document.getElementById('view-loading');
+const ownerEl = document.getElementById('view-owner');
+if (loadingEl) loadingEl.style.display = 'none';
+if (ownerEl) ownerEl.style.display = 'block';
+initOwnerDashboard();
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
