@@ -32,12 +32,15 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
     const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
-    if (userDoc.exists() && userDoc.data().role === "owner") {
+    const role = userDoc.exists() ? (userDoc.data().role || '').toLowerCase() : '';
+    console.log('[Owner] Auth role:', role);
+    if (role === "owner") {
       document.getElementById('view-loading').style.display = 'none';
       document.getElementById('view-owner').style.display = 'block';
       document.getElementById('userName').textContent = user.displayName || "Proprietario";
       initOwnerDashboard();
     } else {
+      console.warn('[Owner] Access denied, role:', role);
       window.location.href = "index.html"; // Not an owner
     }
   } else {
