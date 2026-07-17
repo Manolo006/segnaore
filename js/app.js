@@ -335,8 +335,40 @@ function promptLinkTable(id, knownTargetId = null) {
   const targetTable = tables[targetIdx];
   const sourceTable = tables[tableIdx];
   
+  // Merge slots from target into source
   sourceTable.slotIds.push(...targetTable.slotIds);
   sourceTable.seats += targetTable.seats;
+
+  // Ask server how to extend the mother table (horizontal or vertical)
+  const orientation = prompt(`Come vuoi collegare i tavoli? Inserisci 'h' per orizzontale o 'v' per verticale (default: h)`);
+  const horiz = orientation && orientation.toLowerCase() === 'h';
+
+  // Determine bounds of merged slots
+  const allSlots = sourceTable.slotIds.map(id => tableSlots[id]).filter(Boolean);
+  const lefts = allSlots.map(s => parseInt(s.left,10) || 0);
+  const tops = allSlots.map(s => parseInt(s.top,10) || 0);
+  const minLeft = Math.min(...lefts);
+  const minTop = Math.min(...tops);
+  const maxLeft = Math.max(...lefts);
+  const maxTop = Math.max(...tops);
+
+  // Build a new combined slot id
+  const combinedSlotId = `combined_${sourceTable.id}`;
+  const combinedType = horiz ? 'rect-h' : 'rect-v';
+  const width = maxLeft - minLeft + (horiz ? 0 : 0); // not used directly, type defines shape
+  const height = maxTop - minTop + (horiz ? 0 : 0);
+
+  // Create the combined slot (positioned at the top‑left of the merged area)
+  tableSlots[combinedSlotId] = {
+    area: 'Terrazza',
+    left: `${minLeft}px`,
+    top: `${minTop}px`,
+    type: combinedType,
+    baseSeats: sourceTable.seats,
+  };
+
+  // The source table now references only the combined slot
+  sourceTable.slotIds = [combinedSlotId];
   
   // Delete target table from array
   tables = tables.filter(t => t.id !== targetId);
