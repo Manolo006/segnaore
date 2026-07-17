@@ -108,13 +108,13 @@ const STATUS_EMOJIS = {
    DATA — Slots & Tables
 ===================================================== */
 const tableSlots = {
-  'pt_1': { area: 'Piano Terra', left: '1.3rem', top: '43rem', type: 'sq', baseSeats: 2 },
-  'pt_2': { area: 'Piano Terra', left: '1.3rem', top: '36.875rem', type: 'sq', baseSeats: 2 },
-  'pt_3': { area: 'Piano Terra', left: '1.3rem', top: '21.25rem', type: 'sq', baseSeats: 2 },
-  'pt_4': { area: 'Piano Terra', left: '22.5rem', top: '36.875rem', type: 'sq', baseSeats: 2 },
-  'pt_5': { area: 'Piano Terra (Esterno)', left: '1.875rem', top: '1.3rem', type: 'rect-h', baseSeats: 4 },
-  'pt_6': { area: 'Piano Terra (Esterno)', left: '15.625rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
-  'pt_7': { area: 'Piano Terra (Esterno)', left: '29.375rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
+  'pt_1': { area: 'Piano Terra', left: '1.3rem', top: '47rem', type: 'sq', baseSeats: 2 },
+  'pt_2': { area: 'Piano Terra', left: '1.3rem', top: '34.5rem', type: 'sq', baseSeats: 2 },
+  'pt_3': { area: 'Piano Terra', left: '1.3rem', top: '22rem', type: 'sq', baseSeats: 2 },
+  'pt_4': { area: 'Piano Terra', left: '20rem', top: '34.5rem', type: 'sq', baseSeats: 2 },
+  'pt_5': { area: 'Piano Terra (Esterno)', left: '1.3rem', top: '1.3rem', type: 'rect-h', baseSeats: 4 },
+  'pt_6': { area: 'Piano Terra (Esterno)', left: '15.4rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
+  'pt_7': { area: 'Piano Terra (Esterno)', left: '27.5rem', top: '1.3rem', type: 'sq', baseSeats: 2 },
   // Terrazza — layout aggiornato secondo la disposizione reale
   //  ZONA ALTA (prima della linea):
   //    T10: rettangolo verticale a sinistra
@@ -125,11 +125,11 @@ const tableSlots = {
   //    T14: quadrato al centro
   //    T15: quadrato in basso a destra
   'tr_10': { area: 'Terrazza', left: '20px',  top: '100px', type: 'rect-v', baseSeats: 4 },
-  'tr_11': { area: 'Terrazza', left: '180px', top: '20px',  type: 'sq',     baseSeats: 2 },
-  'tr_12': { area: 'Terrazza', left: '330px', top: '80px',  type: 'rect-v', baseSeats: 4 },
-  'tr_13': { area: 'Terrazza', left: '40px',  top: '370px', type: 'sq',     baseSeats: 2 },
-  'tr_14': { area: 'Terrazza', left: '175px', top: '470px', type: 'sq',     baseSeats: 2 },
-  'tr_15': { area: 'Terrazza', left: '310px', top: '560px', type: 'sq',     baseSeats: 2 },
+  'tr_11': { area: 'Terrazza', left: '210px', top: '20px',  type: 'sq',     baseSeats: 2 },
+  'tr_12': { area: 'Terrazza', left: '400px', top: '100px',  type: 'rect-v', baseSeats: 4 },
+  'tr_13': { area: 'Terrazza', left: '20px',  top: '370px', type: 'sq',     baseSeats: 2 },
+  'tr_14': { area: 'Terrazza', left: '210px', top: '470px', type: 'sq',     baseSeats: 2 },
+  'tr_15': { area: 'Terrazza', left: '400px', top: '560px', type: 'sq',     baseSeats: 2 },
 };
 
 let tables = [
