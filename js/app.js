@@ -705,67 +705,78 @@ function closePanel() {
 }
 
 function setTableStatus(id, newStatus) {
-  // SALA PRIORITY LOCK:
-  // Scrive 'salaLockAt' nel tavolo. Il KDS non potrà mai sovrascrivere stati
-  // impostati dalla sala come: free, bill, reserved, paid, occupied.
-  window._manualLock = window._manualLock || {};
-  window._manualLock[id] = Date.now();
-
+  // La sala scrive direttamente su Firebase.
+  // Il listener onValue('tables') si occuperà di aggiornare lo stato locale e la UI.
+  // Questo è l'unico pattern corretto: Firebase è la source of truth.
   const d = tables.find(t => t && t.id === id);
-  if(!d) return;
-  d.status = newStatus;
-  d.salaLockAt = Date.now(); // Persistente su Firebase
-  d.salaStatus = newStatus;  // Stato imposto dalla sala
-  
-  if (newStatus === 'free' || newStatus === 'paid' || newStatus === 'reserved') {
-    d.startedAt = null;
-    
-    // Mark all active orders for this table as PAID in Firebase
-    if(window._fbReady && window._db) {
+  if (!d) return;
+
+  const updatedTable = { ...d };
+  updatedTable.status = newStatus;
+  // Elimina proprietà non serializzabili
+  delete updatedTable.orders;
+  // Rimuovi i campi di lock vecchi se presenti
+  delete updatedTable.salaLockAt;
+  delete updatedTable.salaStatus;
+
+  if (newStatus === 'free' || newStatus === 'paid') {
+    updatedTable.startedAt = null;
+    updatedTable.reservedTime = '';
+    updatedTable.reservedGuests = 0;
+    updatedTable.guests = 0;
+  } else if (newStatus === 'reserved') {
+    updatedTable.startedAt = null;
+  } else if (!updatedTable.startedAt) {
+    updatedTable.startedAt = Date.now();
+  }
+
+  // Se il tavolo viene liberato/pagato, marca tutti gli ordini attivi come pagati
+  if (newStatus === 'free' || newStatus === 'paid') {
+    if (window._fbReady && window._db) {
       window._onValue(window._ref(window._db, 'orders'), (snapshot) => {
         const data = snapshot.val();
-        if(data) {
-          const now = Date.now();
+        if (data) {
           const updates = {};
           Object.entries(data).forEach(([orderId, o]) => {
             if (o.tableId === id && !o.paidAt) {
-              updates[`${orderId}/paidAt`] = now;
+              updates[`${orderId}/paidAt`] = Date.now();
               updates[`${orderId}/paymentStatus`] = 'paid';
             }
           });
-          if(Object.keys(updates).length > 0) {
+          if (Object.keys(updates).length > 0) {
             window._fbUpdate(window._ref(window._db, 'orders'), updates);
           }
         }
       }, { onlyOnce: true });
     }
-  } else if (!d.startedAt) {
-    d.startedAt = Date.now();
   }
 
-  if(newStatus === 'free' || newStatus === 'paid') {
-     d.reservedTime = '';
-     d.reservedGuests = 0;
-  }
-
-  renderTables();
-  if (selectedTableId === id) openPanel(id);
   showToast(STATUS_EMOJIS[newStatus], `Tavolo ${id}: ${STATUS_LABELS[newStatus]}`);
-  if(window.syncTablesToDB) window.syncTablesToDB([id]);
+
+  // Scrivi su Firebase — il listener aggiornerà lo stato locale e la UI
+  if (window._fbReady && window._db) {
+    window._fbUpdate(window._ref(window._db, 'tables'), {
+      [`table_${id}`]: updatedTable
+    }).catch(e => console.error('Errore setTableStatus:', e));
+  }
 }
 
 function changeGuests(id, delta) {
   const d = tables.find(t => t && t.id === id);
-  if(!d) return;
-  d.guests = Math.max(0, Math.min(d.seats, d.guests + delta));
-  const el = document.getElementById(`guest-val-${id}`);
-  if (el) el.textContent = d.guests;
-  if(window.syncTablesToDB) window.syncTablesToDB([id]);
+  if (!d) return;
+  const newGuests = Math.max(0, Math.min(d.seats, d.guests + delta));
+  const updatedTable = { ...d, guests: newGuests };
+  delete updatedTable.orders;
+  delete updatedTable.salaLockAt;
+  delete updatedTable.salaStatus;
+  if (window._fbReady && window._db) {
+    window._fbUpdate(window._ref(window._db, 'tables'), {
+      [`table_${id}`]: updatedTable
+    }).catch(e => console.error('Errore changeGuests:', e));
+  }
 }
 
 function freeTable(id) {
-  const d = tables.find(t => t && t.id === id);
-  if(d) d.guests = 0;
   setTableStatus(id, 'free');
   closePanel();
 }
@@ -928,117 +939,117 @@ window.syncTablesToDB = async function(changedTableIds = null) {
 let isFirstLoad = true;
 
 function initSync() {
-  if(window._fbReady) {
-    // 1. Sync Tables
-    window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        let isLegacy = false;
-        let parsedTables = [];
-        
-        if (Array.isArray(data)) {
-           isLegacy = true;
-           parsedTables = data.filter(t => t);
-        } else {
-           const keys = Object.keys(data);
-           if (keys.length > 0 && !keys[0].startsWith('table_')) {
-              isLegacy = true;
-           }
-           parsedTables = Object.values(data).filter(t => t);
-        }
-        
-        tables = parsedTables;
-        tables.sort((a, b) => a.id - b.id);
-        
-        if (isLegacy) {
-           window.syncTablesToDB();
-        }
-        
-        renderTables();
-        if(selectedTableId) buildPanelContent(selectedTableId);
-      } else if (isFirstLoad) {
+  if (!window._fbReady) { setTimeout(initSync, 100); return; }
+
+  // =====================================================
+  // LISTENER 1: Tavoli (source of truth)
+  // Ogni cambio su Firebase aggiorna la UI.
+  // =====================================================
+  window._onValue(window._ref(window._db, 'tables'), (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      let parsedTables = [];
+      if (Array.isArray(data)) {
+        parsedTables = data.filter(t => t);
+        // Migrazione legacy: riscrivi come oggetto
         window.syncTablesToDB();
+      } else {
+        parsedTables = Object.values(data).filter(t => t);
+        const keys = Object.keys(data);
+        if (keys.length > 0 && !keys[0].startsWith('table_')) {
+          // Migrazione legacy
+          window.syncTablesToDB();
+        }
       }
-      isFirstLoad = false;
-    });
+      tables = parsedTables;
+      tables.sort((a, b) => a.id - b.id);
+    } else if (isFirstLoad) {
+      window.syncTablesToDB();
+    }
+    isFirstLoad = false;
 
-    // 2. Sync Orders to compute real-time status from KDS
-    window._onValue(window._ref(window._db, 'orders'), (snapshot) => {
-      const data = snapshot.val();
-      const allOrders = data ? Object.values(data) : [];
-      
-      const changedIds = [];
-      const now = Date.now();
-      tables.forEach(t => {
-        // SALA PRIORITY LOCK:
-        // Se il cameriere ha impostato uno stato manualmente (salaLockAt recente, entro 30 sec)
-        // oppure lo stato corrente è un "sala-state" critico, la cucina non può intervenire.
-        const manualLockTime = (window._manualLock && window._manualLock[t.id]) || 0;
-        if (now - manualLockTime < 4000) return; // lock locale 4 sec (anti-race)
-        
-        // Stati impostati dalla sala che il KDS NON deve mai sovrascrivere:
-        // - free (tavolo liberato dal cameriere)
-        // - reserved (prenotazione fatta dal cameriere)
-        // - bill (il cameriere ha richiesto il conto)
-        // - paid (il cameriere ha chiuso il tavolo)
-        // - occupied (il cameriere ha confermato che il tavolo è occupato)
-        const SALA_PRIORITY_STATUSES = ['free', 'reserved', 'bill', 'paid', 'occupied'];
-        
-        // Se il tavolo ha un salaLockAt recente (< 60 secondi) E lo status attuale
-        // è uno stato di sala, la cucina non può sovrascriverlo.
-        const salaLockAge = t.salaLockAt ? (now - t.salaLockAt) : Infinity;
-        const isInSalaLock = salaLockAge < 60000 && SALA_PRIORITY_STATUSES.includes(t.salaStatus || t.status);
-        
-        if (isInSalaLock) return; // La sala comanda, ignoriamo il KDS
+    renderTables();
+    // Se il panel è aperto, aggiornalo con i dati freschi da Firebase
+    if (selectedTableId) {
+      const panelBody = document.getElementById('panelBody');
+      if (panelBody) panelBody.innerHTML = buildPanelContent(selectedTableId);
+    }
+  });
 
-        // Find all active orders for the table (not done)
-        const tAllActiveOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
-        
-        // Orders that are active AND not yet paid
-        const tOrdersUnpaid = tAllActiveOrders.filter(o => o.paymentStatus !== 'paid');
-        
-        if (tOrdersUnpaid.length > 0) {
-          // La cucina può solo impostare 'preparing' o 'ready'
-          // NON tocca mai: free, reserved, bill, paid, occupied
-          if (!SALA_PRIORITY_STATUSES.includes(t.status)) {
-            const firstOrderTime = Math.min(...tOrdersUnpaid.map(o => o.timestamp || o.createdAt || now));
-            if (!t.startedAt) t.startedAt = firstOrderTime;
-            
-            const allItems = tOrdersUnpaid.flatMap(o => o.items || []);
-            let newStatus = 'preparing';
-            if (allItems.length > 0 && allItems.some(i => i.status === 'ready')) {
-              newStatus = 'ready';
-            }
-            if (t.status !== newStatus) {
-              t.status = newStatus;
-              changedIds.push(t.id);
-            }
-          }
-        } else {
-          // No unpaid active orders.
-          if (t.status === 'preparing' || t.status === 'ready') {
-            t.status = 'occupied'; // When kitchen finishes, people eat
-            changedIds.push(t.id);
-          } else if (tAllActiveOrders.length > 0 && (t.status === 'occupied' || t.status === 'bill')) {
-            // All active orders have been marked as PAID!
-            // Solo se lo status è 'bill' (sala ha richiesto conto) lo aggiorniamo a 'paid'
-            // Questo è l'unico caso in cui il sistema può aggiornare uno stato 'sala'
-            // perché è consequenza diretta della marcatura pagamento in lista ordini
-            if (t.status === 'bill') {
-              t.status = 'paid';
-              changedIds.push(t.id);
-            }
+  // =====================================================
+  // LISTENER 2: Ordini (KDS)
+  // Regole RIGIDE — la cucina può SOLO:
+  //   free → preparing (se arriva un ordine)
+  //   preparing → ready (se tutti i piatti sono pronti)
+  //   ready → occupied (se gli ordini finiscono)
+  //   bill+tuttiPagati → paid (conseguenza del pagamento)
+  // NON tocca MAI: free (con ordini già presenti), reserved, occupied, bill, paid
+  // impostati manualmente dalla sala.
+  // =====================================================
+  window._onValue(window._ref(window._db, 'orders'), (snapshot) => {
+    const data = snapshot.val();
+    const allOrders = data ? Object.values(data) : [];
+    const updates = {};
+
+    tables.forEach(t => {
+      // Tutti gli ordini di questo tavolo che non sono "done"
+      const activeOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
+      // Ordini attivi non ancora pagati
+      const unpaidOrders = activeOrders.filter(o => o.paymentStatus !== 'paid');
+
+      if (unpaidOrders.length > 0) {
+        // La cucina può passare da 'free' a 'preparing' SOLO se il tavolo è ancora libero
+        // (es: un cameriere ha preso un ordine ma non ha ancora messo il tavolo come occupato)
+        if (t.status === 'free') {
+          const tCopy = { ...t, status: 'preparing' };
+          delete tCopy.orders;
+          updates[`table_${t.id}`] = tCopy;
+          return;
+        }
+        // Da 'preparing' può passare a 'ready' se almeno un piatto è pronto
+        if (t.status === 'preparing') {
+          const allItems = unpaidOrders.flatMap(o => o.items || []);
+          if (allItems.some(i => i.status === 'ready')) {
+            const tCopy = { ...t, status: 'ready' };
+            delete tCopy.orders;
+            updates[`table_${t.id}`] = tCopy;
           }
         }
-      });
-      if (changedIds.length > 0) {
-        window.syncTablesToDB(changedIds);
+        // Da 'ready' può passare a 'preparing' se nessun piatto è più 'ready'
+        if (t.status === 'ready') {
+          const allItems = unpaidOrders.flatMap(o => o.items || []);
+          if (!allItems.some(i => i.status === 'ready')) {
+            const tCopy = { ...t, status: 'preparing' };
+            delete tCopy.orders;
+            updates[`table_${t.id}`] = tCopy;
+          }
+        }
+      } else {
+        // Nessun ordine unpaid attivo
+        // KDS: preparing/ready → occupied (la gente sta mangiando)
+        if (t.status === 'preparing' || t.status === 'ready') {
+          const tCopy = { ...t, status: 'occupied' };
+          delete tCopy.orders;
+          updates[`table_${t.id}`] = tCopy;
+        }
+        // KDS: bill → paid SOLO se c'erano ordini attivi e sono tutti paid
+        // (il cameriere ha richiesto il conto e tutti gli ordini risultano pagati)
+        if (t.status === 'bill' && activeOrders.length > 0) {
+          const allPaid = activeOrders.every(o => o.paymentStatus === 'paid');
+          if (allPaid) {
+            const tCopy = { ...t, status: 'paid' };
+            delete tCopy.orders;
+            updates[`table_${t.id}`] = tCopy;
+          }
+        }
       }
-      renderTables();
     });
-  } else {
-    setTimeout(initSync, 100);
-  }
+
+    if (Object.keys(updates).length > 0) {
+      window._fbUpdate(window._ref(window._db, 'tables'), updates)
+        .catch(e => console.error('KDS sync error:', e));
+    }
+  });
 }
 initSync();
 
@@ -1062,7 +1073,7 @@ function checkNightlyReset() {
       renderTables();
       localStorage.setItem('lastNightlyReset', todayStr);
       showToast('🧹', 'Reset notturno eseguito: i tavoli sono tornati liberi.');
-      if(window.syncTablesToDB) window.syncTablesToDB();
+      if (window.syncTablesToDB) window.syncTablesToDB();
     }
   }
 }
