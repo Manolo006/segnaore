@@ -961,15 +961,18 @@ function initSync() {
       
       const changedIds = [];
       tables.forEach(t => {
-        // Ignora gli ordini completati (done) o già pagati/archiviati (paid)
-        const tOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done' && o.paymentStatus !== 'paid');
+        // Find all active orders for the table (not done)
+        const tAllActiveOrders = allOrders.filter(o => o.tableId === t.id && o.status !== 'done');
         
-        if (tOrders.length > 0) {
+        // Orders that are active AND not yet paid
+        const tOrdersUnpaid = tAllActiveOrders.filter(o => o.paymentStatus !== 'paid');
+        
+        if (tOrdersUnpaid.length > 0) {
           if (t.status !== 'bill' && t.status !== 'paid' && t.status !== 'occupied') {
-            const firstOrderTime = Math.min(...tOrders.map(o => o.timestamp || o.createdAt || Date.now()));
+            const firstOrderTime = Math.min(...tOrdersUnpaid.map(o => o.timestamp || o.createdAt || Date.now()));
             if (!t.startedAt) t.startedAt = firstOrderTime;
             
-            const allItems = tOrders.flatMap(o => o.items || []);
+            const allItems = tOrdersUnpaid.flatMap(o => o.items || []);
             let newStatus = 'preparing';
             if (allItems.length > 0 && allItems.some(i => i.status === 'ready')) {
               newStatus = 'ready';
@@ -980,8 +983,13 @@ function initSync() {
             }
           }
         } else {
+          // No unpaid active orders.
           if (t.status === 'preparing' || t.status === 'ready') {
-            t.status = 'occupied'; // When kitchen finishes, people eat (table is occupied, not free)
+            t.status = 'occupied'; // When kitchen finishes, people eat
+            changedIds.push(t.id);
+          } else if (tAllActiveOrders.length > 0 && (t.status === 'occupied' || t.status === 'bill')) {
+            // All active orders have been marked as PAID!
+            t.status = 'paid';
             changedIds.push(t.id);
           }
         }
