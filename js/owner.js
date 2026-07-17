@@ -35,6 +35,8 @@ onAuthStateChanged(auth, async (user) => {
       const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
       const role = userDoc.exists() ? (userDoc.data().role || '').toLowerCase() : '';
       console.log('[Owner] Auth role:', role);
+      localStorage.setItem('userRole', role);
+      document.dispatchEvent(new CustomEvent('userRoleLoaded', { detail: { role } }));
       if (role === "owner") {
         document.getElementById('view-loading').style.display = 'none';
         document.getElementById('view-owner').style.display = 'block';

@@ -78,6 +78,9 @@
             userData = data;
           }
 
+          localStorage.setItem('userRole', userRole);
+          document.dispatchEvent(new CustomEvent('userRoleLoaded', { detail: { role: userRole } }));
+
           document.getElementById('userName').textContent = user.displayName || "Utente";
           
           if (userRole === "owner") {
@@ -96,6 +99,8 @@
           currentUser = null;
           userRole = null;
           userData = null;
+          localStorage.removeItem('userRole');
+          document.dispatchEvent(new CustomEvent('userRoleLoaded', { detail: { role: null } }));
           document.getElementById('view-login').style.display = 'flex';
           document.getElementById('view-employee').style.display = 'none';
           document.getElementById('view-owner').style.display = 'none';

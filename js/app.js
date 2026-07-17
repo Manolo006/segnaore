@@ -55,11 +55,17 @@ import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
-      if (userDoc.exists() && userDoc.data().role === 'owner') {
-        const bBtn = document.getElementById('bnavOwnerBtn');
-        if (bBtn) bBtn.style.display = 'flex';
+      try {
+        const userDoc = await getDoc(doc(dbFirestore, "users", user.uid));
+        const role = userDoc.exists() ? userDoc.data().role : null;
+        localStorage.setItem('userRole', role);
+        document.dispatchEvent(new CustomEvent('userRoleLoaded', { detail: { role } }));
+      } catch (e) {
+        console.error('Error checking role in app.js:', e);
       }
+    } else {
+      localStorage.removeItem('userRole');
+      document.dispatchEvent(new CustomEvent('userRoleLoaded', { detail: { role: null } }));
     }
   });
 
