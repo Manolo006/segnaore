@@ -120,7 +120,7 @@
 { id: 's2', cat: 'secondi', name: 'Frittura mista di gamberi e calamari', desc: 'Pesce fritto misto', price: 19.90, img: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80' },
 
 // DOLCI
-{ id: 'd1', cat: 'dolci', name: 'Cheesecake', desc: 'Torta al formaggio', price: 6.90, img: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80' },
+{ id: 'd1', cat: 'dolci', name: 'Cheesecake', desc: 'Torta al formaggio', price: 6.90, img: 'img/cheesecake.png' },
 { id: 'd2', cat: 'dolci', name: 'Profiterole', desc: 'Bignè con crema e cioccolato', price: 6.90, img: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80' },
 { id: 'd3', cat: 'dolci', name: 'Tiramisù', desc: 'Dolce al caffè e mascarpone', price: 6.90, img: 'http://googleusercontent.com/image_collection/image_retrieval/18169031594575410063_2' },
 { id: 'd4', cat: 'dolci', name: 'Gelato cioccolato', desc: 'Gelato al cioccolato', price: 6.90, img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=600&q=80' },
