@@ -194,15 +194,28 @@
       const now = new Date();
       const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       
+      const expectedIn = userData.shiftStart || "09:00";
+      let approvedIn = timeStr;
+      
+      const [actH, actM] = timeStr.split(':').map(Number);
+      const [expH, expM] = expectedIn.split(':').map(Number);
+      const actTotal = actH * 60 + actM;
+      const expTotal = expH * 60 + expM;
+      
+      // Se si timbra in anticipo o entro 5 minuti di ritardo, arrotonda all'orario previsto
+      if (actTotal <= expTotal + 5) {
+        approvedIn = expectedIn;
+      }
+      
       await addDoc(collection(dbFirestore, "attendance"), {
         userId: currentUser.uid,
         userName: currentUser.displayName,
         dateString: now.toISOString().split('T')[0],
         realClockIn: serverTimestamp(),
         realClockOut: null,
-        approvedClockIn: timeStr,
+        approvedClockIn: approvedIn,
         approvedClockOut: null,
-        expectedIn: userData.shiftStart || "09:00", // Save for owner comparison
+        expectedIn: expectedIn,
         expectedOut: userData.shiftEnd || "18:00",
         status: "In corso",
         note: "",
@@ -217,10 +230,50 @@
       const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       
       const shiftRef = doc(dbFirestore, "attendance", currentShiftId);
+      const shiftSnap = await getDoc(shiftRef);
+      let expectedOut = "18:00";
+      let approvedIn = "09:00";
+      if (shiftSnap.exists()) {
+        expectedOut = shiftSnap.data().expectedOut || "18:00";
+        approvedIn = shiftSnap.data().approvedClockIn || "09:00";
+      }
+      
+      let approvedOut = timeStr;
+      
+      const [actH, actM] = timeStr.split(':').map(Number);
+      const [expH, expM] = expectedOut.split(':').map(Number);
+      const actTotal = actH * 60 + actM;
+      const expTotal = expH * 60 + expM;
+      
+      if (actTotal > expTotal) {
+        const extraMinutes = actTotal - expTotal;
+        const overtimeMinutes = Math.floor(extraMinutes / 30) * 30;
+        const finalMinutes = expTotal + overtimeMinutes;
+        
+        const finalH = Math.floor(finalMinutes / 60) % 24;
+        const finalM = finalMinutes % 60;
+        approvedOut = `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
+      } else {
+        // Se si esce in anticipo di massimo 5 minuti, abbuona e segna come orario previsto
+        if (expTotal - actTotal <= 5) {
+          approvedOut = expectedOut;
+        }
+      }
+      
+      let h = 0;
+      if (approvedIn && approvedOut) {
+        const [inH, inM] = approvedIn.split(':').map(Number);
+        const [outH, outM] = approvedOut.split(':').map(Number);
+        const m1 = inH * 60 + inM;
+        const m2 = outH * 60 + outM;
+        h = Math.max(0, m2 - m1) / 60;
+      }
+      
       await updateDoc(shiftRef, {
         realClockOut: serverTimestamp(),
-        approvedClockOut: timeStr,
+        approvedClockOut: approvedOut,
         status: "Da approvare",
+        totalHours: h,
         gpsOut: { lat: gpsStatus.lat, lng: gpsStatus.lng }
       });
       loadEmployeeDashboard();
