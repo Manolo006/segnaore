@@ -83,10 +83,7 @@
 
           document.getElementById('userName').textContent = user.displayName || "Utente";
           
-          if (userRole === "owner") {
-            document.getElementById('view-owner').style.display = 'block';
-            loadOwnerDashboard();
-          } else if (userRole === "employee") {
+          if (userRole === "owner" || userRole === "employee") {
             document.getElementById('view-employee').style.display = 'block';
             startGpsTracking();
             loadEmployeeDashboard();
@@ -103,7 +100,6 @@
           document.dispatchEvent(new CustomEvent('userRoleLoaded', { detail: { role: null } }));
           document.getElementById('view-login').style.display = 'flex';
           document.getElementById('view-employee').style.display = 'none';
-          document.getElementById('view-owner').style.display = 'none';
           document.getElementById('view-pending').style.display = 'none';
         }
       });
