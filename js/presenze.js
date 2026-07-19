@@ -227,89 +227,135 @@
     };
 
     function calculateShiftHours(data) {
-      if (!data.approvedClockIn || !data.approvedClockOut) {
+      try {
+        if (!data.approvedClockIn || !data.approvedClockOut) {
+          return { regular: 0, overtime: 0, total: 0 };
+        }
+
+        const tIn = String(data.approvedClockIn);
+        const tOut = String(data.approvedClockOut);
+
+        if (!tIn.includes(':') || !tOut.includes(':')) {
+          return { regular: 0, overtime: 0, total: 0 };
+        }
+
+        const [inH, inM] = tIn.split(':').map(Number);
+        const [outH, outM] = tOut.split(':').map(Number);
+        
+        if (isNaN(inH) || isNaN(inM) || isNaN(outH) || isNaN(outM)) {
+          return { regular: 0, overtime: 0, total: 0 };
+        }
+
+        const workedMinutes = (outH * 60 + outM) - (inH * 60 + inM);
+        const totalWorkedHours = Math.max(0, workedMinutes) / 60;
+
+        // Standard shift duration
+        const expIn = String(data.expectedIn || "09:00");
+        const expOut = String(data.expectedOut || "18:00");
+        
+        if (!expIn.includes(':') || !expOut.includes(':')) {
+          return { regular: totalWorkedHours, overtime: 0, total: totalWorkedHours };
+        }
+
+        const [expInH, expInM] = expIn.split(':').map(Number);
+        const [expOutH, expOutM] = expOut.split(':').map(Number);
+
+        if (isNaN(expInH) || isNaN(expInM) || isNaN(expOutH) || isNaN(expOutM)) {
+          return { regular: totalWorkedHours, overtime: 0, total: totalWorkedHours };
+        }
+
+        const expectedMinutes = (expOutH * 60 + expOutM) - (expInH * 60 + expInM);
+
+        let overtime = 0;
+        let regular = totalWorkedHours;
+
+        const extraMinutes = workedMinutes - expectedMinutes;
+        if (extraMinutes >= 30) {
+          const overtimeMinutes = Math.floor(extraMinutes / 30) * 30;
+          overtime = overtimeMinutes / 60;
+          regular = Math.max(0, totalWorkedHours - overtime);
+        }
+
+        return {
+          regular: regular,
+          overtime: overtime,
+          total: totalWorkedHours
+        };
+      } catch (err) {
+        console.error("Error calculating shift hours for:", data, err);
         return { regular: 0, overtime: 0, total: 0 };
       }
-
-      const [inH, inM] = data.approvedClockIn.split(':').map(Number);
-      const [outH, outM] = data.approvedClockOut.split(':').map(Number);
-      const workedMinutes = (outH * 60 + outM) - (inH * 60 + inM);
-      const totalWorkedHours = Math.max(0, workedMinutes) / 60;
-
-      // Standard shift duration
-      const expIn = data.expectedIn || "09:00";
-      const expOut = data.expectedOut || "18:00";
-      const [expInH, expInM] = expIn.split(':').map(Number);
-      const [expOutH, expOutM] = expOut.split(':').map(Number);
-      const expectedMinutes = (expOutH * 60 + expOutM) - (expInH * 60 + expInM);
-
-      let overtime = 0;
-      let regular = totalWorkedHours;
-
-      const extraMinutes = workedMinutes - expectedMinutes;
-      if (extraMinutes >= 30) {
-        const overtimeMinutes = Math.floor(extraMinutes / 30) * 30;
-        overtime = overtimeMinutes / 60;
-        regular = Math.max(0, totalWorkedHours - overtime);
-      }
-
-      return {
-        regular: regular,
-        overtime: overtime,
-        total: totalWorkedHours
-      };
     }
 
     async function loadHistory() {
-      const q = query(collection(dbFirestore, "attendance"), where("userId", "==", currentUser.uid), orderBy("realClockIn", "desc"));
-      const snapshot = await getDocs(q);
-      const list = document.getElementById('history-list');
-      list.innerHTML = '';
-      
-      let totalRegular = 0;
-      let totalOvertime = 0;
-
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        let color = data.status === 'Approvato' ? 'var(--s-ready)' : (data.status === 'In corso' ? 'var(--s-prep)' : 'var(--s-new)');
+      try {
+        console.log("[Presenze] Caricamento storico per utente:", currentUser?.uid);
+        const q = query(collection(dbFirestore, "attendance"), where("userId", "==", currentUser.uid));
+        const snapshot = await getDocs(q);
+        const list = document.getElementById('history-list');
+        if (!list) {
+          console.warn("[Presenze] Elemento 'history-list' non trovato nel DOM.");
+          return;
+        }
+        list.innerHTML = '';
         
-        let statsHtml = '';
-        if (data.approvedClockIn && data.approvedClockOut) {
-          const stats = calculateShiftHours(data);
+        let totalRegular = 0;
+        let totalOvertime = 0;
+
+        console.log("[Presenze] Record trovati nel database:", snapshot.size);
+
+        // Ordina in memoria per evitare errori di indice composto su Firestore
+        const sortedDocs = [...snapshot.docs].sort((a, b) => {
+          const timeA = a.data().realClockIn?.seconds || 0;
+          const timeB = b.data().realClockIn?.seconds || 0;
+          return timeB - timeA;
+        });
+
+        sortedDocs.forEach(docSnap => {
+          const data = docSnap.data();
+          let color = data.status === 'Approvato' ? 'var(--s-ready)' : (data.status === 'In corso' ? 'var(--s-prep)' : 'var(--s-new)');
           
-          if (data.status === 'Approvato') {
-            totalRegular += stats.regular;
-            totalOvertime += stats.overtime;
+          let statsHtml = '';
+          if (data.approvedClockIn && data.approvedClockOut) {
+            const stats = calculateShiftHours(data);
+            
+            if (data.status === 'Approvato') {
+              totalRegular += stats.regular;
+              totalOvertime += stats.overtime;
+            }
+
+            statsHtml = `
+              <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">
+                Ore lavorate: <strong style="color:var(--text);">${stats.total.toFixed(2)}h</strong> 
+                (Ordinarie: <strong>${stats.regular.toFixed(2)}h</strong>${stats.overtime > 0 ? `, Straordinari: <strong style="color:var(--s-new);">+${stats.overtime.toFixed(2)}h</strong>` : ''})
+              </div>
+            `;
           }
 
-          statsHtml = `
-            <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">
-              Ore lavorate: <strong style="color:var(--text);">${stats.total.toFixed(2)}h</strong> 
-              (Ordinarie: <strong>${stats.regular.toFixed(2)}h</strong>${stats.overtime > 0 ? `, Straordinari: <strong style="color:var(--s-new);">+${stats.overtime.toFixed(2)}h</strong>` : ''})
+          list.innerHTML += `
+            <div class="card history-card" style="margin-bottom: 12px; padding: 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div style="font-weight:700;">${data.dateString || 'Data non disponibile'}</div>
+                  <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">In: ${data.approvedClockIn || '--:--'} - Out: ${data.approvedClockOut || '--:--'}</div>
+                  ${statsHtml}
+                  ${data.note ? `<div style="font-size:0.75rem; color:var(--s-new); margin-top:4px;">Nota: ${data.note}</div>` : ''}
+                </div>
+                <div style="color: ${color}; font-size: 0.8rem; font-weight:700;">${data.status || 'Stato sconosciuto'}</div>
+              </div>
             </div>
           `;
-        }
+        });
 
-        list.innerHTML += `
-          <div class="card history-card" style="margin-bottom: 12px; padding: 14px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-              <div>
-                <div style="font-weight:700;">${data.dateString}</div>
-                <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">In: ${data.approvedClockIn} - Out: ${data.approvedClockOut || '--:--'}</div>
-                ${statsHtml}
-                ${data.note ? `<div style="font-size:0.75rem; color:var(--s-new); margin-top:4px;">Nota: ${data.note}</div>` : ''}
-              </div>
-              <div style="color: ${color}; font-size: 0.8rem; font-weight:700;">${data.status}</div>
-            </div>
-          </div>
-        `;
-      });
-
-      // Aggiorna riepilogo ore a schermo
-      const regEl = document.getElementById('sum-regular-hours');
-      const ovEl = document.getElementById('sum-overtime-hours');
-      if (regEl) regEl.textContent = totalRegular.toFixed(2) + 'h';
-      if (ovEl) ovEl.textContent = totalOvertime.toFixed(2) + 'h';
+        // Aggiorna riepilogo ore a schermo
+        const regEl = document.getElementById('sum-regular-hours');
+        const ovEl = document.getElementById('sum-overtime-hours');
+        if (regEl) regEl.textContent = totalRegular.toFixed(2) + 'h';
+        if (ovEl) ovEl.textContent = totalOvertime.toFixed(2) + 'h';
+        console.log("[Presenze] Storico caricato con successo. Totale ordinarie:", totalRegular, "Straordinari:", totalOvertime);
+      } catch (err) {
+        console.error("[Presenze] Errore critico nel caricamento dello storico:", err);
+      }
     }
 
     /* UTILS */
