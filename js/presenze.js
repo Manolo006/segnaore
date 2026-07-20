@@ -129,6 +129,19 @@
         const settingsSnap = await get(ref(dbRealtime, 'settings/gps'));
         const settings = settingsSnap.val() || { lat: 37.069253, lng: -8.106154, radius: 100 };
 
+        // Bypass GPS in locale per facilitare i test di sviluppo
+        const hostname = window.location.hostname;
+        if (hostname === "localhost" || hostname === "127.0.0.1") {
+          console.log("[GPS] Bypass locale attivo per test.");
+          gpsStatus = { valid: true, lat: settings.lat, lng: settings.lng };
+          if (gpsLabel) {
+            gpsLabel.innerHTML = '📍 Posizione valida (Bypass Locale)';
+            gpsLabel.className = 'status-badge valid';
+          }
+          updateClockButtons();
+          return;
+        }
+
         navigator.geolocation.watchPosition(
           (position) => {
             const distance = calculateDistance(position.coords.latitude, position.coords.longitude, settings.lat, settings.lng);
