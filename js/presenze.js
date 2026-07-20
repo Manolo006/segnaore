@@ -207,10 +207,14 @@
         approvedIn = expectedIn;
       }
       
-      await addDoc(collection(dbFirestore, "attendance"), {
+      const dateStr = now.toISOString().split('T')[0];
+      const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : 'utente';
+      const docId = `${emailPrefix}_${dateStr}`;
+      
+      await setDoc(doc(dbFirestore, "attendance", docId), {
         userId: currentUser.uid,
         userName: currentUser.displayName,
-        dateString: now.toISOString().split('T')[0],
+        dateString: dateStr,
         realClockIn: serverTimestamp(),
         realClockOut: null,
         approvedClockIn: approvedIn,
