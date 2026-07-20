@@ -91,3 +91,42 @@
     }
     .bnav-item svg { width: 24px; height: 24px; }
     .bnav-item.active { color: var(--accent); }
+
+    /* ARCHIVE DETAILS/SUMMARY */
+    details.archive-details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 20px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    details.archive-details[open] {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    summary.archive-summary {
+      padding: 16px 20px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-2);
+      user-select: none;
+      list-style: none;
+    }
+    summary.archive-summary::-webkit-details-marker {
+      display: none;
+    }
+    summary.archive-summary::after {
+      content: "▼";
+      font-size: 0.75rem;
+      color: var(--text-3);
+      transition: transform 0.2s ease;
+    }
+    details.archive-details[open] summary.archive-summary::after {
+      transform: rotate(180deg);
+    }
+    .archive-content {
+      padding: 4px 16px 16px 16px;
+    }

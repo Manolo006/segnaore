@@ -363,14 +363,19 @@
         const q = query(collection(dbFirestore, "attendance"), where("userId", "==", currentUser.uid));
         const snapshot = await getDocs(q);
         const list = document.getElementById('history-list');
+        const archiveList = document.getElementById('archive-list');
         if (!list) {
           console.warn("[Presenze] Elemento 'history-list' non trovato nel DOM.");
           return;
         }
         list.innerHTML = '';
+        if (archiveList) archiveList.innerHTML = '';
         
         let totalRegular = 0;
         let totalOvertime = 0;
+        let archiveCount = 0;
+        let activeHtml = '';
+        let archiveHtml = '';
 
         console.log("[Presenze] Record trovati nel database:", snapshot.size);
 
@@ -383,7 +388,12 @@
 
         sortedDocs.forEach(docSnap => {
           const data = docSnap.data();
-          let color = data.status === 'Approvato' ? 'var(--s-ready)' : (data.status === 'In corso' ? 'var(--s-prep)' : 'var(--s-new)');
+          const isPaid = data.status === 'Pagato';
+          
+          let color = 'var(--s-new)';
+          if (data.status === 'Approvato') color = 'var(--s-ready)';
+          else if (data.status === 'In corso') color = 'var(--s-prep)';
+          else if (data.status === 'Pagato') color = 'rgba(34,197,94,0.6)';
           
           let statsHtml = '';
           if (data.approvedClockIn && data.approvedClockOut) {
@@ -402,7 +412,7 @@
             `;
           }
 
-          list.innerHTML += `
+          const cardHtml = `
             <div class="card history-card" style="margin-bottom: 12px; padding: 14px;">
               <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div>
@@ -415,13 +425,35 @@
               </div>
             </div>
           `;
+
+          if (isPaid) {
+            archiveCount++;
+            archiveHtml += cardHtml;
+          } else {
+            activeHtml += cardHtml;
+          }
         });
+
+        list.innerHTML = activeHtml || '<div style="color:var(--text-3); text-align:center; padding:24px 12px; font-size:0.9rem;">Nessun turno da pagare</div>';
+        if (archiveList) {
+          archiveList.innerHTML = archiveHtml || '<div style="color:var(--text-3); text-align:center; padding:24px 12px; font-size:0.9rem;">Nessun turno archiviato</div>';
+        }
+        
+        const countEl = document.getElementById('archive-count');
+        if (countEl) countEl.textContent = archiveCount;
 
         // Aggiorna riepilogo ore a schermo
         const regEl = document.getElementById('sum-regular-hours');
         const ovEl = document.getElementById('sum-overtime-hours');
         if (regEl) regEl.textContent = totalRegular.toFixed(2) + 'h';
         if (ovEl) ovEl.textContent = totalOvertime.toFixed(2) + 'h';
+        
+        // Abilita/Disabilita bottone di pagamento
+        const btnMarkPaid = document.getElementById('btn-mark-paid');
+        if (btnMarkPaid) {
+          btnMarkPaid.disabled = (totalRegular === 0 && totalOvertime === 0);
+        }
+        
         console.log("[Presenze] Storico caricato con successo. Totale ordinarie:", totalRegular, "Straordinari:", totalOvertime);
       } catch (err) {
         console.error("[Presenze] Errore critico nel caricamento dello storico:", err);
@@ -439,3 +471,31 @@
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       return R * c;
     }
+
+    // Funzione per segnare tutti i turni approvati come pagati
+    window.markAllAsPaid = async () => {
+      if (!confirm("Sei sicuro di voler segnare tutti i turni approvati come pagati? Questo azzererà il contatore in alto.")) {
+        return;
+      }
+      try {
+        const q = query(collection(dbFirestore, "attendance"), where("userId", "==", currentUser.uid), where("status", "==", "Approvato"));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+          alert("Non ci sono turni approvati da segnare come pagati.");
+          return;
+        }
+        
+        const promises = [];
+        snapshot.forEach(docSnap => {
+          const docRef = doc(dbFirestore, "attendance", docSnap.id);
+          promises.push(updateDoc(docRef, { status: "Pagato" }));
+        });
+        await Promise.all(promises);
+        
+        alert("Tutti i turni approvati sono stati segnati come pagati!");
+        loadHistory();
+      } catch (err) {
+        console.error("Errore nel segnare i turni come pagati:", err);
+        alert("Errore durante il salvataggio del pagamento.");
+      }
+    };
