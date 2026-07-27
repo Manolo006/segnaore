@@ -227,7 +227,7 @@ window.approveShift = async (id) => {
     const t2 = outVal.split(':');
     const m1 = parseInt(t1[0])*60 + parseInt(t1[1]);
     const m2 = parseInt(t2[0])*60 + parseInt(t2[1]);
-    h = Math.max(0, m2 - m1) / 60;
+    h = Math.floor(Math.max(0, m2 - m1) / 60);
   }
 
   await updateDoc(doc(dbFirestore, "attendance", id), {

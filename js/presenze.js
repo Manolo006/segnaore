@@ -207,22 +207,44 @@
       const now = new Date();
       const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       
-      const expectedIn = userData.shiftStart || "09:00";
-      let approvedIn = timeStr;
-      
+      // Determina gli orari previsti in base alla fascia oraria della timbratura (pranzo o cena)
       const [actH, actM] = timeStr.split(':').map(Number);
-      const [expH, expM] = expectedIn.split(':').map(Number);
+      let expectedIn = "19:00";
+      let expectedOut = "22:00";
+      
+      if (actH < 16) {
+        expectedIn = "12:00";
+        expectedOut = "15:00";
+      }
+      
+      let approvedIn = timeStr;
       const actTotal = actH * 60 + actM;
+      const [expH, expM] = expectedIn.split(':').map(Number);
       const expTotal = expH * 60 + expM;
       
-      // Se si timbra in anticipo o entro 5 minuti di ritardo, arrotonda all'orario previsto
-      if (actTotal <= expTotal + 5) {
-        approvedIn = expectedIn;
+      // Controlla se la timbratura è vicina all'orario previsto (entro 45 minuti di anticipo o di ritardo)
+      const diffMinutes = actTotal - expTotal;
+      if (diffMinutes >= -45 && diffMinutes <= 45) {
+        // Se si timbra in anticipo o entro 5 minuti di ritardo, arrotonda all'orario previsto
+        if (actTotal <= expTotal + 5) {
+          approvedIn = expectedIn;
+        }
+      } else {
+        // Altrimenti (fuori turno programmato): applica la regola del margine a 55
+        // Se i minuti correnti sono >= 55, arrotonda all'ora successiva, altrimenti a quella corrente
+        if (actM >= 55) {
+          const nextH = (actH + 1) % 24;
+          approvedIn = `${String(nextH).padStart(2, '0')}:00`;
+        } else {
+          approvedIn = `${String(actH).padStart(2, '0')}:00`;
+        }
       }
       
       const dateStr = now.toISOString().split('T')[0];
       const emailPrefix = currentUser.email ? currentUser.email.split('@')[0] : 'utente';
-      const docId = `${emailPrefix}_${dateStr}`;
+      // Include l'orario di ingresso nell'ID per consentire timbrature multiple nello stesso giorno
+      const timeKey = approvedIn.replace(':', '');
+      const docId = `${emailPrefix}_${dateStr}_${timeKey}`;
       
       await setDoc(doc(dbFirestore, "attendance", docId), {
         userId: currentUser.uid,
@@ -233,7 +255,7 @@
         approvedClockIn: approvedIn,
         approvedClockOut: null,
         expectedIn: expectedIn,
-        expectedOut: userData.shiftEnd || "18:00",
+        expectedOut: expectedOut,
         status: "In corso",
         note: "",
         gpsIn: { lat: gpsStatus.lat, lng: gpsStatus.lng },
@@ -248,42 +270,21 @@
       
       const shiftRef = doc(dbFirestore, "attendance", currentShiftId);
       const shiftSnap = await getDoc(shiftRef);
-      let expectedOut = "18:00";
       let approvedIn = "09:00";
       if (shiftSnap.exists()) {
-        expectedOut = shiftSnap.data().expectedOut || "18:00";
         approvedIn = shiftSnap.data().approvedClockIn || "09:00";
       }
       
+      // L'orario reale di uscita viene memorizzato esattamente
       let approvedOut = timeStr;
       
-      const [actH, actM] = timeStr.split(':').map(Number);
-      const [expH, expM] = expectedOut.split(':').map(Number);
-      const actTotal = actH * 60 + actM;
-      const expTotal = expH * 60 + expM;
-      
-      if (actTotal > expTotal) {
-        const extraMinutes = actTotal - expTotal;
-        const overtimeMinutes = Math.floor(extraMinutes / 30) * 30;
-        const finalMinutes = expTotal + overtimeMinutes;
-        
-        const finalH = Math.floor(finalMinutes / 60) % 24;
-        const finalM = finalMinutes % 60;
-        approvedOut = `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
-      } else {
-        // Se si esce in anticipo di massimo 5 minuti, abbuona e segna come orario previsto
-        if (expTotal - actTotal <= 5) {
-          approvedOut = expectedOut;
-        }
-      }
-      
+      // Calcolo ore totali arrotondato per difetto all'ora intera
       let h = 0;
       if (approvedIn && approvedOut) {
         const [inH, inM] = approvedIn.split(':').map(Number);
         const [outH, outM] = approvedOut.split(':').map(Number);
-        const m1 = inH * 60 + inM;
-        const m2 = outH * 60 + outM;
-        h = Math.max(0, m2 - m1) / 60;
+        const workedMinutes = (outH * 60 + outM) - (inH * 60 + inM);
+        h = Math.floor(Math.max(0, workedMinutes) / 60);
       }
       
       await updateDoc(shiftRef, {
@@ -316,39 +317,32 @@
           return { regular: 0, overtime: 0, total: 0 };
         }
 
-        const workedMinutes = (outH * 60 + outM) - (inH * 60 + inM);
-        const totalWorkedHours = Math.max(0, workedMinutes) / 60;
+    function calculateShiftHours(data) {
+      try {
+        if (!data.approvedClockIn || !data.approvedClockOut) {
+          return { regular: 0, overtime: 0, total: 0 };
+        }
 
-        // Standard shift duration
-        const expIn = String(data.expectedIn || "09:00");
-        const expOut = String(data.expectedOut || "18:00");
+        const tIn = String(data.approvedClockIn);
+        const tOut = String(data.approvedClockOut);
+
+        if (!tIn.includes(':') || !tOut.includes(':')) {
+          return { regular: 0, overtime: 0, total: 0 };
+        }
+
+        const [inH, inM] = tIn.split(':').map(Number);
+        const [outH, outM] = tOut.split(':').map(Number);
         
-        if (!expIn.includes(':') || !expOut.includes(':')) {
-          return { regular: totalWorkedHours, overtime: 0, total: totalWorkedHours };
+        if (isNaN(inH) || isNaN(inM) || isNaN(outH) || isNaN(outM)) {
+          return { regular: 0, overtime: 0, total: 0 };
         }
 
-        const [expInH, expInM] = expIn.split(':').map(Number);
-        const [expOutH, expOutM] = expOut.split(':').map(Number);
-
-        if (isNaN(expInH) || isNaN(expInM) || isNaN(expOutH) || isNaN(expOutM)) {
-          return { regular: totalWorkedHours, overtime: 0, total: totalWorkedHours };
-        }
-
-        const expectedMinutes = (expOutH * 60 + expOutM) - (expInH * 60 + expInM);
-
-        let overtime = 0;
-        let regular = totalWorkedHours;
-
-        const extraMinutes = workedMinutes - expectedMinutes;
-        if (extraMinutes >= 30) {
-          const overtimeMinutes = Math.floor(extraMinutes / 30) * 30;
-          overtime = overtimeMinutes / 60;
-          regular = Math.max(0, totalWorkedHours - overtime);
-        }
+        const workedMinutes = (outH * 60 + outM) - (inH * 60 + inM);
+        const totalWorkedHours = Math.floor(Math.max(0, workedMinutes) / 60);
 
         return {
-          regular: regular,
-          overtime: overtime,
+          regular: totalWorkedHours,
+          overtime: 0,
           total: totalWorkedHours
         };
       } catch (err) {
@@ -372,7 +366,7 @@
         if (archiveList) archiveList.innerHTML = '';
         
         let totalRegular = 0;
-        let totalOvertime = 0;
+        let unpaidShiftsCount = 0;
         let archiveCount = 0;
         let activeHtml = '';
         let archiveHtml = '';
@@ -400,14 +394,13 @@
             const stats = calculateShiftHours(data);
             
             if (data.status === 'Approvato') {
-              totalRegular += stats.regular;
-              totalOvertime += stats.overtime;
+              totalRegular += stats.total;
+              unpaidShiftsCount++;
             }
 
             statsHtml = `
               <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">
-                Ore lavorate: <strong style="color:var(--text);">${stats.total.toFixed(2)}h</strong> 
-                (Ordinarie: <strong>${stats.regular.toFixed(2)}h</strong>${stats.overtime > 0 ? `, Straordinari: <strong style="color:var(--s-new);">+${stats.overtime.toFixed(2)}h</strong>` : ''})
+                Ore lavorate: <strong style="color:var(--text);">${stats.total.toFixed(0)}h</strong>
               </div>
             `;
           }
@@ -445,16 +438,16 @@
         // Aggiorna riepilogo ore a schermo
         const regEl = document.getElementById('sum-regular-hours');
         const ovEl = document.getElementById('sum-overtime-hours');
-        if (regEl) regEl.textContent = totalRegular.toFixed(2) + 'h';
-        if (ovEl) ovEl.textContent = totalOvertime.toFixed(2) + 'h';
+        if (regEl) regEl.textContent = totalRegular.toFixed(0) + 'h';
+        if (ovEl) ovEl.textContent = unpaidShiftsCount;
         
         // Abilita/Disabilita bottone di pagamento
         const btnMarkPaid = document.getElementById('btn-mark-paid');
         if (btnMarkPaid) {
-          btnMarkPaid.disabled = (totalRegular === 0 && totalOvertime === 0);
+          btnMarkPaid.disabled = (totalRegular === 0 && unpaidShiftsCount === 0);
         }
         
-        console.log("[Presenze] Storico caricato con successo. Totale ordinarie:", totalRegular, "Straordinari:", totalOvertime);
+        console.log("[Presenze] Storico caricato con successo. Totale ore:", totalRegular, "Turni da pagare:", unpaidShiftsCount);
       } catch (err) {
         console.error("[Presenze] Errore critico nel caricamento dello storico:", err);
       }
