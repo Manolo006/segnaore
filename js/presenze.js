@@ -275,8 +275,9 @@
         approvedIn = shiftSnap.data().approvedClockIn || "09:00";
       }
       
-      // L'orario reale di uscita viene memorizzato esattamente
-      let approvedOut = timeStr;
+      // L'orario di uscita approvato viene arrotondato per difetto all'ora intera (es. 15:59 -> 15:00)
+      const [actH, actM] = timeStr.split(':').map(Number);
+      const approvedOut = `${String(actH).padStart(2, '0')}:00`;
       
       // Calcolo ore totali arrotondato per difetto all'ora intera
       let h = 0;
