@@ -44,21 +44,47 @@ function initNavbar() {
         const auth = authMod.getAuth(app);
         const dbFirestore = fsMod.getFirestore(app);
 
+        const bBtn = document.getElementById('bnavOwnerBtn');
+
+        // Immediate check from localStorage to avoid loading latency
+        const cachedRole = (localStorage.getItem('userRole') || '').toLowerCase();
+        if (cachedRole === 'owner' && bBtn) {
+          bBtn.style.setProperty('display', 'flex', 'important');
+        }
+
+        // Listen for updates from other scripts
+        document.addEventListener('userRoleLoaded', (e) => {
+          const role = (e.detail.role || '').toLowerCase();
+          const targetBtn = document.getElementById('bnavOwnerBtn');
+          if (targetBtn) {
+            if (role === 'owner') {
+              targetBtn.style.setProperty('display', 'flex', 'important');
+            } else {
+              targetBtn.style.setProperty('display', 'none', 'important');
+            }
+          }
+        });
+
         authMod.onAuthStateChanged(auth, async (user) => {
-          const bBtn = document.getElementById('bnavOwnerBtn');
+          const currentBtn = document.getElementById('bnavOwnerBtn');
           if (user) {
             try {
               const userDoc = await fsMod.getDoc(fsMod.doc(dbFirestore, "users", user.uid));
-              if (userDoc.exists() && userDoc.data().role === 'owner') {
-                if (bBtn) bBtn.style.setProperty('display', 'flex', 'important');
+              const role = userDoc.exists() ? (userDoc.data().role || '').toLowerCase() : '';
+              
+              localStorage.setItem('userRole', role);
+              
+              if (role === 'owner') {
+                if (currentBtn) currentBtn.style.setProperty('display', 'flex', 'important');
               } else {
-                if (bBtn) bBtn.style.setProperty('display', 'none', 'important');
+                if (currentBtn) currentBtn.style.setProperty('display', 'none', 'important');
               }
             } catch (e) {
               console.error('Error fetching role in navbar:', e);
             }
           } else {
-            if (bBtn) bBtn.style.setProperty('display', 'none', 'important');
+            localStorage.removeItem('userRole');
+            if (currentBtn) currentBtn.style.setProperty('display', 'none', 'important');
           }
         });
       }).catch(err => {
