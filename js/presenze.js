@@ -318,26 +318,6 @@
           return { regular: 0, overtime: 0, total: 0 };
         }
 
-    function calculateShiftHours(data) {
-      try {
-        if (!data.approvedClockIn || !data.approvedClockOut) {
-          return { regular: 0, overtime: 0, total: 0 };
-        }
-
-        const tIn = String(data.approvedClockIn);
-        const tOut = String(data.approvedClockOut);
-
-        if (!tIn.includes(':') || !tOut.includes(':')) {
-          return { regular: 0, overtime: 0, total: 0 };
-        }
-
-        const [inH, inM] = tIn.split(':').map(Number);
-        const [outH, outM] = tOut.split(':').map(Number);
-        
-        if (isNaN(inH) || isNaN(inM) || isNaN(outH) || isNaN(outM)) {
-          return { regular: 0, overtime: 0, total: 0 };
-        }
-
         const workedMinutes = (outH * 60 + outM) - (inH * 60 + inM);
         const totalWorkedHours = Math.floor(Math.max(0, workedMinutes) / 60);
 
