@@ -321,9 +321,31 @@
         const workedMinutes = (outH * 60 + outM) - (inH * 60 + inM);
         const totalWorkedHours = Math.floor(Math.max(0, workedMinutes) / 60);
 
+        // Calcolo della durata prevista del turno standard
+        const expIn = String(data.expectedIn || "19:00");
+        const expOut = String(data.expectedOut || "22:00");
+        
+        let expectedHours = 3.0; // fallback standard
+        if (expIn.includes(':') && expOut.includes(':')) {
+          const [expInH, expInM] = expIn.split(':').map(Number);
+          const [expOutH, expOutM] = expOut.split(':').map(Number);
+          if (!isNaN(expInH) && !isNaN(expInM) && !isNaN(expOutH) && !isNaN(expOutM)) {
+            const expectedMinutes = (expOutH * 60 + expOutM) - (expInH * 60 + expInM);
+            expectedHours = Math.max(0, expectedMinutes) / 60;
+          }
+        }
+
+        let regular = totalWorkedHours;
+        let overtime = 0;
+
+        if (totalWorkedHours > expectedHours) {
+          regular = expectedHours;
+          overtime = totalWorkedHours - expectedHours;
+        }
+
         return {
-          regular: totalWorkedHours,
-          overtime: 0,
+          regular: regular,
+          overtime: overtime,
           total: totalWorkedHours
         };
       } catch (err) {
@@ -347,7 +369,7 @@
         if (archiveList) archiveList.innerHTML = '';
         
         let totalRegular = 0;
-        let unpaidShiftsCount = 0;
+        let totalOvertime = 0;
         let archiveCount = 0;
         let activeHtml = '';
         let archiveHtml = '';
@@ -375,13 +397,14 @@
             const stats = calculateShiftHours(data);
             
             if (data.status === 'Approvato') {
-              totalRegular += stats.total;
-              unpaidShiftsCount++;
+              totalRegular += stats.regular;
+              totalOvertime += stats.overtime;
             }
 
             statsHtml = `
               <div style="font-size:0.8rem; color:var(--text-2); margin-top:4px;">
-                Ore lavorate: <strong style="color:var(--text);">${stats.total.toFixed(0)}h</strong>
+                Ore lavorate: <strong style="color:var(--text);">${stats.total.toFixed(0)}h</strong> 
+                (Ordinarie: <strong>${stats.regular.toFixed(0)}h</strong>${stats.overtime > 0 ? `, Extra: <strong style="color:var(--s-new);">+${stats.overtime.toFixed(0)}h</strong>` : ''})
               </div>
             `;
           }
@@ -420,15 +443,15 @@
         const regEl = document.getElementById('sum-regular-hours');
         const ovEl = document.getElementById('sum-overtime-hours');
         if (regEl) regEl.textContent = totalRegular.toFixed(0) + 'h';
-        if (ovEl) ovEl.textContent = unpaidShiftsCount;
+        if (ovEl) ovEl.textContent = totalOvertime.toFixed(0) + 'h';
         
         // Abilita/Disabilita bottone di pagamento
         const btnMarkPaid = document.getElementById('btn-mark-paid');
         if (btnMarkPaid) {
-          btnMarkPaid.disabled = (totalRegular === 0 && unpaidShiftsCount === 0);
+          btnMarkPaid.disabled = (totalRegular === 0 && totalOvertime === 0);
         }
         
-        console.log("[Presenze] Storico caricato con successo. Totale ore:", totalRegular, "Turni da pagare:", unpaidShiftsCount);
+        console.log("[Presenze] Storico caricato con successo. Totale ore:", totalRegular, "Ore extra:", totalOvertime);
       } catch (err) {
         console.error("[Presenze] Errore critico nel caricamento dello storico:", err);
       }
