@@ -38,6 +38,7 @@
       primi: 'primi',
       secondi: 'secondi',
       dolci: 'dolci',
+      vini: 'bevande',
       bevande: 'bevande',
       bollicine: 'bevande',
       birre: 'bevande',
@@ -129,10 +130,10 @@
 { id: 'd7', cat: 'dolci', name: 'doce de limão', desc: 'dolce al limone', price: 6.90, img: 'https://images.unsplash.com/photo-1514517604298-cf80e0fb7f1e?auto=format&fit=crop&w=600&q=80' },
 
 // VINI DELLA CASA
-{ id: 'b1', cat: 'vini', name: 'Vino della Casa (Calice)', desc: 'Toscana Rosso', price: 4.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
-{ id: 'b2', cat: 'vini', name: 'Vino della Casa (Calice)', desc: 'Toscana Rosso', price: 4.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
-{ id: 'b3', cat: 'vini', name: 'Vino della Casa (Bottiglia)', desc: 'Toscana Branco', price: 18.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
-{ id: 'b4', cat: 'vini', name: 'Vino della Casa (Bottiglia)', desc: 'Toscana Branco', price: 18.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
+{ id: 'b1', cat: 'vini', name: 'Vino della Casa (Calice) rosso', desc: 'Toscana Rosso', price: 4.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
+{ id: 'b2', cat: 'vini', name: 'Vino della Casa (Calice) bianco', desc: 'Toscana Branco', price: 4.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
+{ id: 'b3', cat: 'vini', name: 'Vino della Casa (Bottiglia) rosso', desc: 'Toscana Rosso', price: 18.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
+{ id: 'b4', cat: 'vini', name: 'Vino della Casa (Bottiglia) bianco', desc: 'Toscana Branco', price: 18.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
 
 // VINI ITALIANI
 { id: 'vi1', cat: 'vini', name: 'Primitivo di Puglia zin', desc: 'Vino rosso italiano', price: 25.90, img: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80' },
@@ -155,7 +156,7 @@
 { id: 'vp9', cat: 'vini', name: 'Monte da peseguina R (Rosé)', desc: 'Vino rosato portoghese', price: 28.90, img: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80' },
 
 // BOLLICINE (ESPUMANTE)
-{ id: 'bo1', cat: 'bollicine', name: 'Bosco Brut', desc: 'Spumante', price: 19.90, img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80' },
+{ id: 'bo1', cat: 'bollicine', name: 'Bosco Brut', desc: 'Spumante', price: 19.90, img: 'img/Bosco-dei-Cirmiolo-Vino-Spumante-Brut.jpg' },
 { id: 'bo2', cat: 'bollicine', name: 'Prosecco', desc: 'Spumante prosecco', price: 21.90, img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80' },
 
 // BIRRE
@@ -165,7 +166,7 @@
 { id: 'bi4', cat: 'birre', name: 'Birra Peroni', desc: 'Birra in bottiglia', price: 4.50, img: 'https://images.unsplash.com/photo-1608270176050-12ec057de108?auto=format&fit=crop&w=600&q=80' },
 { id: 'bi5', cat: 'birre', name: 'Birra Corona', desc: 'Birra in bottiglia', price: 4.50, img: 'https://images.unsplash.com/photo-1608270176050-12ec057de108?auto=format&fit=crop&w=600&q=80' },
 { id: 'bi6', cat: 'birre', name: 'Birra Heineken', desc: 'Birra in bottiglia', price: 4.50, img: 'https://images.unsplash.com/photo-1608270176050-12ec057de108?auto=format&fit=crop&w=600&q=80' },
-{ id: 'bi7', cat: 'birre', name: 'Birra Sagres 0.0', desc: 'Birra analcolica in bottiglia', price: 4.50, img: 'https://images.unsplash.com/photo-1608270176050-12ec057de108?auto=format&fit=crop&w=600&q=80' },
+{ id: 'bi7', cat: 'birre', name: 'Birra Sagres 0.0', desc: 'Birra analcolica in bottiglia', price: 4.50, img: 'img/segnaore/img/sagres00.png' },
 { id: 'bi8', cat: 'birre', name: 'Birra Somersby', desc: 'Sidro in bottiglia', price: 4.20, img: 'https://images.unsplash.com/photo-1608270176050-12ec057de108?auto=format&fit=crop&w=600&q=80' },
 
 // APERITIVI E SANGRIA

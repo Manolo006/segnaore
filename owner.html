@@ -112,12 +112,29 @@
           <!-- Populated dynamically via JS -->
         </select>
         
-        <label style="font-size:0.8rem; color:var(--text-2); display:block; margin-bottom:8px;">Scatta o Seleziona la Foto</label>
-        <input type="file" id="foto-file-input" class="input" accept="image/*" capture="environment" style="margin-bottom:16px;" onchange="handleFotoSelected(event)">
+        <label style="font-size:0.8rem; color:var(--text-2); display:block; margin-bottom:8px;">Inquadra il Piatto o Carica un File</label>
+        
+        <!-- Live Camera Container -->
+        <div id="camera-container" style="display:none; position:relative; width:100%; max-width:400px; aspect-ratio:1/1; margin:0 auto 16px auto; border-radius:12px; overflow:hidden; border:2px solid var(--border); background:#000;">
+          <video id="camera-video" autoplay playsinline style="width:100%; height:100%; object-fit:cover; display:block;"></video>
+          <!-- Circular overlay guide -->
+          <div style="position:absolute; top:0; left:0; right:0; bottom:0; border:2px dashed rgba(255,255,255,0.4); box-shadow:0 0 0 9999px rgba(0,0,0,0.5); border-radius:50%; margin:20px; pointer-events:none;"></div>
+          <!-- Camera Toggle button inside overlay -->
+          <button onclick="toggleCameraDirection()" style="position:absolute; top:12px; right:12px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.3); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; z-index:10;">🔄</button>
+        </div>
+
+        <!-- Camera Controls -->
+        <div style="display:flex; gap:12px; margin-bottom:16px;">
+          <button id="btn-start-camera" class="btn btn-outline" style="flex:1; font-size:0.85rem; padding:12px;" onclick="startCamera()">📷 Attiva Fotocamera</button>
+          <button id="btn-capture-photo" class="btn btn-green" style="flex:1; font-size:0.85rem; padding:12px; display:none;" onclick="capturePhoto()">🎯 Scatta Foto</button>
+          <button id="btn-stop-camera" class="btn btn-red" style="flex:1; font-size:0.85rem; padding:12px; display:none;" onclick="stopCamera()">❌ Annulla</button>
+        </div>
+
+        <input type="file" id="foto-file-input" class="input" accept="image/*" style="margin-bottom:16px;" onchange="handleFotoSelected(event)">
         
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
           <input type="checkbox" id="foto-remove-bg" checked style="width:20px; height:20px; cursor:pointer;" onchange="handleRemoveBgToggle()">
-          <label for="foto-remove-bg" style="font-size:0.85rem; color:var(--text-2); cursor:pointer; user-select:none;">Rimuovi lo sfondo e gli elementi inutili (es. mani, tavoli)</label>
+          <label for="foto-remove-bg" style="font-size:0.85rem; color:var(--text-2); cursor:pointer; user-select:none;">Rimuovi lo sfondo e ritaglia il piatto automaticamente (AI)</label>
         </div>
 
         <div id="foto-preview-container" style="display:none; text-align:center; margin-bottom:20px; padding:16px; border:1px dashed var(--border); border-radius:12px; background:rgba(255,255,255,0.01);">
@@ -131,7 +148,6 @@
         </button>
       </div>
     </div>
-
   </div>
 
   <div id="navbar-placeholder"></div>

@@ -405,6 +405,8 @@ window.eseguiChiusuraCassa = async () => {
 // =====================================================
 let selectedFile = null;
 let processedBlob = null;
+let cameraStream = null;
+let cameraFacingMode = "environment"; // default retro
 
 function populateDishSelect() {
   const select = document.getElementById('foto-dish-select');
@@ -413,6 +415,84 @@ function populateDishSelect() {
     <option value="${item.id}">${item.name} (${item.cat})</option>
   `).join('');
 }
+
+// FOTOCAMERA LIVE
+window.startCamera = async () => {
+  const video = document.getElementById('camera-video');
+  const container = document.getElementById('camera-container');
+  const btnStart = document.getElementById('btn-start-camera');
+  const btnCapture = document.getElementById('btn-capture-photo');
+  const btnStop = document.getElementById('btn-stop-camera');
+  const fileInput = document.getElementById('foto-file-input');
+
+  if (!video || !container) return;
+
+  try {
+    if (cameraStream) {
+      window.stopCamera();
+    }
+
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: cameraFacingMode, width: { ideal: 1080 }, height: { ideal: 1080 } }
+    });
+    
+    video.srcObject = cameraStream;
+    container.style.display = 'block';
+    if (btnStart) btnStart.style.display = 'none';
+    if (btnCapture) btnCapture.style.display = 'inline-flex';
+    if (btnStop) btnStop.style.display = 'inline-flex';
+    if (fileInput) fileInput.style.display = 'none';
+  } catch (err) {
+    console.error("Errore accesso fotocamera:", err);
+    alert("Impossibile accedere alla fotocamera. Verifica i permessi o prova a ricaricare la pagina su HTTPS.");
+  }
+};
+
+window.stopCamera = () => {
+  const video = document.getElementById('camera-video');
+  const container = document.getElementById('camera-container');
+  const btnStart = document.getElementById('btn-start-camera');
+  const btnCapture = document.getElementById('btn-capture-photo');
+  const btnStop = document.getElementById('btn-stop-camera');
+  const fileInput = document.getElementById('foto-file-input');
+
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+  }
+  if (video) video.srcObject = null;
+  if (container) container.style.display = 'none';
+  if (btnStart) btnStart.style.display = 'inline-flex';
+  if (btnCapture) btnCapture.style.display = 'none';
+  if (btnStop) btnStop.style.display = 'none';
+  if (fileInput) fileInput.style.display = 'block';
+};
+
+window.capturePhoto = async () => {
+  const video = document.getElementById('camera-video');
+  if (!video || !cameraStream) return;
+
+  const canvas = document.createElement('canvas');
+  // Acquisisce alla risoluzione video effettiva
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 640;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob(async (blob) => {
+    window.stopCamera();
+    selectedFile = new File([blob], "captured_dish.jpg", { type: "image/jpeg" });
+    await processSelectedImage();
+  }, 'image/jpeg', 0.95);
+};
+
+window.toggleCameraDirection = async () => {
+  cameraFacingMode = cameraFacingMode === "environment" ? "user" : "environment";
+  if (cameraStream) {
+    await window.startCamera();
+  }
+};
 
 window.handleFotoSelected = async (event) => {
   const file = event.target.files[0];
@@ -451,17 +531,25 @@ async function processSelectedImage() {
     if (removeBgChecked) {
       if (typeof imglyRemoveBackground !== 'undefined') {
         try {
-          console.log("[Foto] Avvio rimozione sfondo locale...");
-          sourceBlob = await imglyRemoveBackground(file);
+          console.log("[Foto] Avvio rimozione sfondo locale con JSDelivr...");
+          const config = {
+            publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@2.x/dist/',
+            progress: (stage, progress) => {
+              const percent = Math.round(progress * 100);
+              const label = stage.includes('fetch') ? 'Download modelli AI' : 'Elaborazione AI';
+              if (statusLabel) statusLabel.textContent = `🤖 ${label}: ${percent}%...`;
+            }
+          };
+          sourceBlob = await imglyRemoveBackground(file, config);
           console.log("[Foto] Rimozione sfondo completata.");
         } catch (bgErr) {
           console.warn("[Foto] Rimozione sfondo locale fallita, proseguo con originale:", bgErr);
-          if (statusLabel) statusLabel.textContent = "⚠️ Impossibile ritagliare lo sfondo. Uso immagine originale...";
+          if (statusLabel) statusLabel.textContent = "⚠️ Impossibile ritagliare lo sfondo. Uso originale...";
           sourceBlob = file;
         }
       } else {
-        console.warn("[Foto] Libreria imglyRemoveBackground non disponibile.");
-        if (statusLabel) statusLabel.textContent = "⚠️ Servizio ritaglio non pronto. Uso immagine originale...";
+        console.warn("[Foto] Libreria imglyRemoveBackground non caricata.");
+        if (statusLabel) statusLabel.textContent = "⚠️ Servizio ritaglio non pronto. Uso originale...";
         sourceBlob = file;
       }
     }
@@ -499,7 +587,7 @@ function resizeToSquareWhite(blob, size) {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, size, size);
 
-      // Centratura mantenendo aspect ratio con 10% di margine interno
+      // Centratura mantenendo aspect ratio con 10% di margine interno per estetica
       const maxDim = Math.max(img.width, img.height);
       const scale = (size * 0.9) / maxDim;
       const w = img.width * scale;
