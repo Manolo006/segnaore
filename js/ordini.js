@@ -99,6 +99,7 @@
 { id: 'pz2', cat: 'pizze', name: 'Maialosa', desc: 'Porchetta, pecorino e cipolla caramellata', price: 14.90, img: 'img/pz2.png' },
 { id: 'pz3', cat: 'pizze', name: 'Tradizione', desc: 'Polpettine, sugo di pomodoro e Grana Padano', price: 13.90, img: 'img/pz3.png' },
 { id: 'pz4', cat: 'pizze', name: 'Gourmet', desc: 'Prosciutto Parma, rucola, Grana Padano e glassa balsamica', price: 14.50, img: 'img/pz4.png' },
+{ id: 'pz5', cat: 'pizze', name: 'Pinsa (margherita)', desc: 'Salsa di pomodoro, mozzarella e basilico', price: 15.90, img: 'img/pz5.png' },
 
 // FRITTI
 { id: 'fr1', cat: 'fritti', name: 'Arancino siciliano', desc: 'Riso, carne macinata, piselli, formaggio', price: 7.50, img: 'img/fr1.png' },

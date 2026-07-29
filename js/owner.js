@@ -582,7 +582,7 @@ async function processSelectedImage() {
           console.log("[Foto] Avvio rimozione sfondo AI (modello small, v1.4.5)...");
           const config = {
             model: 'small', // Modello più leggero e veloce, perfetto per smartphone
-            publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.4.5/dist/',
+            publicPath: 'https://unpkg.com/@imgly/background-removal-data@1.4.5/dist/',
             progress: (stage, progress) => {
               const percent = Math.round(progress * 100);
               const label = stage.includes('fetch') ? 'Download modelli AI' : 'Elaborazione AI';
