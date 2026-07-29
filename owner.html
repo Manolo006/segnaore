@@ -10,6 +10,12 @@
   <title>Area Proprietario — RistoGest</title>
   
   <link rel="stylesheet" href="css/owner.css">
+  <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@2.x/dist/bundle.js"></script>
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
   <script type="module" src="js/owner.js"></script>
 </head>
 <body>
@@ -36,6 +42,7 @@
       <button class="tab-btn active" onclick="switchOwnerTab('tab-staff', event)">Dipendenti</button>
       <button class="tab-btn" onclick="switchOwnerTab('tab-consumi', event)">Consumi</button>
       <button class="tab-btn" onclick="switchOwnerTab('tab-cassa', event)">Chiusura Cassa</button>
+      <button class="tab-btn" onclick="switchOwnerTab('tab-foto', event)">Foto Menu</button>
     </div>
 
     <!-- TAB DIPENDENTI (ex Presenze Owner) -->
@@ -92,6 +99,35 @@
         </p>
         <button class="btn btn-red" style="margin-top:20px;" onclick="eseguiChiusuraCassa()" id="btn-chiusura">
           Esegui Chiusura Cassa
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB FOTO MENU -->
+    <div id="tab-foto" class="owner-tab" style="display:none;">
+      <h3 class="section-title" style="color:var(--accent);">📸 Gestione Foto Menu</h3>
+      <div class="card">
+        <label style="font-size:0.8rem; color:var(--text-2); display:block; margin-bottom:8px;">Seleziona il Piatto dal Menu</label>
+        <select id="foto-dish-select" class="input" style="background:var(--bg-2); color:white; padding:12px; margin-bottom:16px;">
+          <!-- Populated dynamically via JS -->
+        </select>
+        
+        <label style="font-size:0.8rem; color:var(--text-2); display:block; margin-bottom:8px;">Scatta o Seleziona la Foto</label>
+        <input type="file" id="foto-file-input" class="input" accept="image/*" capture="environment" style="margin-bottom:16px;" onchange="handleFotoSelected(event)">
+        
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+          <input type="checkbox" id="foto-remove-bg" checked style="width:20px; height:20px; cursor:pointer;" onchange="handleRemoveBgToggle()">
+          <label for="foto-remove-bg" style="font-size:0.85rem; color:var(--text-2); cursor:pointer; user-select:none;">Rimuovi lo sfondo e gli elementi inutili (es. mani, tavoli)</label>
+        </div>
+
+        <div id="foto-preview-container" style="display:none; text-align:center; margin-bottom:20px; padding:16px; border:1px dashed var(--border); border-radius:12px; background:rgba(255,255,255,0.01);">
+          <div style="font-size:0.8rem; color:var(--text-2); margin-bottom:12px;" id="foto-preview-status">Anteprima Elaborazione:</div>
+          <div id="foto-spinner" style="display:none; margin:20px auto; width:40px; height:40px; border:4px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <img id="foto-preview-img" style="max-width:200px; max-height:200px; border-radius:12px; border:1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); background:#ffffff; display:none; margin:0 auto;" src="" alt="Anteprima">
+        </div>
+
+        <button class="btn btn-blue" id="foto-upload-btn" onclick="uploadDishPhoto()" disabled>
+          💾 Salva Foto Piatto
         </button>
       </div>
     </div>

@@ -2,6 +2,8 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getDatabase, ref, get, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+import { menuItems } from './ordini.js';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
@@ -17,6 +19,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const dbFirestore = getFirestore(app);
 const dbRealtime = getDatabase(app);
+const storage = getStorage(app);
 
 let currentUser = null;
 let allOrders = [];
@@ -83,6 +86,7 @@ function initOwnerDashboard() {
   // Load Dipendenti (Staff & Turni)
   loadReviewList().catch(e => console.error('[Owner] Error in loadReviewList:', e));
   loadStaffList().catch(e => console.error('[Owner] Error in loadStaffList:', e));
+  populateDishSelect();
   
   try {
     // Load GPS settings
@@ -393,5 +397,164 @@ window.eseguiChiusuraCassa = async () => {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Esegui Chiusura Cassa';
+  }
+};
+
+// =====================================================
+// GESTIONE FOTO MENU
+// =====================================================
+let selectedFile = null;
+let processedBlob = null;
+
+function populateDishSelect() {
+  const select = document.getElementById('foto-dish-select');
+  if (!select) return;
+  select.innerHTML = menuItems.map(item => `
+    <option value="${item.id}">${item.name} (${item.cat})</option>
+  `).join('');
+}
+
+window.handleFotoSelected = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  selectedFile = file;
+  await processSelectedImage();
+};
+
+window.handleRemoveBgToggle = async () => {
+  if (selectedFile) {
+    await processSelectedImage();
+  }
+};
+
+async function processSelectedImage() {
+  const file = selectedFile;
+  if (!file) return;
+
+  const previewContainer = document.getElementById('foto-preview-container');
+  const spinner = document.getElementById('foto-spinner');
+  const previewImg = document.getElementById('foto-preview-img');
+  const statusLabel = document.getElementById('foto-preview-status');
+  const uploadBtn = document.getElementById('foto-upload-btn');
+
+  if (previewContainer) previewContainer.style.display = 'block';
+  if (spinner) spinner.style.display = 'block';
+  if (previewImg) previewImg.style.display = 'none';
+  if (statusLabel) statusLabel.textContent = "Elaborazione immagine (isolamento piatto)...";
+  if (uploadBtn) uploadBtn.disabled = true;
+
+  const removeBgChecked = document.getElementById('foto-remove-bg')?.checked;
+
+  try {
+    let sourceBlob = file;
+
+    if (removeBgChecked) {
+      if (typeof imglyRemoveBackground !== 'undefined') {
+        try {
+          console.log("[Foto] Avvio rimozione sfondo locale...");
+          sourceBlob = await imglyRemoveBackground(file);
+          console.log("[Foto] Rimozione sfondo completata.");
+        } catch (bgErr) {
+          console.warn("[Foto] Rimozione sfondo locale fallita, proseguo con originale:", bgErr);
+          if (statusLabel) statusLabel.textContent = "⚠️ Impossibile ritagliare lo sfondo. Uso immagine originale...";
+          sourceBlob = file;
+        }
+      } else {
+        console.warn("[Foto] Libreria imglyRemoveBackground non disponibile.");
+        if (statusLabel) statusLabel.textContent = "⚠️ Servizio ritaglio non pronto. Uso immagine originale...";
+        sourceBlob = file;
+      }
+    }
+
+    // Centratura e ridimensionamento a 500x500 con sfondo bianco puro
+    processedBlob = await resizeToSquareWhite(sourceBlob, 500);
+
+    if (previewImg) {
+      previewImg.src = URL.createObjectURL(processedBlob);
+      previewImg.style.display = 'block';
+    }
+    if (spinner) spinner.style.display = 'none';
+    if (statusLabel && !statusLabel.textContent.includes('⚠️')) {
+      statusLabel.textContent = "✨ Piatto ritagliato e centrato con successo!";
+    }
+    if (uploadBtn) uploadBtn.disabled = false;
+  } catch (err) {
+    console.error("[Foto] Errore elaborazione:", err);
+    if (spinner) spinner.style.display = 'none';
+    if (statusLabel) statusLabel.textContent = "❌ Errore: " + err.message;
+  }
+}
+
+function resizeToSquareWhite(blob, size) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = URL.createObjectURL(blob);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = size;
+      canvas.height = size;
+
+      // Colore sfondo bianco puro
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+
+      // Centratura mantenendo aspect ratio con 10% di margine interno
+      const maxDim = Math.max(img.width, img.height);
+      const scale = (size * 0.9) / maxDim;
+      const w = img.width * scale;
+      const h = img.height * scale;
+      const x = (size - w) / 2;
+      const y = (size - h) / 2;
+
+      ctx.drawImage(img, x, y, w, h);
+      canvas.toBlob((resultBlob) => {
+        resolve(resultBlob);
+      }, 'image/jpeg', 0.85);
+    };
+    img.onerror = (e) => reject(new Error("Impossibile decodificare l'immagine."));
+  });
+}
+
+window.uploadDishPhoto = async () => {
+  const select = document.getElementById('foto-dish-select');
+  const uploadBtn = document.getElementById('foto-upload-btn');
+  if (!select || !processedBlob) return;
+
+  const dishId = select.value;
+  const dishName = select.options[select.selectedIndex].text;
+
+  if (uploadBtn) {
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "Salvataggio...";
+  }
+
+  try {
+    console.log(`[Foto] Caricamento in Storage di menu_images/${dishId}.jpg...`);
+    const fileRef = storageRef(storage, `menu_images/${dishId}.jpg`);
+    await uploadBytes(fileRef, processedBlob);
+    const downloadUrl = await getDownloadURL(fileRef);
+
+    // Salvataggio URL nel Realtime Database
+    await set(ref(dbRealtime, `menu_images/${dishId}`), downloadUrl);
+
+    alert(`Nuova foto salvata con successo per: ${dishName}`);
+    
+    // Reset dello stato
+    selectedFile = null;
+    processedBlob = null;
+    document.getElementById('foto-file-input').value = '';
+    document.getElementById('foto-preview-container').style.display = 'none';
+    if (uploadBtn) {
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = "💾 Salva Foto Piatto";
+    }
+  } catch (err) {
+    console.error("[Foto] Errore salvataggio:", err);
+    alert("Errore nel salvataggio: " + err.message);
+    if (uploadBtn) {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "💾 Salva Foto Piatto";
+    }
   }
 };

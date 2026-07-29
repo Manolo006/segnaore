@@ -2,7 +2,7 @@
        FIREBASE — Inizializzazione diretta (GitHub Pages safe)
     ===================================================== */
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getDatabase, ref, push, set, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+    import { getDatabase, ref, push, set, update, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
     const firebaseConfig = {
       apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
@@ -76,7 +76,7 @@
         .join(' ');
     }
 
-    const menuItems = [
+    export const menuItems = [
      // BRUSCHETTE
 { id: 'br1', cat: 'bruschette', name: 'Bruschetta vegetariana', desc: 'Stracciatella, pomodori secchi, zucchine grigliate e basilico', price: 8.50, img: 'http://googleusercontent.com/image_collection/image_retrieval/13892565192973452929_1' },
 { id: 'br2', cat: 'bruschette', name: 'Bruschetta italiana', desc: 'Pomodori, aglio e basilico', price: 5.50, img: 'http://googleusercontent.com/image_collection/image_retrieval/13892565192973452929_0' },
@@ -483,8 +483,20 @@
     window.sendOrder      = sendOrder;
     window.toggleMobileCart = toggleMobileCart;
 
-    renderCategories();
-    renderMenu();
+    // Ascolto per eventuali immagini personalizzate caricate da database
+    onValue(ref(db, 'menu_images'), (snapshot) => {
+      const overrides = snapshot.val();
+      if (overrides) {
+        menuItems.forEach(item => {
+          if (overrides[item.id]) {
+            item.img = overrides[item.id];
+          }
+        });
+      }
+      renderCategories();
+      renderMenu();
+    });
+
     renderCart();
     
     // Search input handler
