@@ -256,9 +256,9 @@
     let cart = [];
     let searchTerm = '';
 
-    // Formatta automaticamente tutti gli URL delle immagini usando l'ID del piatto (es. img/d1.jpg)
+    // Formatta automaticamente tutti gli URL delle immagini usando l'ID del piatto (es. img/d1.png)
     menuItems.forEach(item => {
-      item.img = `img/${item.id}.jpg`;
+      item.img = `img/${item.id}.png`;
     });
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -321,7 +321,7 @@
           <div class="menu-card">
             <div class="menu-card__img">
               <div class="menu-card__img-placeholder">${categories.find(c => c.id === item.cat)?.icon || '🍽️'}</div>
-              <img src="${item.img}" alt="${item.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity: 0.5;" onerror="this.style.display='none'">
+              <img src="${item.img}" alt="${item.name}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity: 0.5;" onerror="if(this.src.indexOf('.png') !== -1) { this.src = this.src.replace('.png', '.jpg'); } else { this.style.display='none'; }">
             </div>
             <div class="menu-card__info">
               <div class="menu-card__title">${item.name}</div>
