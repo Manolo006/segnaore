@@ -1,7 +1,7 @@
 /* =====================================================
        FIREBASE — Inizializzazione diretta (GitHub Pages safe)
     ===================================================== */
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getDatabase, ref, push, set, update, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
     const firebaseConfig = {
@@ -13,7 +13,7 @@
       messagingSenderId: "851521503055",
       appId:             "1:851521503055:web:7e23520cf67641f044cf3a"
     };
-    const fbApp = initializeApp(firebaseConfig);
+    const fbApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
     const db    = getDatabase(fbApp);
     console.log('[Ordini] Firebase connesso ✅');
 
@@ -456,17 +456,19 @@
     const overlay = document.getElementById('cartOverlay');
 
     function toggleMobileCart() {
-      if(window.innerWidth > 900) return;
+      if(!cartPanel || !overlay || window.innerWidth > 900) return;
       cartPanel.classList.toggle('open');
       overlay.classList.toggle('show');
     }
 
-    document.getElementById('mobileCartBtn').addEventListener('click', toggleMobileCart);
-    document.getElementById('cartCloseBtn').addEventListener('click', toggleMobileCart);
-    overlay.addEventListener('click', toggleMobileCart);
+    const mobBtn = document.getElementById('mobileCartBtn');
+    if (mobBtn) mobBtn.addEventListener('click', toggleMobileCart);
+    const closeBtn = document.getElementById('cartCloseBtn');
+    if (closeBtn) closeBtn.addEventListener('click', toggleMobileCart);
+    if (overlay) overlay.addEventListener('click', toggleMobileCart);
 
     window.addEventListener('resize', () => {
-      if(window.innerWidth > 900) {
+      if(cartPanel && overlay && window.innerWidth > 900) {
         cartPanel.classList.remove('open');
         overlay.classList.remove('show');
         renderCart(); // Fixes mobile FAB display state
@@ -493,11 +495,15 @@
           }
         });
       }
-      renderCategories();
-      renderMenu();
+      if (document.getElementById('menuGrid')) {
+        renderCategories();
+        renderMenu();
+      }
     });
 
-    renderCart();
+    if (document.getElementById('cartItems')) {
+      renderCart();
+    }
     
     // Search input handler
     const searchInput = document.getElementById('orderSearch');
