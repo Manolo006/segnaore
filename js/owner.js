@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, writeBatch, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getDatabase, ref, get, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { menuItems } from './ordini.js';
@@ -102,6 +102,17 @@ function initOwnerDashboard() {
       }
     }).catch(e => {
       console.warn('[Owner] Failed to load GPS settings (Permission Denied?):', e);
+    });
+
+    // Load GitHub settings
+    get(ref(dbRealtime, 'settings/github')).then(ghSnap => {
+      if (ghSnap.exists()) {
+        const tokenVal = ghSnap.val().token;
+        const input = document.getElementById('gh-token');
+        if (input && tokenVal) input.value = tokenVal;
+      }
+    }).catch(e => {
+      console.warn('[Owner] Failed to load GitHub settings:', e);
     });
   } catch (e) {
     console.error('[Owner] Error fetching GPS settings:', e);
@@ -291,7 +302,10 @@ async function loadStaffList() {
             </div>
           </div>
 
-          <button class="btn btn-outline" style="padding:10px; margin-top:8px; font-size:0.85rem;" onclick="saveUser('${docSnap.id}')">💾 Salva Dipendente</button>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn btn-outline" style="padding:10px; flex:2; font-size:0.85rem;" onclick="saveUser('${docSnap.id}')">💾 Salva</button>
+            <button class="btn btn-red" style="padding:10px; flex:1; font-size:0.85rem; border-color:var(--s-error); background:rgba(239, 68, 68, 0.08); color:var(--s-error);" onclick="deleteUser('${docSnap.id}', '${data.name.replace(/'/g, "\\'")}')">🗑️ Elimina</button>
+          </div>
         </div>
       `;
     });
@@ -320,12 +334,32 @@ window.saveUser = async (id) => {
   loadStaffList();
 };
 
+window.deleteUser = async (id, name) => {
+  if (!confirm(`Sei sicuro di voler eliminare definitivamente il dipendente "${name}"?`)) {
+    return;
+  }
+  try {
+    await deleteDoc(doc(dbFirestore, "users", id));
+    alert(`Dipendente "${name}" eliminato con successo.`);
+    loadStaffList();
+  } catch (err) {
+    console.error("Errore durante l'eliminazione:", err);
+    alert("Errore durante l'eliminazione: " + err.message);
+  }
+};
+
 window.saveSettings = async () => {
   const lat = parseFloat(document.getElementById('lat').value);
   const lng = parseFloat(document.getElementById('lng').value);
   const rad = parseInt(document.getElementById('rad').value);
   await set(ref(dbRealtime, 'settings/gps'), { lat, lng, radius: rad });
   alert('Impostazioni GPS salvate!');
+};
+
+window.saveGitHubSettings = async () => {
+  const token = document.getElementById('gh-token').value.trim();
+  await set(ref(dbRealtime, 'settings/github'), { token });
+  alert('Configurazione GitHub salvata!');
 };
 
 // ==========================================
@@ -529,26 +563,47 @@ async function processSelectedImage() {
     let sourceBlob = file;
 
     if (removeBgChecked) {
+      // Cerca la funzione di rimozione dello sfondo tra i vari possibili nomi globali
+      let removeBgFn = null;
       if (typeof imglyRemoveBackground !== 'undefined') {
+        removeBgFn = imglyRemoveBackground;
+      } else if (typeof removeBackground !== 'undefined') {
+        removeBgFn = removeBackground;
+      } else if (window.imgly && typeof window.imgly.removeBackground !== 'undefined') {
+        removeBgFn = window.imgly.removeBackground;
+      }
+
+      // Se non trovata globalmente, carica dinamicamente il modulo ESM
+      if (!removeBgFn) {
         try {
-          console.log("[Foto] Avvio rimozione sfondo locale con JSDelivr...");
+          console.log("[Foto] Funzione globale non trovata, carico ESM dinamico...");
+          const module = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@2.0.1/+esm');
+          removeBgFn = module.removeBackground || module.default;
+        } catch (esmErr) {
+          console.error("[Foto] Errore caricamento modulo ESM:", esmErr);
+        }
+      }
+
+      if (removeBgFn) {
+        try {
+          console.log("[Foto] Avvio rimozione sfondo AI...");
           const config = {
-            publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@2.x/dist/',
+            publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@2.0.1/dist/',
             progress: (stage, progress) => {
               const percent = Math.round(progress * 100);
               const label = stage.includes('fetch') ? 'Download modelli AI' : 'Elaborazione AI';
               if (statusLabel) statusLabel.textContent = `🤖 ${label}: ${percent}%...`;
             }
           };
-          sourceBlob = await imglyRemoveBackground(file, config);
+          sourceBlob = await removeBgFn(file, config);
           console.log("[Foto] Rimozione sfondo completata.");
         } catch (bgErr) {
-          console.warn("[Foto] Rimozione sfondo locale fallita, proseguo con originale:", bgErr);
+          console.warn("[Foto] Rimozione sfondo AI fallita, proseguo con originale:", bgErr);
           if (statusLabel) statusLabel.textContent = "⚠️ Impossibile ritagliare lo sfondo. Uso originale...";
           sourceBlob = file;
         }
       } else {
-        console.warn("[Foto] Libreria imglyRemoveBackground non caricata.");
+        console.warn("[Foto] Libreria rimozione sfondo non caricata.");
         if (statusLabel) statusLabel.textContent = "⚠️ Servizio ritaglio non pronto. Uso originale...";
         sourceBlob = file;
       }
@@ -604,6 +659,59 @@ function resizeToSquareWhite(blob, size) {
   });
 }
 
+async function uploadToGitHub(dishId, blob, token) {
+  const repo = "Manolo006/segnaore";
+  const path = `img/${dishId}.jpg`;
+  const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+
+  // Convert blob to Base64
+  const reader = new FileReader();
+  const base64Promise = new Promise((resolve) => {
+    reader.onloadend = () => {
+      resolve(reader.result.split(',')[1]);
+    };
+    reader.readAsDataURL(blob);
+  });
+  const base64Content = await base64Promise;
+
+  // Cerca il file esistente per prenderne l'SHA (richiesto da GitHub per sovrascrittura)
+  let sha = null;
+  try {
+    const res = await fetch(url, {
+      headers: { "Authorization": `token ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      sha = data.sha;
+    }
+  } catch (e) {
+    console.log("[GitHub] File non ancora esistente, verrà creato nuovo:", e);
+  }
+
+  const body = {
+    message: `update(menu): upload photo for dish ${dishId}`,
+    content: base64Content
+  };
+  if (sha) body.sha = sha;
+
+  const putRes = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Authorization": `token ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!putRes.ok) {
+    const errorText = await putRes.text();
+    throw new Error(`Errore GitHub API: ${errorText}`);
+  }
+
+  // Restituisce l'URL diretto raw bypassando cache e attese di build
+  return `https://raw.githubusercontent.com/${repo}/main/${path}?v=${Date.now()}`;
+}
+
 window.uploadDishPhoto = async () => {
   const select = document.getElementById('foto-dish-select');
   const uploadBtn = document.getElementById('foto-upload-btn');
@@ -618,10 +726,22 @@ window.uploadDishPhoto = async () => {
   }
 
   try {
-    console.log(`[Foto] Caricamento in Storage di menu_images/${dishId}.jpg...`);
-    const fileRef = storageRef(storage, `menu_images/${dishId}.jpg`);
-    await uploadBytes(fileRef, processedBlob);
-    const downloadUrl = await getDownloadURL(fileRef);
+    let downloadUrl = "";
+    
+    // Controlla se è configurato un token GitHub
+    const ghSnap = await get(ref(dbRealtime, 'settings/github'));
+    const ghToken = ghSnap.exists() ? ghSnap.val().token : "";
+
+    if (ghToken) {
+      console.log(`[Foto] Tentativo caricamento su GitHub di img/${dishId}.jpg...`);
+      downloadUrl = await uploadToGitHub(dishId, processedBlob, ghToken);
+      console.log("[Foto] Immagine caricata con successo su GitHub!");
+    } else {
+      console.log(`[Foto] Nessun token GitHub. Fallback su Firebase Storage per menu_images/${dishId}.jpg...`);
+      const fileRef = storageRef(storage, `menu_images/${dishId}.jpg`);
+      await uploadBytes(fileRef, processedBlob);
+      downloadUrl = await getDownloadURL(fileRef);
+    }
 
     // Salvataggio URL nel Realtime Database
     await set(ref(dbRealtime, `menu_images/${dishId}`), downloadUrl);

@@ -11,6 +11,10 @@
       --radius:    18px;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      overflow-y: auto !important;
+      height: auto !important;
+    }
     body {
       background: var(--bg);
       color: var(--text);
