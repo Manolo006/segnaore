@@ -4,7 +4,8 @@ import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc
 import { getDatabase, ref, get, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { menuItems } from './ordini.js';
-import imglyRemoveBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm';
+// Rimozione sfondo caricata dinamicamente solo al bisogno
+let imglyRemoveBackground = null;
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
@@ -564,7 +565,19 @@ async function processSelectedImage() {
     let sourceBlob = file;
 
     if (removeBgChecked) {
-      if (typeof imglyRemoveBackground === 'function') {
+      if (!imglyRemoveBackground) {
+        try {
+          console.log("[Foto] Caricamento dinamico della libreria rimozione sfondo...");
+          if (statusLabel) statusLabel.textContent = "🤖 Inizializzazione AI (caricamento moduli)...";
+          const module = await import('https://esm.sh/@imgly/background-removal@1.7.0');
+          imglyRemoveBackground = module.default || module;
+        } catch (importErr) {
+          console.error("[Foto] Errore caricamento dinamico AI:", importErr);
+          if (statusLabel) statusLabel.textContent = "⚠️ Errore caricamento AI. Uso originale...";
+        }
+      }
+
+      if (imglyRemoveBackground) {
         try {
           console.log("[Foto] Avvio rimozione sfondo AI (modello small, v1.4.5)...");
           const config = {
@@ -576,7 +589,9 @@ async function processSelectedImage() {
               if (statusLabel) statusLabel.textContent = `🤖 ${label}: ${percent}%...`;
             }
           };
-          sourceBlob = await imglyRemoveBackground(file, config);
+          // Se la funzione caricata è l'esportazione di default
+          const removeBgFn = typeof imglyRemoveBackground === 'function' ? imglyRemoveBackground : imglyRemoveBackground.removeBackground;
+          sourceBlob = await removeBgFn(file, config);
           console.log("[Foto] Rimozione sfondo completata.");
         } catch (bgErr) {
           console.warn("[Foto] Rimozione sfondo AI fallita, proseguo con originale:", bgErr);
