@@ -256,6 +256,11 @@
     let cart = [];
     let searchTerm = '';
 
+    // Formatta automaticamente tutti gli URL delle immagini usando l'ID del piatto (es. img/d1.jpg)
+    menuItems.forEach(item => {
+      item.img = `img/${item.id}.jpg`;
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
     const tableId = urlParams.get('table');
     if(tableId) {
