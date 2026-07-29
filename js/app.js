@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getDatabase, ref, onValue, set, push, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { menuItems } from './ordini.js';
 
   window.startGlobalOrder = function() {
     const container = document.getElementById('globalOrderTables');
@@ -1096,7 +1097,34 @@ window.addEventListener('beforeinstallprompt', (e) => {
   }
 });
 
-// Register Service Worker
+// Precaricamento in background delle immagini del menu per caricamento istantaneo
+function preloadMenuImages() {
+  console.log('[Preload] Avvio precaricamento immagini menu...');
+  
+  // Genera la lista dei percorsi provando sia .png che .jpg per i fallbacks
+  const urls = [];
+  menuItems.forEach(item => {
+    urls.push(`img/${item.id}.png`);
+    urls.push(`img/${item.id}.jpg`);
+  });
+
+  const triggerLoad = () => {
+    urls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+    console.log(`[Preload] ${urls.length} immagini precaricate in cache locale.`);
+  };
+
+  // Esegue l'operazione solo quando la CPU del browser è libera (idle) per non rallentare l'avvio della mappa
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(triggerLoad);
+  } else {
+    setTimeout(triggerLoad, 2000);
+  }
+}
+
+// Register Service Worker & Start Preloading
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').then((registration) => {
@@ -1104,5 +1132,11 @@ if ('serviceWorker' in navigator) {
     }, (err) => {
       console.log('ServiceWorker registration failed: ', err);
     });
+    // Avvia il precaricamento delle immagini
+    preloadMenuImages();
+  });
+} else {
+  window.addEventListener('load', () => {
+    preloadMenuImages();
   });
 }
