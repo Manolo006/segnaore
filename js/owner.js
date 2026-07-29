@@ -4,6 +4,7 @@ import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc
 import { getDatabase, ref, get, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { menuItems } from './ordini.js';
+import imglyRemoveBackground from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/index.mjs';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCtJWFHpz_wSZd7pVxhUdNkGUNjuRXDexc",
@@ -563,47 +564,27 @@ async function processSelectedImage() {
     let sourceBlob = file;
 
     if (removeBgChecked) {
-      // Cerca la funzione di rimozione dello sfondo tra i vari possibili nomi globali
-      let removeBgFn = null;
-      if (typeof imglyRemoveBackground !== 'undefined') {
-        removeBgFn = imglyRemoveBackground;
-      } else if (typeof removeBackground !== 'undefined') {
-        removeBgFn = removeBackground;
-      } else if (window.imgly && typeof window.imgly.removeBackground !== 'undefined') {
-        removeBgFn = window.imgly.removeBackground;
-      }
-
-      // Se non trovata globalmente, carica dinamicamente il modulo ESM
-      if (!removeBgFn) {
+      if (typeof imglyRemoveBackground === 'function') {
         try {
-          console.log("[Foto] Funzione globale non trovata, carico ESM dinamico...");
-          const module = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@2.0.1/+esm');
-          removeBgFn = module.removeBackground || module.default;
-        } catch (esmErr) {
-          console.error("[Foto] Errore caricamento modulo ESM:", esmErr);
-        }
-      }
-
-      if (removeBgFn) {
-        try {
-          console.log("[Foto] Avvio rimozione sfondo AI...");
+          console.log("[Foto] Avvio rimozione sfondo AI (modello small, v1.4.5)...");
           const config = {
-            publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@2.0.1/dist/',
+            model: 'small', // Modello più leggero e veloce, perfetto per smartphone
+            publicPath: 'https://cdn.jsdelivr.net/npm/@imgly/background-removal-data@1.4.5/dist/',
             progress: (stage, progress) => {
               const percent = Math.round(progress * 100);
               const label = stage.includes('fetch') ? 'Download modelli AI' : 'Elaborazione AI';
               if (statusLabel) statusLabel.textContent = `🤖 ${label}: ${percent}%...`;
             }
           };
-          sourceBlob = await removeBgFn(file, config);
+          sourceBlob = await imglyRemoveBackground(file, config);
           console.log("[Foto] Rimozione sfondo completata.");
         } catch (bgErr) {
           console.warn("[Foto] Rimozione sfondo AI fallita, proseguo con originale:", bgErr);
-          if (statusLabel) statusLabel.textContent = "⚠️ Impossibile ritagliare lo sfondo. Uso originale...";
+          if (statusLabel) statusLabel.textContent = `⚠️ Errore AI: ${bgErr.message || bgErr}. Uso originale...`;
           sourceBlob = file;
         }
       } else {
-        console.warn("[Foto] Libreria rimozione sfondo non caricata.");
+        console.warn("[Foto] Libreria rimozione sfondo non pronta.");
         if (statusLabel) statusLabel.textContent = "⚠️ Servizio ritaglio non pronto. Uso originale...";
         sourceBlob = file;
       }
