@@ -11,9 +11,9 @@ execute if block ~ ~-1 ~ minecraft:hopper unless score #count sd.var matches 1..
 execute if block ~ ~-1 ~ minecraft:hopper if score #count sd.var matches 1.. run return 0
 
 # --- SMOKER CHECK ---
-# If block below is a smoker, check non-fuel slots only
-execute if block ~ ~-1 ~ minecraft:smoker run function storage_checker:display/verify_smoker
-execute if block ~ ~-1 ~ minecraft:smoker run return 0
+execute if block ~ ~-1 ~ minecraft:smoker store result score #count sd.var run data get block ~ ~-1 ~ Items
+execute if block ~ ~-1 ~ minecraft:smoker unless score #count sd.var matches 1.. run kill @s
+execute if block ~ ~-1 ~ minecraft:smoker if score #count sd.var matches 1.. run return 0
 
 # --- NEITHER ---
 # Block is no longer a hopper or smoker, remove display
