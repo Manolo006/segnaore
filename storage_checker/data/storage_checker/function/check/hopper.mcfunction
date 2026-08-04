@@ -1,5 +1,5 @@
 # ============================================
-# Check Hopper for items (all 5 slots, any facing direction)
+# Check Hopper for items (all 5 slots)
 # ============================================
 
 # Skip if a display marker already exists near this block (display is at ~ ~1 ~)
@@ -11,8 +11,27 @@ execute store result score #count sd.var run data get block ~ ~ ~ Items
 # If no items, skip
 execute unless score #count sd.var matches 1.. run return 0
 
-# Store count, type, and item IDs into storage sd:data for display macro
+# Calculate total quantity of items across all 5 slots
+scoreboard players set #total sd.var 0
+
+execute store result score #c sd.var run data get block ~ ~ ~ Items[0].Count
+scoreboard players operation #total sd.var += #c sd.var
+
+execute store result score #c sd.var run data get block ~ ~ ~ Items[1].Count
+scoreboard players operation #total sd.var += #c sd.var
+
+execute store result score #c sd.var run data get block ~ ~ ~ Items[2].Count
+scoreboard players operation #total sd.var += #c sd.var
+
+execute store result score #c sd.var run data get block ~ ~ ~ Items[3].Count
+scoreboard players operation #total sd.var += #c sd.var
+
+execute store result score #c sd.var run data get block ~ ~ ~ Items[4].Count
+scoreboard players operation #total sd.var += #c sd.var
+
+# Store count, total, type, and item IDs into storage sd:data for display macro
 execute store result storage sd:data count int 1 run scoreboard players get #count sd.var
+execute store result storage sd:data total int 1 run scoreboard players get #total sd.var
 data modify storage sd:data type set value "Hopper"
 data modify storage sd:data items set from block ~ ~ ~ Items[].id
 
