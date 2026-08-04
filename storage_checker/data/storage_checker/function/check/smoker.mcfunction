@@ -3,8 +3,8 @@
 # Slot 0 = Input, Slot 1 = Fuel (SKIP), Slot 2 = Output
 # ============================================
 
-# Skip if a display marker already exists at this position
-execute if entity @e[type=minecraft:text_display,tag=sd.marker,dx=0,dy=0,dz=0] run return 0
+# Skip if a display marker already exists near this block (display is at ~ ~1 ~)
+execute if entity @e[type=minecraft:text_display,tag=sd.marker,distance=..1.5] run return 0
 
 # Count occupied non-fuel slots
 scoreboard players set #count sd.var 0

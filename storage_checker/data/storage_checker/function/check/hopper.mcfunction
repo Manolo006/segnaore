@@ -2,8 +2,8 @@
 # Check Hopper for items (all 5 slots, any facing direction)
 # ============================================
 
-# Skip if a display marker already exists at this position
-execute if entity @e[type=minecraft:text_display,tag=sd.marker,dx=0,dy=0,dz=0] run return 0
+# Skip if a display marker already exists near this block (display is at ~ ~1 ~)
+execute if entity @e[type=minecraft:text_display,tag=sd.marker,distance=..1.5] run return 0
 
 # Get the number of occupied item slots in the hopper
 execute store result score #count sd.var run data get block ~ ~ ~ Items
