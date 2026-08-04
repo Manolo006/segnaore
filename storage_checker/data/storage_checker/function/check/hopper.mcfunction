@@ -1,9 +1,11 @@
 # ============================================
 # Check Hopper for items (all 5 slots)
+# Executed at block integer coords (align xyz)
 # ============================================
 
-# Skip if a display marker already exists near this block (display is at ~ ~1 ~)
-execute if entity @e[type=minecraft:text_display,tag=sd.marker,distance=..1.5] run return 0
+# Position at display location (~0.5 ~1 ~0.5) and check distance <= 0.4
+# Using distance=..0.4 prevents matching displays of adjacent containers (which are 1.0+ block away)
+execute positioned ~0.5 ~1 ~0.5 if entity @e[type=minecraft:text_display,tag=sd.marker,distance=..0.4] run return 0
 
 # Get the number of occupied item slots in the hopper
 execute store result score #count sd.var run data get block ~ ~ ~ Items
@@ -29,5 +31,5 @@ execute if data block ~ ~ ~ Items[{Slot:2b}] run function storage_checker:check/
 execute if data block ~ ~ ~ Items[{Slot:3b}] run function storage_checker:check/set_item_3
 execute if data block ~ ~ ~ Items[{Slot:4b}] run function storage_checker:check/set_item_4
 
-# Summon the text display
-function storage_checker:display/summon with storage sd:data
+# Summon display at centered location ~0.5 ~1 ~0.5
+execute positioned ~0.5 ~1 ~0.5 run function storage_checker:display/summon with storage sd:data
