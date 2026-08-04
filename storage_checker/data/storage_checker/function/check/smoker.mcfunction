@@ -20,9 +20,14 @@ scoreboard players operation #count sd.var += #temp sd.var
 # If no items in non-fuel slots, skip
 execute unless score #count sd.var matches 1.. run return 0
 
-# Store count and type for display macro
+# Store count, type, and item IDs into storage sd:data for display macro
 execute store result storage sd:data count int 1 run scoreboard players get #count sd.var
 data modify storage sd:data type set value "Smoker"
+
+# Collect item IDs from non-fuel slots (Slot 0 and Slot 2)
+data remove storage sd:data items
+execute if data block ~ ~ ~ Items[{Slot:0b}] run data modify storage sd:data items append from block ~ ~ ~ Items[{Slot:0b}].id
+execute if data block ~ ~ ~ Items[{Slot:2b}] run data modify storage sd:data items append from block ~ ~ ~ Items[{Slot:2b}].id
 
 # Summon the text display
 function storage_checker:display/summon with storage sd:data

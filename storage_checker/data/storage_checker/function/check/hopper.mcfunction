@@ -11,9 +11,10 @@ execute store result score #count sd.var run data get block ~ ~ ~ Items
 # If no items, skip
 execute unless score #count sd.var matches 1.. run return 0
 
-# Store count and type for display macro
+# Store count, type, and item IDs into storage sd:data for display macro
 execute store result storage sd:data count int 1 run scoreboard players get #count sd.var
 data modify storage sd:data type set value "Hopper"
+data modify storage sd:data items set from block ~ ~ ~ Items[].id
 
 # Summon the text display
 function storage_checker:display/summon with storage sd:data
