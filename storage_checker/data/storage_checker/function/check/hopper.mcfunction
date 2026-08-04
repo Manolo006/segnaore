@@ -34,11 +34,18 @@ execute store result score #c sd.var run data get block ~ ~ ~ Items[4].count
 execute unless score #c sd.var matches 1.. store result score #c sd.var run data get block ~ ~ ~ Items[4].Count
 scoreboard players operation #total sd.var += #c sd.var
 
-# Store count, total, type, and full Items compound (with stack counts & IDs) into storage sd:data
+# Store count, total, type in sd:data
 execute store result storage sd:data count int 1 run scoreboard players get #count sd.var
 execute store result storage sd:data total int 1 run scoreboard players get #total sd.var
 data modify storage sd:data type set value "Hopper"
-data modify storage sd:data items set from block ~ ~ ~ Items
+
+# Build formatted items list (e.g. ["64x minecraft:bone", "32x minecraft:coal"])
+data remove storage sd:data items
+execute if data block ~ ~ ~ Items[{Slot:0b}] run function storage_checker:check/slot_0
+execute if data block ~ ~ ~ Items[{Slot:1b}] run function storage_checker:check/slot_1
+execute if data block ~ ~ ~ Items[{Slot:2b}] run function storage_checker:check/slot_2
+execute if data block ~ ~ ~ Items[{Slot:3b}] run function storage_checker:check/slot_3
+execute if data block ~ ~ ~ Items[{Slot:4b}] run function storage_checker:check/slot_4
 
 # Summon the text display
 function storage_checker:display/summon with storage sd:data
