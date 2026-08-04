@@ -11,19 +11,25 @@ execute store result score #count sd.var run data get block ~ ~ ~ Items
 # If no items, skip
 execute unless score #count sd.var matches 1.. run return 0
 
-# Calculate total quantity of items across all 3 slots
+# Calculate total quantity of items across all 3 slots safely
 scoreboard players set #total sd.var 0
 
-execute store result score #c sd.var run data get block ~ ~ ~ Items[0].count
-execute unless score #c sd.var matches 1.. store result score #c sd.var run data get block ~ ~ ~ Items[0].Count
+# Slot 0 (Input)
+scoreboard players set #c sd.var 0
+execute store result score #c sd.var run data get block ~ ~ ~ Items[{Slot:0b}].count
+execute if score #c sd.var matches 0 store result score #c sd.var run data get block ~ ~ ~ Items[{Slot:0b}].Count
 scoreboard players operation #total sd.var += #c sd.var
 
-execute store result score #c sd.var run data get block ~ ~ ~ Items[1].count
-execute unless score #c sd.var matches 1.. store result score #c sd.var run data get block ~ ~ ~ Items[1].Count
+# Slot 1 (Fuel)
+scoreboard players set #c sd.var 0
+execute store result score #c sd.var run data get block ~ ~ ~ Items[{Slot:1b}].count
+execute if score #c sd.var matches 0 store result score #c sd.var run data get block ~ ~ ~ Items[{Slot:1b}].Count
 scoreboard players operation #total sd.var += #c sd.var
 
-execute store result score #c sd.var run data get block ~ ~ ~ Items[2].count
-execute unless score #c sd.var matches 1.. store result score #c sd.var run data get block ~ ~ ~ Items[2].Count
+# Slot 2 (Output)
+scoreboard players set #c sd.var 0
+execute store result score #c sd.var run data get block ~ ~ ~ Items[{Slot:2b}].count
+execute if score #c sd.var matches 0 store result score #c sd.var run data get block ~ ~ ~ Items[{Slot:2b}].Count
 scoreboard players operation #total sd.var += #c sd.var
 
 # Store count, total, type in sd:data
