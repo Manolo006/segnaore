@@ -3,9 +3,11 @@
 # Runs as player @s at position @s
 # ============================================
 
-# If currently disabled (score 1), enable it (set to 0)
-execute if score @s sd.toggle matches 1 run function storage_checker:trigger/enable_display
-execute if score @s sd.toggle matches 1 run return 0
+# Copy initial toggle score to temporary variable to prevent fallthrough bug
+scoreboard players operation #current sd.var = @s sd.toggle
 
-# Otherwise (score 0), disable it (set to 1)
-function storage_checker:trigger/disable_display
+# If currently disabled (score 1), enable it
+execute if score #current sd.var matches 1 run function storage_checker:trigger/enable_display
+
+# If currently enabled/default (score not 1), disable it
+execute unless score #current sd.var matches 1 run function storage_checker:trigger/disable_display
