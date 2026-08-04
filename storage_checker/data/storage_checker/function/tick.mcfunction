@@ -1,7 +1,14 @@
 # ============================================
 # Storage Checker - Main Tick
-# Runs every tick: scans for containers, manages displays
+# Runs every tick: manages trigger, cleanup, verification, and scanning
 # ============================================
+
+# Enable /trigger check_storage for all players so non-OPs can run it
+scoreboard players enable @a check_storage
+
+# Process trigger calls from players
+execute as @a[scores={check_storage=1..}] at @s run function storage_checker:trigger/run
+scoreboard players reset @a[scores={check_storage=1..}] check_storage
 
 # Phase 1: Clean up displays too far from any player (6+ blocks)
 function storage_checker:display/cleanup
