@@ -1,8 +1,9 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, writeBatch, deleteDoc, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc, writeBatch, deleteDoc, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getDatabase, ref, get, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 import { menuItems } from './ordini.js';
 // Rimozione sfondo caricata dinamicamente solo al bisogno
 let imglyRemoveBackground = null;
@@ -806,6 +807,14 @@ function initReservationsTab() {
   });
 }
 
+const VAPID_KEY = 'BKDfyJZDEGggLOqhfphEtJoukNYIsQQ9Xlge1fwfqJRHaICfv3wzt9EE5dvYHGBUZ0KRCsPeg2KCDwXNI_xJLhs';
+let fcmMessaging = null;
+try {
+  fcmMessaging = getMessaging(app);
+} catch (e) {
+  console.warn('[FCM] Messaging non supportato:', e);
+}
+
 window.requestPushNotificationPermission = async function() {
   if (!('Notification' in window)) {
     alert('Le notifiche push non sono supportate da questo browser.');
@@ -813,11 +822,25 @@ window.requestPushNotificationPermission = async function() {
   }
   const permission = await Notification.requestPermission();
   updatePushToggleBtn(permission);
-  if (permission === 'granted') {
-    new Notification('🔔 Notifiche Attivate!', {
-      body: 'Riceverai una notifica ogni volta che arriva una nuova prenotazione dal sito.',
-      icon: 'img/icon.jpg'
-    });
+
+  if (permission === 'granted' && fcmMessaging) {
+    try {
+      const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+      const token = await getToken(fcmMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+      console.log('[FCM] Push Token:', token);
+
+      if (token) {
+        const cleanTokenId = token.substring(0, 40).replace(/[^a-zA-Z0-9]/g, '_');
+        await setDoc(doc(dbFirestore, 'owner_tokens', cleanTokenId), {
+          fcmToken: token,
+          updatedAt: new Date(),
+          user: auth.currentUser ? auth.currentUser.email : 'owner'
+        });
+        alert('🔔 Notifiche Push FCM attivate con successo! Riceverai notifiche anche ad app chiusa.');
+      }
+    } catch (err) {
+      console.error('[FCM] Errore registrazione token:', err);
+    }
   }
 };
 
