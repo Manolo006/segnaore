@@ -18,7 +18,7 @@ const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 // WhatsApp number for the restaurant owner
-const OWNER_WHATSAPP = '+351000000000'; // Replace with actual number
+const OWNER_WHATSAPP = '+351289076410'; // In Punto Bistrot Italiano
 
 export function initReservations() {
   const form = document.getElementById('reservation-form');
