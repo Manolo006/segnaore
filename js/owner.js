@@ -770,10 +770,15 @@ window.uploadDishPhoto = async () => {
 let allReservations = [];
 let currentFilter = 'all';
 let reservationsUnsubscribe = null;
+let isInitialReservationLoad = true;
 
 function initReservationsTab() {
   const listEl = document.getElementById('reservations-list');
   if (!listEl) return;
+
+  if ('Notification' in window) {
+    updatePushToggleBtn(Notification.permission);
+  }
 
   // Real-time listener on Firestore reservations collection
   const q = query(
@@ -782,6 +787,16 @@ function initReservationsTab() {
   );
 
   reservationsUnsubscribe = onSnapshot(q, (snapshot) => {
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'added') {
+        const data = change.doc.data();
+        if (data.status === 'pending' && !isInitialReservationLoad) {
+          notifyNewReservation({ id: change.doc.id, ...data });
+        }
+      }
+    });
+
+    isInitialReservationLoad = false;
     allReservations = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     updateBadge();
     renderReservations();
@@ -789,6 +804,79 @@ function initReservationsTab() {
     console.error('[Prenotazioni] Errore listener:', err);
     if (listEl) listEl.innerHTML = '<p style="color:#ef4444; padding:20px;">Errore caricamento prenotazioni.</p>';
   });
+}
+
+window.requestPushNotificationPermission = async function() {
+  if (!('Notification' in window)) {
+    alert('Le notifiche push non sono supportate da questo browser.');
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  updatePushToggleBtn(permission);
+  if (permission === 'granted') {
+    new Notification('🔔 Notifiche Attivate!', {
+      body: 'Riceverai una notifica ogni volta che arriva una nuova prenotazione dal sito.',
+      icon: 'img/icon.jpg'
+    });
+  }
+};
+
+function updatePushToggleBtn(permission) {
+  const label = document.getElementById('push-toggle-label');
+  const btn = document.getElementById('btn-push-toggle');
+  if (!label || !btn) return;
+
+  if (permission === 'granted') {
+    label.textContent = 'Notifiche ON';
+    btn.className = 'btn btn-green';
+    btn.style.opacity = '0.85';
+  } else if (permission === 'denied') {
+    label.textContent = 'Notifiche Bloccate';
+    btn.className = 'btn btn-red';
+  } else {
+    label.textContent = 'Attiva Notifiche Push';
+    btn.className = 'btn btn-blue';
+  }
+}
+
+function notifyNewReservation(res) {
+  playReservationSound();
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const title = `🍽️ Nuova Prenotazione: ${res.name}`;
+    const options = {
+      body: `📅 Data: ${res.date} ore ${res.time}\n👥 ${res.guests} persone · 📞 ${res.phone}`,
+      icon: 'img/icon.jpg',
+      badge: 'img/icon.jpg',
+      vibrate: [300, 100, 300, 100, 300],
+      tag: 'res-' + (res.id || Date.now()),
+      data: { url: 'owner.html' }
+    };
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options));
+    } else {
+      new Notification(title, options);
+    }
+  }
+}
+
+function playReservationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15);
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+  } catch (e) {}
 }
 
 function updateBadge() {
