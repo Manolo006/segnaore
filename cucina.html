@@ -21,21 +21,37 @@
   <!-- TOP NAV -->
   <nav class="topnav">
     <div class="topnav__brand">
-      <div class="topnav__logo" style="width:48px; height:48px; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+      <div class="topnav__logo" style="width:40px; height:40px; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
         <img src="img/icon.jpg" alt="Logo" style="width:100%; height:100%; object-fit:cover;">
+      </div>
+      <div>
+        <div style="font-size:1.05rem; font-weight:700; font-family:'Playfair Display', serif;">Cucina KDS</div>
+        <div style="font-size:0.7rem; color:var(--text-2);">Touch Massimo · Vocale · Tastiera</div>
       </div>
     </div>
     <div class="topnav__right">
+      <button class="topnav__btn" id="btnSound" title="Attiva/Disattiva Suono Nuova Comanda" onclick="toggleSound()">
+        <i class="fa-solid fa-bell"></i> <span id="soundLabel">Suono ON</span>
+      </button>
+      <button class="topnav__btn" id="btnVoice" title="Attiva/Disattiva Comandi Vocali" onclick="toggleVoice()">
+        <i class="fa-solid fa-microphone"></i> <span id="voiceLabel">Vocale OFF</span>
+      </button>
       <div class="topnav__clock" id="clockDisplay">--:--</div>
     </div>
   </nav>
 
+  <!-- VOICE FEEDBACK BANNER -->
+  <div id="voiceBanner" class="voice-banner" style="display:none;">
+    <i class="fa-solid fa-microphone-lines fa-beat" style="color:#ef4444;"></i>
+    <span id="voiceStatusText">In ascolto comandi vocali... Prova a dire "Tavolo 3" o "Tavolo 5 pronto"</span>
+  </div>
+
   <!-- FILTER BAR -->
   <div class="filter-bar">
-    <button class="filter-chip f-all active" data-filter="all">🍽️ Tutte</button>
-    <button class="filter-chip f-new"  data-filter="new">🟡 In attesa</button>
-    <button class="filter-chip f-prep" data-filter="cooking">🔵 In cottura</button>
-    <button class="filter-chip f-ready" data-filter="ready">🟢 Pronte</button>
+    <button class="filter-chip f-all active" data-filter="all"><i class="fa-solid fa-list-check"></i> Tutte</button>
+    <button class="filter-chip f-new"  data-filter="new"><i class="fa-solid fa-circle" style="color:#f59e0b;"></i> In attesa</button>
+    <button class="filter-chip f-prep" data-filter="cooking"><i class="fa-solid fa-fire" style="color:#3b82f6;"></i> In cottura</button>
+    <button class="filter-chip f-ready" data-filter="ready"><i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> Pronte</button>
   </div>
 
   <!-- KDS TICKETS GRID -->
@@ -43,11 +59,15 @@
     <!-- Tickets injected by JS -->
   </main>
 
-  <!-- STATS BAR -->
+  <!-- SHORTCUTS & STATS BAR -->
   <div class="stats-bar">
-    <div class="stat-pill new">🟡 <span id="cnt-new">0</span> in attesa</div>
-    <div class="stat-pill prep">🔵 <span id="cnt-cooking">0</span> in cottura</div>
-    <div class="stat-pill ready">🟢 <span id="cnt-ready">0</span> pronte</div>
+    <div class="stat-pill new"><i class="fa-solid fa-clock" style="color:#f59e0b;"></i> <span id="cnt-new">0</span> in attesa</div>
+    <div class="stat-pill prep"><i class="fa-solid fa-fire" style="color:#3b82f6;"></i> <span id="cnt-cooking">0</span> in cottura</div>
+    <div class="stat-pill ready"><i class="fa-solid fa-circle-check" style="color:#22c55e;"></i> <span id="cnt-ready">0</span> pronte</div>
+    
+    <div class="kds-hint">
+      <span class="hint-tag">💡 <strong>Tastiera/Numpad:</strong> Premere <code>1-9</code> per la comanda #N | <code>SPAZIO</code> per la comanda più vecchia</span>
+    </div>
   </div>
 
 </div>
