@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, writeBatch, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, writeBatch, deleteDoc, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getDatabase, ref, get, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { menuItems } from './ordini.js';
@@ -762,3 +762,169 @@ window.uploadDishPhoto = async () => {
     }
   }
 };
+
+// =====================================================
+// GESTIONE PRENOTAZIONI (dal sito pubblico)
+// =====================================================
+
+let allReservations = [];
+let currentFilter = 'all';
+let reservationsUnsubscribe = null;
+
+function initReservationsTab() {
+  const listEl = document.getElementById('reservations-list');
+  if (!listEl) return;
+
+  // Real-time listener on Firestore reservations collection
+  const q = query(
+    collection(dbFirestore, 'reservations'),
+    orderBy('createdAt', 'desc')
+  );
+
+  reservationsUnsubscribe = onSnapshot(q, (snapshot) => {
+    allReservations = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateBadge();
+    renderReservations();
+  }, (err) => {
+    console.error('[Prenotazioni] Errore listener:', err);
+    if (listEl) listEl.innerHTML = '<p style="color:#ef4444; padding:20px;">Errore caricamento prenotazioni.</p>';
+  });
+}
+
+function updateBadge() {
+  const badge = document.getElementById('reservations-badge');
+  if (!badge) return;
+  const pending = allReservations.filter(r => r.status === 'pending').length;
+  if (pending > 0) {
+    badge.textContent = pending > 9 ? '9+' : pending;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+window.filterReservations = function(filter) {
+  currentFilter = filter;
+  // Update button styles
+  ['all','pending','accepted','rejected'].forEach(f => {
+    const btn = document.getElementById('filter-' + f);
+    if (!btn) return;
+    btn.style.opacity = (f === filter) ? '1' : '0.5';
+  });
+  renderReservations();
+};
+
+function renderReservations() {
+  const listEl = document.getElementById('reservations-list');
+  if (!listEl) return;
+
+  const filtered = currentFilter === 'all'
+    ? allReservations
+    : allReservations.filter(r => r.status === currentFilter);
+
+  if (filtered.length === 0) {
+    const msgs = { all: 'Nessuna prenotazione.', pending: 'Nessuna prenotazione in attesa.', accepted: 'Nessuna prenotazione accettata.', rejected: 'Nessuna prenotazione rifiutata.' };
+    listEl.innerHTML = `<p style="color:var(--text-3); text-align:center; padding:40px 0;">${msgs[currentFilter]}</p>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(r => {
+    const createdAt = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleString('it-IT') : '—';
+    const statusStyle = {
+      pending:  'background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);',
+      accepted: 'background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3);',
+      rejected: 'background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3);'
+    }[r.status] || '';
+    const statusLabel = { pending: 'In Attesa', accepted: 'Accettata', rejected: 'Rifiutata' }[r.status] || r.status;
+
+    const actionBtns = r.status === 'pending' ? `
+      <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-green" style="flex:1; min-width:120px; font-size:0.85rem; padding:10px;" onclick="setReservationStatus('${r.id}', 'accepted')">
+          ✓ Accetta
+        </button>
+        <button class="btn btn-red" style="flex:1; min-width:120px; font-size:0.85rem; padding:10px;" onclick="setReservationStatus('${r.id}', 'rejected')">
+          ✗ Rifiuta
+        </button>
+      </div>
+    ` : `
+      <div style="margin-top:10px;">
+        <button class="btn" style="font-size:0.8rem; padding:8px 14px; opacity:0.6;" onclick="setReservationStatus('${r.id}', 'pending')">
+          Riapri come In Attesa
+        </button>
+      </div>
+    `;
+
+    return `
+    <div class="card" style="margin-bottom:12px; border-left:3px solid ${r.status === 'accepted' ? '#22c55e' : r.status === 'rejected' ? '#ef4444' : '#f59e0b'};">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div style="font-weight:700; font-size:1.05rem; margin-bottom:2px;">${escapeHtml(r.name)}</div>
+          <div style="font-size:0.78rem; color:var(--text-3);">Ricevuta: ${createdAt}</div>
+        </div>
+        <span style="font-size:0.75rem; font-weight:700; padding:4px 12px; border-radius:100px; ${statusStyle}">${statusLabel}</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:14px;">
+        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px;">
+          <div style="font-size:0.68rem; color:var(--text-3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Data & Ora</div>
+          <div style="font-weight:600; font-size:0.95rem;">${r.date} ore ${r.time}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px;">
+          <div style="font-size:0.68rem; color:var(--text-3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Persone</div>
+          <div style="font-weight:600; font-size:0.95rem;">${r.guests} ${parseInt(r.guests) === 1 ? 'persona' : 'persone'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px;">
+          <div style="font-size:0.68rem; color:var(--text-3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Telefono</div>
+          <a href="tel:${r.phone}" style="font-weight:600; font-size:0.95rem; color:var(--accent);">${escapeHtml(r.phone)}</a>
+        </div>
+        <div style="background:rgba(255,255,255,0.04); border-radius:10px; padding:10px;">
+          <div style="font-size:0.68rem; color:var(--text-3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px;">Email</div>
+          <a href="mailto:${r.email}" style="font-weight:600; font-size:0.85rem; color:var(--accent); word-break:break-all;">${escapeHtml(r.email)}</a>
+        </div>
+      </div>
+
+      ${r.notes ? `<div style="margin-top:10px; background:rgba(255,255,255,0.04); border-radius:10px; padding:10px; font-size:0.85rem; color:var(--text-2);"><span style="font-size:0.68rem; color:var(--text-3); text-transform:uppercase; display:block; margin-bottom:4px;">Note</span>${escapeHtml(r.notes)}</div>` : ''}
+
+      ${actionBtns}
+    </div>`;
+  }).join('');
+}
+
+window.setReservationStatus = async function(reservationId, newStatus) {
+  try {
+    await updateDoc(doc(dbFirestore, 'reservations', reservationId), { status: newStatus });
+    console.log('[Prenotazioni] Status aggiornato:', reservationId, '->', newStatus);
+  } catch (err) {
+    console.error('[Prenotazioni] Errore aggiornamento status:', err);
+    alert('Errore: ' + err.message);
+  }
+};
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Hook into initOwnerDashboard to also load reservations
+const _origInit = window.initOwnerDashboard;
+function patchInit() {
+  initReservationsTab();
+}
+// Attach to switchOwnerTab to lazy-init on first open
+const _origSwitch = window.switchOwnerTab;
+window.switchOwnerTabWithReservations = function(tabId, ev) {
+  if (typeof _origSwitch === 'function') _origSwitch(tabId, ev);
+  if (tabId === 'tab-prenotazioni' && allReservations.length === 0) {
+    initReservationsTab();
+  }
+};
+
+// Auto-init on dashboard load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (document.getElementById('tab-prenotazioni')) {
+      initReservationsTab();
+    }
+  }, 2000); // after auth completes
+});
+

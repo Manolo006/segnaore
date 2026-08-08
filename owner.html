@@ -84,6 +84,7 @@
       <button class="tab-btn" onclick="switchOwnerTab('tab-consumi', event)">Consumi</button>
       <button class="tab-btn" onclick="switchOwnerTab('tab-cassa', event)">Chiusura Cassa</button>
       <button class="tab-btn" onclick="switchOwnerTab('tab-foto', event)">Foto Menu</button>
+      <button class="tab-btn" id="tab-btn-prenotazioni" onclick="switchOwnerTab('tab-prenotazioni', event)" style="position:relative;">Prenotazioni <span id="reservations-badge" style="display:none; position:absolute; top:4px; right:4px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:0.65rem; font-weight:700; display:none; align-items:center; justify-content:center;">0</span></button>
     </div>
 
     <!-- TAB DIPENDENTI (ex Presenze Owner) -->
@@ -199,6 +200,23 @@
         </button>
       </div>
     </div>
+
+    <!-- TAB PRENOTAZIONI -->
+    <div id="tab-prenotazioni" class="owner-tab">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <h3 class="section-title" style="margin:0; color:var(--accent);">Prenotazioni Online</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" id="filter-all"      onclick="filterReservations('all')" style="font-size:0.8rem; padding:8px 14px;">Tutte</button>
+          <button class="btn" id="filter-pending"  onclick="filterReservations('pending')" style="font-size:0.8rem; padding:8px 14px; background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);">In Attesa</button>
+          <button class="btn btn-green" id="filter-accepted" onclick="filterReservations('accepted')" style="font-size:0.8rem; padding:8px 14px;">Accettate</button>
+          <button class="btn btn-red"   id="filter-rejected" onclick="filterReservations('rejected')" style="font-size:0.8rem; padding:8px 14px;">Rifiutate</button>
+        </div>
+      </div>
+      <div id="reservations-list">
+        <p style="color:var(--text-3); text-align:center; padding:40px 0;">Caricamento prenotazioni...</p>
+      </div>
+    </div>
+
   </div>
 
   <div id="navbar-placeholder"></div>
