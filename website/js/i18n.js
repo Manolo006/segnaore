@@ -54,7 +54,7 @@ export const translations = {
     form_notes: 'Note (allergie, occasioni speciali...)',
     form_submit: 'Conferma Prenotazione',
     form_submitting: 'Invio in corso...',
-    form_success_title: 'Prenotazione Ricevuta! 🎉',
+    form_success_title: 'Prenotazione Ricevuta!',
     form_success_text: 'Grazie per aver scelto In Punto! Ti contatteremo presto per confermare il tavolo.',
     form_error: 'Si è verificato un errore. Contattaci direttamente via WhatsApp.',
     form_required: 'Compila tutti i campi obbligatori.',
