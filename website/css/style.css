@@ -325,7 +325,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .hero__bg {
   position: absolute;
   inset: 0;
-  background-image: url('../img/hero.jpg');
+  background-image: url('../img/photo5.png');
   background-size: cover;
   background-position: center;
   transform: translateY(var(--parallax-y, 0));
