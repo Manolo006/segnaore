@@ -19,7 +19,7 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -27,6 +27,10 @@ body {
   flex-direction: column;
   min-height: 100dvh;
   padding-bottom: 80px;
+}
+
+h1, h2, h3, .topnav__brand, .section-title {
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 /* TOPNAV */
