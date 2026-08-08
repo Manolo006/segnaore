@@ -139,6 +139,8 @@
                 src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
                 alt="Interno del bistrot In Punto, con pareti verdi e atmosfera calda"
                 class="about__img"
+                width="800"
+                height="1000"
                 loading="lazy"
               >
               <div class="about__badge">
@@ -337,6 +339,7 @@
                 <input 
                   type="text" 
                   id="res-name" 
+                  name="name"
                   class="form-input" 
                   data-i18n="form_name"
                   placeholder="Nome e Cognome"
@@ -351,10 +354,12 @@
                   <input 
                     type="email" 
                     id="res-email" 
+                    name="email"
                     class="form-input" 
                     data-i18n="form_email"
                     placeholder="email@esempio.com"
                     autocomplete="email"
+                    spellcheck="false"
                     required
                   >
                 </div>
@@ -363,6 +368,7 @@
                   <input 
                     type="tel" 
                     id="res-phone" 
+                    name="phone"
                     class="form-input" 
                     data-i18n="form_phone"
                     placeholder="+351 289 076 410"
