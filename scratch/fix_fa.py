@@ -1,0 +1,676 @@
+import os
+
+html_content = """<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  
+  <!-- SEO -->
+  <title>In Punto Bistrot Italiano — Quarteira, Algarve</title>
+  <meta name="description" content="Autentica cucina italiana nel cuore dell'Algarve. Pasta fresca, pizze al padellino, taglieri e molto altro. Prenota il tuo tavolo a Quarteira, Portogallo.">
+  <meta name="keywords" content="ristorante italiano Quarteira, bistrot italiano Algarve, in punto bistrot, cucina italiana Portogallo, prenotazione ristorante Quarteira">
+  <meta name="author" content="In Punto Bistrot Italiano">
+  <meta property="og:title" content="In Punto Bistrot Italiano — Quarteira">
+  <meta property="og:description" content="Cucina italiana autentica nel cuore dell'Algarve. Prenota il tuo tavolo online.">
+  <meta property="og:type" content="restaurant">
+  <meta property="og:locale" content="it_IT">
+  <link rel="canonical" href="https://manolo006.github.io/segnaore/website/">
+
+  <!-- Favicon -->
+  <link rel="icon" href="../img/icon.jpg" type="image/jpeg">
+  <link rel="apple-touch-icon" href="../img/icon.jpg">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===========================================
+       NAVBAR
+  =========================================== -->
+  <nav id="main-nav" role="navigation" aria-label="Navigazione principale">
+    <div class="nav-inner">
+      <!-- Logo -->
+      <a href="#top" class="nav-logo" aria-label="In Punto Bistrot Italiano — Torna in cima">
+        <div class="nav-logo__icon" aria-hidden="true">
+          <i class="fa-solid fa-utensils"></i>
+        </div>
+        <div class="nav-logo__text">
+          <span class="nav-logo__name">in<strong>Punto</strong></span>
+          <span class="nav-logo__sub">Bistrot Italiano</span>
+        </div>
+      </a>
+
+      <!-- Desktop links -->
+      <ul class="nav-links" role="list">
+        <li><a href="#menu"        class="nav-link" data-i18n="nav_menu">Menu</a></li>
+        <li><a href="#about"       class="nav-link" data-i18n="nav_about">Chi Siamo</a></li>
+        <li><a href="#gallery"     class="nav-link" data-i18n="nav_gallery">Galleria</a></li>
+        <li><a href="#reservation" class="nav-link" data-i18n="nav_reserve">Prenota</a></li>
+        <li><a href="#contact"     class="nav-link" data-i18n="nav_contact">Contatti</a></li>
+      </ul>
+
+      <!-- Right side: Lang + CTA -->
+      <div class="nav-right">
+        <div class="lang-switcher" aria-label="Seleziona lingua" role="group">
+          <button class="lang-btn active" data-lang="it" aria-label="Italiano">IT</button>
+          <button class="lang-btn"        data-lang="en" aria-label="English">EN</button>
+          <button class="lang-btn"        data-lang="pt" aria-label="Português">PT</button>
+        </div>
+        <a href="#reservation" class="nav-cta">
+          <i class="fa-solid fa-calendar-check"></i> <span data-i18n="nav_reserve_btn">Prenota un Tavolo</span>
+        </a>
+        
+        <!-- Hamburger -->
+        <button class="hamburger" id="hamburger" aria-label="Apri menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" role="menu" aria-labelledby="hamburger">
+    <a href="#menu"        class="nav-link" role="menuitem" data-i18n="nav_menu">Menu</a>
+    <a href="#about"       class="nav-link" role="menuitem" data-i18n="nav_about">Chi Siamo</a>
+    <a href="#gallery"     class="nav-link" role="menuitem" data-i18n="nav_gallery">Galleria</a>
+    <a href="#reservation" class="nav-link" role="menuitem" data-i18n="nav_reserve">Prenota</a>
+    <a href="#contact"     class="nav-link" role="menuitem" data-i18n="nav_contact">Contatti</a>
+    <div class="lang-switcher" style="margin-top:20px;" role="group" aria-label="Lingua">
+      <button class="lang-btn active" data-lang="it">IT</button>
+      <button class="lang-btn"        data-lang="en">EN</button>
+      <button class="lang-btn"        data-lang="pt">PT</button>
+    </div>
+  </div>
+
+  <main id="top">
+
+    <!-- ===========================================
+         HERO
+    =========================================== -->
+    <section class="hero" aria-label="Hero">
+      <div class="hero__bg" role="img" aria-label="Interno del bistrot In Punto"></div>
+      <div class="hero__overlay" aria-hidden="true"></div>
+      
+      <div class="hero__content">
+        <div class="hero__tag">
+          <span data-i18n="hero_tag">Quarteira, Algarve · Portogallo</span>
+        </div>
+        
+        <h1 class="hero__title" data-i18n="hero_title">
+          Un angolo d'Italia<br>al cuore dell'Algarve
+        </h1>
+        
+        <p class="hero__subtitle" data-i18n="hero_subtitle">
+          Cucina autentica italiana preparata con amore, ingredienti freschi e la passione di una famiglia.
+        </p>
+        
+        <div class="hero__ctas">
+          <a href="#reservation" class="btn-primary">
+            <i class="fa-solid fa-calendar-days"></i> <span data-i18n="hero_cta_primary">Prenota un Tavolo</span>
+          </a>
+          <a href="#menu" class="btn-outline">
+            <i class="fa-solid fa-utensils"></i> <span data-i18n="hero_cta_secondary">Scopri il Menu</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero__scroll" aria-hidden="true">
+        <div class="hero__scroll-line"></div>
+        <span><i class="fa-solid fa-chevron-down"></i></span>
+      </div>
+    </section>
+
+    <!-- ===========================================
+         ABOUT
+    =========================================== -->
+    <section id="about" aria-labelledby="about-title">
+      <div class="container">
+        <div class="about-grid">
+          <!-- Image side -->
+          <div class="animate-on-scroll">
+            <div class="about__img-wrap">
+              <img 
+                src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
+                alt="Interno del bistrot In Punto, con pareti verdi e atmosfera calda"
+                class="about__img"
+                loading="lazy"
+              >
+              <div class="about__badge">
+                <div class="about__badge-icon"><i class="fa-solid fa-heart" style="color: #e74c3c;"></i></div>
+                <div class="about__badge-text">"Cucina<br>con Amore"</div>
+                <div class="about__badge-sub">La nostra filosofia</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text side -->
+          <div class="about__text">
+            <div class="animate-on-scroll" data-delay="1">
+              <span class="section-tag" data-i18n="about_tag">La Nostra Storia</span>
+              <h2 id="about-title" class="section-title" data-i18n="about_title">Cucina con Amore</h2>
+            </div>
+            <div class="animate-on-scroll" data-delay="2">
+              <p data-i18n="about_text1">
+                In Punto Bistrot Italiano è nato dal sogno di portare i sapori autentici della cucina italiana nel cuore dell'Algarve. Un progetto familiare, costruito con passione, dedizione e tanto amore per il cibo.
+              </p>
+              <p data-i18n="about_text2">
+                Ogni piatto che serviamo racconta una storia: ingredienti selezionati, ricette tramandate e una cura artigianale che si sente al primo morso. Benvenuti nella nostra tavola.
+              </p>
+            </div>
+
+            <div class="about-pillars animate-on-scroll" data-delay="3">
+              <div class="pillar">
+                <div class="pillar__icon"><i class="fa-solid fa-pizza-slice"></i></div>
+                <h3 class="pillar__title" data-i18n="about_p1_title">Tradizione</h3>
+                <p class="pillar__text" data-i18n="about_p1_text">Ricette autentiche dalla tradizione italiana, preparate ogni giorno con cura.</p>
+              </div>
+              <div class="pillar">
+                <div class="pillar__icon"><i class="fa-solid fa-leaf"></i></div>
+                <h3 class="pillar__title" data-i18n="about_p2_title">Freschezza</h3>
+                <p class="pillar__text" data-i18n="about_p2_text">Ingredienti freschi e di qualità, selezionati ogni mattina.</p>
+              </div>
+              <div class="pillar">
+                <div class="pillar__icon"><i class="fa-solid fa-face-smile"></i></div>
+                <h3 class="pillar__title" data-i18n="about_p3_title">Accoglienza</h3>
+                <p class="pillar__text" data-i18n="about_p3_text">Un ambiente caldo e familiare dove ogni ospite è trattato come a casa.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================
+         MENU
+    =========================================== -->
+    <section id="menu" aria-labelledby="menu-title">
+      <div class="container">
+        <div class="menu-header animate-on-scroll">
+          <span class="section-tag" data-i18n="menu_tag">Il Nostro Menu</span>
+          <h2 id="menu-title" class="section-title" data-i18n="menu_title">I Sapori di Casa</h2>
+          <p class="section-subtitle" data-i18n="menu_subtitle">
+            Ogni piatto è preparato al momento con ingredienti freschi e ricette autentiche.
+          </p>
+        </div>
+
+        <!-- Category tabs -->
+        <div id="menu-tabs" role="tablist" aria-label="Categorie menu"></div>
+
+        <!-- Items grid -->
+        <div id="menu-grid" role="list" aria-live="polite" aria-label="Piatti del menu"></div>
+      </div>
+    </section>
+
+    <!-- ===========================================
+         GALLERY
+    =========================================== -->
+    <section id="gallery" aria-labelledby="gallery-title">
+      <div class="container">
+        <div class="gallery-header animate-on-scroll">
+          <span class="section-tag" data-i18n="gallery_tag">La Nostra Atmosfera</span>
+          <h2 id="gallery-title" class="section-title" data-i18n="gallery_title">Vivi l'Esperienza</h2>
+          <p class="section-subtitle" data-i18n="gallery_subtitle">
+            Luce calda, tavoli di legno, e il profumo della cucina italiana.
+          </p>
+        </div>
+
+        <div class="gallery-grid animate-on-scroll" data-delay="2">
+          <div class="gallery-item" role="button" tabindex="0" aria-label="Esterno del locale">
+            <img 
+              src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
+              alt="Esterno del bistrot In Punto a Quarteira"
+              loading="lazy"
+            >
+            <div class="gallery-item__overlay" aria-hidden="true">
+              <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 1.5rem; color: white;"></i>
+            </div>
+          </div>
+
+          <div class="gallery-item" role="button" tabindex="0" aria-label="Sala interna verde">
+            <img 
+              src="https://dynamic-media-cdn.tripadvisor.com/media/photo-o/2c/c8/a9/02/interno-del-bistrot.jpg?w=700&h=-1&s=1" 
+              alt="Sala interna con pareti verdi e arredamento rustico"
+              loading="lazy"
+              onerror="this.src='https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg'"
+            >
+            <div class="gallery-item__overlay" aria-hidden="true">
+              <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 1.5rem; color: white;"></i>
+            </div>
+          </div>
+
+          <div class="gallery-item" role="button" tabindex="0" aria-label="Terrazza esterna">
+            <img 
+              src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
+              alt="Terrazza del bistrot con fiori e tavolini all'aperto"
+              loading="lazy"
+            >
+            <div class="gallery-item__overlay" aria-hidden="true">
+              <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 1.5rem; color: white;"></i>
+            </div>
+          </div>
+
+          <div class="gallery-item" role="button" tabindex="0" aria-label="Apparecchiatura tavolo">
+            <img 
+              src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
+              alt="Tavolo apparecchiato con piatti in ceramica blu e bicchieri da vino"
+              loading="lazy"
+            >
+            <div class="gallery-item__overlay" aria-hidden="true">
+              <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 1.5rem; color: white;"></i>
+            </div>
+          </div>
+
+          <div class="gallery-item" role="button" tabindex="0" aria-label="Bar interno">
+            <img 
+              src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
+              alt="Area bar interna con botti di vino e decorazioni italiane"
+              loading="lazy"
+            >
+            <div class="gallery-item__overlay" aria-hidden="true">
+              <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 1.5rem; color: white;"></i>
+            </div>
+          </div>
+
+          <div class="gallery-item" role="button" tabindex="0" aria-label="Il team In Punto">
+            <img 
+              src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
+              alt="Il team di In Punto davanti al bistrot"
+              loading="lazy"
+            >
+            <div class="gallery-item__overlay" aria-hidden="true">
+              <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 1.5rem; color: white;"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lightbox -->
+      <div id="lightbox-overlay" role="dialog" aria-modal="true" aria-label="Visualizzazione immagine">
+        <button id="lightbox-close" class="lightbox-btn" aria-label="Chiudi"><i class="fa-solid fa-xmark"></i></button>
+        <button id="lightbox-prev"  class="lightbox-btn" aria-label="Immagine precedente"><i class="fa-solid fa-chevron-left"></i></button>
+        <img id="lightbox-img" src="" alt="" />
+        <button id="lightbox-next"  class="lightbox-btn" aria-label="Immagine successiva"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+    </section>
+
+    <!-- ===========================================
+         RESERVATION
+    =========================================== -->
+    <section id="reservation" aria-labelledby="reservation-title">
+      <div class="container">
+        <div class="reservation-grid">
+          <!-- Info side -->
+          <div class="animate-on-scroll">
+            <span class="section-tag" data-i18n="reserve_tag">Prenota il tuo Tavolo</span>
+            <h2 id="reservation-title" class="section-title" data-i18n="reserve_title">Ti aspettiamo a Tavola</h2>
+            <p class="section-subtitle" data-i18n="reserve_subtitle">
+              Prenota il tuo tavolo in pochi secondi. Ti invieremo una conferma il prima possibile.
+            </p>
+
+            <div class="reservation-info__media" style="margin-top:32px;">
+              <img 
+                src="https://raw.githubusercontent.com/Manolo006/segnaore/main/website/img/hero.jpg" 
+                alt="Sala del bistrot In Punto"
+                loading="lazy"
+              >
+            </div>
+
+            <div class="reservation-info__quote">
+              <blockquote>
+                "Un'esperienza che ti porta direttamente in Italia, a due passi dall'oceano."
+              </blockquote>
+              <cite>— Un cliente soddisfatto su TripAdvisor <span style="color:#f59e0b;"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></span></cite>
+            </div>
+          </div>
+
+          <!-- Form side -->
+          <div class="animate-on-scroll" data-delay="2">
+            <form id="reservation-form" class="reservation-form" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="res-name">Nome e Cognome *</label>
+                <input 
+                  type="text" 
+                  id="res-name" 
+                  class="form-input" 
+                  data-i18n="form_name"
+                  placeholder="Nome e Cognome"
+                  autocomplete="name"
+                  required
+                >
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="res-email">Email *</label>
+                  <input 
+                    type="email" 
+                    id="res-email" 
+                    class="form-input" 
+                    data-i18n="form_email"
+                    placeholder="email@esempio.com"
+                    autocomplete="email"
+                    required
+                  >
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="res-phone">Telefono *</label>
+                  <input 
+                    type="tel" 
+                    id="res-phone" 
+                    class="form-input" 
+                    data-i18n="form_phone"
+                    placeholder="+351 289 076 410"
+                    autocomplete="tel"
+                    required
+                  >
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="res-date">Data *</label>
+                  <input type="date" id="res-date" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="res-time">Ora *</label>
+                  <input type="time" id="res-time" class="form-input" min="12:00" max="22:00" value="20:00" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="res-guests">N° Persone *</label>
+                <select id="res-guests" class="form-input" required>
+                  <option value="">—</option>
+                  <option value="1">1 persona</option>
+                  <option value="2">2 persone</option>
+                  <option value="3">3 persone</option>
+                  <option value="4">4 persone</option>
+                  <option value="5">5 persone</option>
+                  <option value="6">6 persone</option>
+                  <option value="7">7 persone</option>
+                  <option value="8">8+ persone</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="res-notes">Note</label>
+                <textarea 
+                  id="res-notes" 
+                  class="form-input" 
+                  data-i18n="form_notes"
+                  placeholder="Allergie, occasioni speciali, preferenze di posto..."
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <button type="submit" id="res-submit" class="btn-reserve">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span data-i18n="form_submit">Conferma Prenotazione</span>
+              </button>
+
+              <div id="reservation-success" role="alert">
+                <div class="success-title"><i class="fa-solid fa-circle-check"></i> <span data-i18n="form_success_title">Prenotazione Ricevuta!</span></div>
+                <p data-i18n="form_success_text">
+                  Grazie per aver scelto In Punto! Ti contatteremo presto per confermare il tavolo.
+                </p>
+              </div>
+
+              <div id="reservation-error" role="alert" aria-live="assertive"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================
+         CONTACT
+    =========================================== -->
+    <section id="contact" aria-labelledby="contact-title">
+      <div class="container">
+        <div class="contact-grid">
+          <!-- Info -->
+          <div class="contact-info animate-on-scroll">
+            <span class="section-tag" data-i18n="contact_tag">Dove Siamo</span>
+            <h2 id="contact-title" class="section-title" data-i18n="contact_title">Vieni a Trovarci</h2>
+
+            <div class="contact-items">
+              <div class="contact-item">
+                <div class="contact-item__icon" aria-hidden="true">
+                  <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div>
+                  <div class="contact-item__label" data-i18n="contact_address_label">Indirizzo</div>
+                  <div class="contact-item__value">
+                    <a 
+                      href="https://maps.google.com/?q=In+Punto+Bistrot+Italiano+Quarteira" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      data-i18n="contact_address"
+                    >
+                      Rua Gonçalo Velho 16,<br>8125-161 Quarteira, Portogallo
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="contact-item">
+                <div class="contact-item__icon" aria-hidden="true">
+                  <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                  <div class="contact-item__label" data-i18n="contact_hours_label">Orari</div>
+                  <div class="contact-item__value" data-i18n="contact_hours">
+                    Mar–Dom: 12:00–22:30<br>Lunedì: Chiuso
+                  </div>
+                </div>
+              </div>
+
+              <div class="contact-item">
+                <div class="contact-item__icon" aria-hidden="true">
+                  <i class="fa-solid fa-phone"></i>
+                </div>
+                <div>
+                  <div class="contact-item__label" data-i18n="contact_phone_label">Telefono</div>
+                  <div class="contact-item__value">
+                    <a href="tel:+351289076410">+351 289 076 410</a>
+                  </div>
+                </div>
+              </div>
+
+              <div class="contact-item">
+                <div class="contact-item__icon" aria-hidden="true">
+                  <i class="fa-solid fa-share-nodes"></i>
+                </div>
+                <div>
+                  <div class="contact-item__label" data-i18n="contact_social_label">Seguici</div>
+                  <div class="contact-item__value">
+                    <div class="social-links">
+                      <a 
+                        href="https://www.instagram.com/inpuntobistrot" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="social-link"
+                        aria-label="Seguici su Instagram"
+                      >
+                        <i class="fa-brands fa-instagram"></i> Instagram
+                      </a>
+                      <a 
+                        href="https://www.tripadvisor.it/Restaurant_Review-g580249-d34397758-Reviews-In_Punto_Bistrot_Italiano-Quarteira_Faro_District_Algarve.html" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="social-link"
+                        aria-label="Recensioni su TripAdvisor"
+                      >
+                        <i class="fa-brands fa-tripadvisor"></i> TripAdvisor
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <a 
+              href="https://wa.me/351289076410?text=Ciao!%20Vorrei%20prenotare%20un%20tavolo%20a%20In%20Punto%20Bistrot%20Italiano." 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="whatsapp-cta"
+              style="margin-top:32px;"
+              aria-label="Contattaci su WhatsApp"
+            >
+              <i class="fa-brands fa-whatsapp" style="font-size:1.3rem;"></i>
+              Chatta su WhatsApp
+            </a>
+          </div>
+
+          <!-- Map -->
+          <div class="animate-on-scroll" data-delay="2">
+            <div class="map-wrap">
+              <iframe 
+                title="Mappa In Punto Bistrot Italiano Quarteira"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.1!2d-8.1033!3d37.065!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sIn+Punto+Bistrot+Italiano!5e0!3m2!1sit!2sit!4v1620000000000!5m2!1sit!2sit" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+
+            <!-- Review highlight -->
+            <div style="margin-top:24px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:24px;">
+              <div style="display:flex; gap:16px; align-items:flex-start;">
+                <div style="font-size:1.8rem; color:#f59e0b; flex-shrink:0;">
+                  <i class="fa-solid fa-quote-left"></i>
+                </div>
+                <div>
+                  <div style="display:flex; gap:4px; margin-bottom:8px; color:#f59e0b; font-size:0.9rem;">
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                  </div>
+                  <p style="color:rgba(255,255,255,0.8); font-size:0.9rem; line-height:1.6; font-style:italic;">
+                    "Ottima pasta, ambiente accogliente e personale gentilissimo. Un angolo d'Italia in Portogallo. Torneremo!"
+                  </p>
+                  <span style="color:rgba(255,255,255,0.45); font-size:0.75rem; margin-top:8px; display:block;">— Recensione su TripAdvisor</span>
+                </div>
+              </div>
+
+              <a 
+                href="https://www.tripadvisor.it/Restaurant_Review-g580249-d34397758-Reviews-In_Punto_Bistrot_Italiano-Quarteira_Faro_District_Algarve.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="display:flex; align-items:center; gap:8px; margin-top:20px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.8); font-size:0.85rem; font-weight:600; padding:10px 18px; border-radius:10px; transition:all 0.3s ease; text-decoration:none; width:fit-content;"
+              >
+                Leggi tutte le recensioni <i class="fa-solid fa-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===========================================
+       FOOTER
+  =========================================== -->
+  <footer role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Brand -->
+        <div class="footer-brand">
+          <div class="footer-brand__logo">
+            <div class="footer-brand__icon" aria-hidden="true"><i class="fa-solid fa-utensils"></i></div>
+            <div>
+              <div class="footer-brand__name">in<strong>Punto</strong></div>
+              <div class="footer-brand__sub">Bistrot Italiano</div>
+            </div>
+          </div>
+          <p data-i18n="footer_tagline" style="color:rgba(255,255,255,0.55);">
+            Cucina con Amore dal cuore dell'Italia
+          </p>
+          <p style="color:rgba(255,255,255,0.4); font-size:0.82rem;" data-i18n="footer_address">
+            Rua Gonçalo Velho 16, Quarteira (PT)
+          </p>
+        </div>
+
+        <!-- Nav -->
+        <div class="footer-col">
+          <div class="footer-col__title">Menu</div>
+          <ul role="list">
+            <li><a href="#menu"        data-i18n="footer_nav_menu">Menu</a></li>
+            <li><a href="#about"       data-i18n="footer_nav_about">Chi Siamo</a></li>
+            <li><a href="#gallery"     data-i18n="footer_nav_gallery">Galleria</a></li>
+            <li><a href="#reservation" data-i18n="footer_nav_reserve">Prenota</a></li>
+          </ul>
+        </div>
+
+        <!-- Social -->
+        <div class="footer-col">
+          <div class="footer-col__title">Contatti</div>
+          <ul role="list">
+            <li><a href="https://www.instagram.com/inpuntobistrot" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-instagram"></i> Instagram</a></li>
+            <li>
+              <a 
+                href="https://www.tripadvisor.it/Restaurant_Review-g580249-d34397758-Reviews-In_Punto_Bistrot_Italiano-Quarteira_Faro_District_Algarve.html" 
+                target="_blank" rel="noopener noreferrer"
+              >
+                <i class="fa-brands fa-tripadvisor"></i> TripAdvisor
+              </a>
+            </li>
+            <li><a href="tel:+351289076410"><i class="fa-solid fa-phone"></i> Telefono</a></li>
+            <li>
+              <a href="https://wa.me/351289076410" target="_blank" rel="noopener noreferrer">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© <span id="footer-year"></span> in<strong>Punto</strong> Bistrot Italiano · <span data-i18n="footer_rights">Tutti i diritti riservati.</span></p>
+        <span class="footer-flag" aria-hidden="true" style="font-size: 0.85rem; letter-spacing: 2px;">IT · PT</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===========================================
+       FLOATING WHATSAPP BUTTON
+  =========================================== -->
+  <a 
+    id="whatsapp-float"
+    href="https://wa.me/351289076410?text=Ciao!%20Vorrei%20prenotare%20un%20tavolo%20a%20In%20Punto%20Bistrot%20Italiano." 
+    target="_blank" 
+    rel="noopener noreferrer"
+    aria-label="Contattaci su WhatsApp"
+  >
+    <i class="fa-brands fa-whatsapp" style="font-size: 1.8rem;"></i>
+  </a>
+
+  <!-- ===========================================
+       SCRIPTS
+  =========================================== -->
+  <script>
+    // Footer year auto-update
+    document.getElementById('footer-year').textContent = new Date().getFullYear();
+  </script>
+
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
+"""
+
+with open('website/index.html', 'wb') as f:
+    f.write(html_content.encode('utf-8'))
+
+print("website/index.html updated successfully with Font Awesome!")
